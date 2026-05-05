@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background:
+      radial-gradient(1200px 600px at 100% -10%, rgba(124, 92, 255, 0.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(80, 200, 255, 0.10), transparent 60%),
+      #0b0d12;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Respect iOS safe areas */
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 0px);
+  }
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl bg-ink-900/80 ring-1 ring-white/5 backdrop-blur-sm shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset];
+  }
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium;
+  }
+  .tap {
+    @apply active:scale-[0.985] transition-transform duration-100;
+  }
+}
+
+/* Hide scrollbars on horizontal scrollers but keep accessible */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
