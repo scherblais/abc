@@ -24,13 +24,14 @@ type TravelState =
   | { kind: 'idle' }
   | { kind: 'looking' }
   | { kind: 'no_origin' }
-  | { kind: 'not_found' }
+  | { kind: 'not_found'; reason?: string }
   | {
       kind: 'resolved';
       km: number;
       fee: number;
       coords: { lat: number; lon: number };
       mode: 'road' | 'straight';
+      warning?: string;
     };
 
 const draftFromBooking = (b: Booking): DraftBooking => ({
@@ -127,29 +128,43 @@ export function BookScreen({
       if (apiKey) {
         // Resolve the booking address coordinates (for the on-screen "X km
         // from..." display) and fetch road distance in parallel.
-        const [addressResult, route] = await Promise.all([
+        const [geocodeRes, routeRes] = await Promise.all([
           googleGeocode(trimmed, apiKey),
           googleRoadDistance(settings.startingAddress, trimmed, apiKey),
         ]);
-        if (!addressResult || !route) {
-          setTravel({ kind: 'not_found' });
+
+        if (!geocodeRes.ok) {
+          setTravel({ kind: 'not_found', reason: `Geocoding: ${geocodeRes.error}` });
           return;
         }
-        const km = route.meters / 1000;
-        const fee = travelFee(km, settings);
-        setTravel({
-          kind: 'resolved',
-          km,
-          fee,
-          coords: { lat: addressResult.lat, lon: addressResult.lon },
-          mode: 'road',
-        });
-        setDraft((p) => ({
-          ...p,
-          travelKm: km,
-          travelFee: fee,
-          coords: { lat: addressResult.lat, lon: addressResult.lon },
-        }));
+        const coords = { lat: geocodeRes.value.lat, lon: geocodeRes.value.lon };
+
+        if (routeRes.ok) {
+          const km = routeRes.value.meters / 1000;
+          const fee = travelFee(km, settings);
+          setTravel({ kind: 'resolved', km, fee, coords, mode: 'road' });
+          setDraft((p) => ({ ...p, travelKm: km, travelFee: fee, coords }));
+          return;
+        }
+
+        // Routes failed but the address is valid — degrade to haversine so
+        // the user still gets a travel fee. Surface the Routes error too.
+        if (settings.startingCoords) {
+          const km = distanceKm(settings.startingCoords, coords);
+          const fee = travelFee(km, settings);
+          setTravel({
+            kind: 'resolved',
+            km,
+            fee,
+            coords,
+            mode: 'straight',
+            warning: `Routes API: ${routeRes.error}`,
+          });
+          setDraft((p) => ({ ...p, travelKm: km, travelFee: fee, coords }));
+          return;
+        }
+
+        setTravel({ kind: 'not_found', reason: `Routes: ${routeRes.error}` });
         return;
       }
 
@@ -460,11 +475,15 @@ export function BookScreen({
 function TravelLine({ state, settings }: { state: TravelState; settings: Settings }) {
   if (state.kind === 'idle') return null;
   let text = '';
+  let detail: string | null = null;
   let muted = true;
+
   if (state.kind === 'looking') text = 'Locating address…';
-  else if (state.kind === 'no_origin') text = 'Set a starting location in Settings to bill travel.';
+  else if (state.kind === 'no_origin')
+    text = 'Set a starting location in Settings to bill travel.';
   else if (state.kind === 'not_found') {
     text = "Couldn't locate that address — travel fee won't apply.";
+    detail = state.reason ?? null;
     muted = false;
   } else {
     const km = state.km.toFixed(1);
@@ -475,16 +494,24 @@ function TravelLine({ state, settings }: { state: TravelState; settings: Setting
     } else {
       text = `${km} km ${kind} from ${settings.startingAddress} · within free radius`;
     }
+    detail = state.warning ?? null;
   }
+
   return (
-    <p
-      className={`mt-1.5 line-clamp-2 px-0.5 text-[11.5px] leading-snug ${
-        muted ? 'text-neutral-500' : 'text-neutral-700'
-      }`}
-      aria-live="polite"
-    >
-      {text}
-    </p>
+    <div className="mt-1.5 px-0.5" aria-live="polite">
+      <p
+        className={`line-clamp-2 text-[11.5px] leading-snug ${
+          muted ? 'text-neutral-500' : 'text-neutral-700'
+        }`}
+      >
+        {text}
+      </p>
+      {detail && (
+        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-neutral-500">
+          {detail}
+        </p>
+      )}
+    </div>
   );
 }
 

@@ -12,7 +12,7 @@ type Status =
   | { kind: 'idle' }
   | { kind: 'looking' }
   | { kind: 'located'; lat: number; lon: number; displayName: string; provider: 'google' | 'osm' }
-  | { kind: 'not_found' }
+  | { kind: 'not_found'; reason?: string }
   | { kind: 'error' };
 
 const INPUT =
@@ -48,13 +48,20 @@ export function StartingLocationCard({ settings, onChange }: Props) {
     }
     setStatus({ kind: 'looking' });
     debounceRef.current = window.setTimeout(async () => {
-      const result = trimmedKey
-        ? await googleGeocode(trimmedAddress, trimmedKey)
-        : await geocode(trimmedAddress).then((r) =>
-            r ? { lat: r.lat, lon: r.lon, formattedAddress: r.displayName } : null,
-          );
-      if (!result) {
-        setStatus({ kind: 'not_found' });
+      let resolved: { lat: number; lon: number; formattedAddress: string } | null = null;
+      let reason: string | undefined;
+
+      if (trimmedKey) {
+        const r = await googleGeocode(trimmedAddress, trimmedKey);
+        if (r.ok) resolved = r.value;
+        else reason = r.error;
+      } else {
+        const r = await geocode(trimmedAddress);
+        if (r) resolved = { lat: r.lat, lon: r.lon, formattedAddress: r.displayName };
+      }
+
+      if (!resolved) {
+        setStatus({ kind: 'not_found', reason });
         onChange({
           ...settings,
           startingAddress: trimmedAddress,
@@ -67,15 +74,15 @@ export function StartingLocationCard({ settings, onChange }: Props) {
       }
       setStatus({
         kind: 'located',
-        lat: result.lat,
-        lon: result.lon,
-        displayName: result.formattedAddress,
+        lat: resolved.lat,
+        lon: resolved.lon,
+        displayName: resolved.formattedAddress,
         provider: trimmedKey ? 'google' : 'osm',
       });
       onChange({
         ...settings,
         startingAddress: trimmedAddress,
-        startingCoords: { lat: result.lat, lon: result.lon },
+        startingCoords: { lat: resolved.lat, lon: resolved.lon },
         freeRadiusKm: freeKm,
         perKmRate: rate,
         googleApiKey: trimmedKey || undefined,
@@ -182,21 +189,25 @@ export function StartingLocationCard({ settings, onChange }: Props) {
 function StatusLine({ status }: { status: Status }) {
   if (status.kind === 'idle') return null;
   let text = '';
+  let detail: string | null = null;
   let cls = 'text-neutral-500';
   if (status.kind === 'looking') text = 'Locating…';
   else if (status.kind === 'located')
     text = `Located${status.provider === 'google' ? ' (Google)' : ''} · ${status.displayName}`;
   else if (status.kind === 'not_found') {
     text = "Couldn't locate that address";
+    detail = status.reason ?? null;
     cls = 'text-neutral-700';
   } else text = 'Lookup failed — check connection';
 
   return (
-    <p
-      className={`mt-1.5 line-clamp-2 px-0.5 text-[11.5px] leading-snug ${cls}`}
-      aria-live="polite"
-    >
-      {text}
-    </p>
+    <div className="mt-1.5 px-0.5" aria-live="polite">
+      <p className={`line-clamp-2 text-[11.5px] leading-snug ${cls}`}>{text}</p>
+      {detail && (
+        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-neutral-500">
+          {detail}
+        </p>
+      )}
+    </div>
   );
 }

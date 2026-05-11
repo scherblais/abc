@@ -53,16 +53,16 @@ export default function App() {
       let cancelled = false;
       (async () => {
         const apiKey = settings.googleApiKey?.trim();
-        const result = apiKey
-          ? await googleGeocode(settings.startingAddress, apiKey)
-          : await geocode(settings.startingAddress).then((r) =>
-              r ? { lat: r.lat, lon: r.lon } : null,
-            );
-        if (!cancelled && result) {
-          setSettings((prev) => ({
-            ...prev,
-            startingCoords: { lat: result.lat, lon: result.lon },
-          }));
+        let coords: { lat: number; lon: number } | null = null;
+        if (apiKey) {
+          const r = await googleGeocode(settings.startingAddress, apiKey);
+          if (r.ok) coords = { lat: r.value.lat, lon: r.value.lon };
+        } else {
+          const r = await geocode(settings.startingAddress);
+          if (r) coords = { lat: r.lat, lon: r.lon };
+        }
+        if (!cancelled && coords) {
+          setSettings((prev) => ({ ...prev, startingCoords: coords! }));
         }
       })();
       return () => {
