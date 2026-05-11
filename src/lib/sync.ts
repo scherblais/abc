@@ -106,11 +106,12 @@ export function useDataDoc<T>(
       valueRef.current = next;
       setValue(next);
       if (uid) {
-        setDoc(doc(getFirebaseDb(), fullPath(uid, path)), next as object).catch(
-          (err) => {
-            console.error(`[sync] write to ${fullPath(uid, path)} failed:`, err);
-          },
-        );
+        setDoc(
+          doc(getFirebaseDb(), fullPath(uid, path)),
+          stripUndefined(next) as object,
+        ).catch((err) => {
+          console.error(`[sync] write to ${fullPath(uid, path)} failed:`, err);
+        });
       }
     },
     [uid, path],
@@ -140,7 +141,10 @@ async function applyListDiff<T extends { id: string }>(
     // Cheap "did this change" check. JSON comparison is fine for our
     // plain-object shapes and avoids a per-field deep-equal.
     if (!before || JSON.stringify(before) !== JSON.stringify(item)) {
-      batch.set(doc(db, `users/${uid}/${name}`, id), item as object);
+      batch.set(
+        doc(db, `users/${uid}/${name}`, id),
+        stripUndefined(item) as object,
+      );
       changes++;
     }
   }
@@ -151,6 +155,29 @@ async function applyListDiff<T extends { id: string }>(
     }
   }
   if (changes > 0) await batch.commit();
+}
+
+/**
+ * Firestore rejects setDoc payloads containing `undefined` values. Our
+ * domain types have optional fields (Service.description, Booking.coords,
+ * Invoice.business.phone, etc.) that are routinely undefined, so we strip
+ * those keys recursively before every write. Arrays and primitives pass
+ * through unchanged.
+ */
+export function stripUndefined<T>(value: T): T {
+  if (value === null || value === undefined) return value;
+  if (Array.isArray(value)) {
+    return value.map((v) => stripUndefined(v)) as unknown as T;
+  }
+  if (typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as object)) {
+      if (v === undefined) continue;
+      out[k] = stripUndefined(v);
+    }
+    return out as T;
+  }
+  return value;
 }
 
 /** Imperative check used by migration: does the user have any cloud data? */

@@ -9,6 +9,7 @@ import {
   loadSettings,
 } from './storage';
 import { DEFAULT_CATALOG } from './catalog';
+import { stripUndefined } from './sync';
 
 const MARKER_KEY = 'lensbook.migrated.v1';
 
@@ -66,15 +67,17 @@ export async function migrateLocalToCloud(uid: string): Promise<void> {
 
   // Always write settings; only batch-write collections if there's data to move.
   const batch = writeBatch(db);
-  batch.set(doc(db, `users/${uid}/meta/settings`), settings);
+  batch.set(doc(db, `users/${uid}/meta/settings`), stripUndefined(settings));
   for (const b of bookings)
-    batch.set(doc(db, `users/${uid}/bookings`, b.id), b);
+    batch.set(doc(db, `users/${uid}/bookings`, b.id), stripUndefined(b));
   for (const i of invoices)
-    batch.set(doc(db, `users/${uid}/invoices`, i.id), i);
+    batch.set(doc(db, `users/${uid}/invoices`, i.id), stripUndefined(i));
   for (const c of companies)
-    batch.set(doc(db, `users/${uid}/companies`, c.id), c);
-  for (const a of agents) batch.set(doc(db, `users/${uid}/agents`, a.id), a);
-  for (const s of services) batch.set(doc(db, `users/${uid}/services`, s.id), s);
+    batch.set(doc(db, `users/${uid}/companies`, c.id), stripUndefined(c));
+  for (const a of agents)
+    batch.set(doc(db, `users/${uid}/agents`, a.id), stripUndefined(a));
+  for (const s of services)
+    batch.set(doc(db, `users/${uid}/services`, s.id), stripUndefined(s));
 
   await batch.commit();
   markMigrated(uid);
