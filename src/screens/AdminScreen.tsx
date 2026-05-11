@@ -7,7 +7,9 @@ import { ThemeToggleCard } from '../components/ThemeToggleCard';
 type Props = {
   services: Service[];
   settings: Settings;
+  accountEmail?: string | null;
   onSaveSettings: (s: Settings) => void;
+  onSignOut?: () => void;
   onBack: () => void;
   onAdd: () => void;
   onEdit: (s: Service) => void;
@@ -19,7 +21,9 @@ type Props = {
 export function AdminScreen({
   services,
   settings,
+  accountEmail,
   onSaveSettings,
+  onSignOut,
   onBack,
   onAdd,
   onEdit,
@@ -52,6 +56,35 @@ export function AdminScreen({
         <ThemeToggleCard />
         <StartingLocationCard settings={settings} onChange={onSaveSettings} />
         <BusinessInfoCard settings={settings} onChange={onSaveSettings} />
+
+        {onSignOut && (
+          <section className="card mb-6 p-5">
+            <div className="mb-2 flex items-baseline justify-between gap-3">
+              <h2 className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100">
+                Account
+              </h2>
+              <span className="text-[12px] text-neutral-500 dark:text-neutral-400">
+                Synced
+              </span>
+            </div>
+            {accountEmail && (
+              <p className="truncate text-[13px] text-neutral-700 dark:text-neutral-300">
+                {accountEmail}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('Sign out? Your data stays in the cloud and reappears next sign-in.')) {
+                  onSignOut();
+                }
+              }}
+              className="tap mt-4 w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white"
+            >
+              Sign out
+            </button>
+          </section>
+        )}
 
         <button
           type="button"

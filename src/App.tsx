@@ -8,6 +8,7 @@ import { ClientsScreen } from './screens/ClientsScreen';
 import { InvoicesScreen } from './screens/InvoicesScreen';
 import { InvoiceEditScreen } from './screens/InvoiceEditScreen';
 import { InvoicePrintScreen } from './screens/InvoicePrintScreen';
+import { SignInScreen } from './screens/SignInScreen';
 import type {
   Agent,
   Booking,
@@ -19,6 +20,7 @@ import type {
   Settings,
 } from './types';
 import {
+  DEFAULT_SETTINGS,
   loadAgents,
   loadBookings,
   loadCompanies,
@@ -43,6 +45,10 @@ import {
   bookingToInvoiceIndex,
   nextInvoiceNumber,
 } from './lib/invoices';
+import { useAuth } from './lib/auth';
+import { useDataDoc, useDataList } from './lib/sync';
+import { migrateLocalToCloud } from './lib/migrate';
+import { signOut } from './lib/firebase';
 
 type Screen =
   | { name: 'home' }
@@ -56,40 +62,108 @@ type Screen =
   | { name: 'invoice-print'; invoiceId: string };
 
 export default function App() {
-  const [bookings, setBookings] = useState<Booking[]>(() => loadBookings());
-  const [services, setServices] = useState<Service[]>(() => {
-    const stored = loadServices();
-    return stored ?? DEFAULT_CATALOG;
-  });
-  const [companies, setCompanies] = useState<Company[]>(() => loadCompanies());
-  const [agents, setAgents] = useState<Agent[]>(() => loadAgents());
-  const [invoices, setInvoices] = useState<Invoice[]>(() => loadInvoices());
-  const [settings, setSettings] = useState<Settings>(() => loadSettings());
+  const auth = useAuth();
+
+  // Firebase not configured: run as a local-only app, exactly as before.
+  if (auth.status === 'disabled') return <AppShell uid={null} />;
+
+  // Resolving the persisted sign-in.
+  if (auth.status === 'loading') return <LoadingScreen />;
+
+  if (auth.status === 'signed-out') return <SignInScreen />;
+
+  return <AuthenticatedApp uid={auth.user.uid} email={auth.user.email} />;
+}
+
+function AuthenticatedApp({
+  uid,
+  email,
+}: {
+  uid: string;
+  email: string | null;
+}) {
+  // Kick off migration in the background. The Firestore listener will pick up
+  // migrated rows on the next snapshot, so we don't gate the UI on it.
+  useEffect(() => {
+    migrateLocalToCloud(uid).catch((err) => {
+      console.error('Migration failed:', err);
+    });
+  }, [uid]);
+
+  return <AppShell uid={uid} accountEmail={email} />;
+}
+
+function LoadingScreen() {
+  return (
+    <div className="flex h-full min-h-full items-center justify-center px-6">
+      <p className="text-[13px] text-neutral-500 dark:text-neutral-400">
+        Loading…
+      </p>
+    </div>
+  );
+}
+
+function AppShell({
+  uid,
+  accountEmail,
+}: {
+  uid: string | null;
+  accountEmail?: string | null;
+}) {
+  const [bookings, setBookings] = useDataList<Booking>(
+    uid,
+    'bookings',
+    loadBookings,
+    saveBookings,
+  );
+  const [services, setServices] = useDataList<Service>(
+    uid,
+    'services',
+    () => loadServices() ?? DEFAULT_CATALOG,
+    saveServices,
+  );
+  const [companies, setCompanies] = useDataList<Company>(
+    uid,
+    'companies',
+    loadCompanies,
+    saveCompanies,
+  );
+  const [agents, setAgents] = useDataList<Agent>(
+    uid,
+    'agents',
+    loadAgents,
+    saveAgents,
+  );
+  const [invoices, setInvoices] = useDataList<Invoice>(
+    uid,
+    'invoices',
+    loadInvoices,
+    saveInvoices,
+  );
+  const [settings, setSettings] = useDataDoc<Settings>(
+    uid,
+    'meta/settings',
+    loadSettings,
+    saveSettings,
+  );
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
 
+  // Seed the catalog the first time a freshly signed-in user has no services
+  // (and no localStorage to migrate). Avoids an empty Book screen.
   useEffect(() => {
-    saveBookings(bookings);
-  }, [bookings]);
-
-  useEffect(() => {
-    saveServices(services);
-  }, [services]);
-
-  useEffect(() => {
-    saveCompanies(companies);
-  }, [companies]);
-
-  useEffect(() => {
-    saveAgents(agents);
-  }, [agents]);
-
-  useEffect(() => {
-    saveInvoices(invoices);
-  }, [invoices]);
-
-  useEffect(() => {
-    saveSettings(settings);
-  }, [settings]);
+    if (!uid) return;
+    if (services.length === 0) {
+      // Only seed once per app load; subsequent zero-length states are
+      // intentional and shouldn't re-seed.
+      const t = window.setTimeout(() => {
+        if (services.length === 0) {
+          setServices(DEFAULT_CATALOG.map((s) => ({ ...s })));
+        }
+      }, 1500);
+      return () => window.clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, services.length === 0]);
 
   // One-shot migration: invoices created before tax was made automatic have
   // gstRate/qstRate snapshotted as 0. Bring them up to current rates so they
@@ -387,7 +461,9 @@ export default function App() {
         <AdminScreen
           services={services}
           settings={settings}
+          accountEmail={accountEmail ?? null}
           onSaveSettings={setSettings}
+          onSignOut={accountEmail !== undefined ? () => signOut() : undefined}
           onBack={() => setScreen({ name: 'home' })}
           onAdd={() => setScreen({ name: 'service-edit' })}
           onEdit={(s) => setScreen({ name: 'service-edit', serviceId: s.id })}
@@ -459,3 +535,6 @@ export default function App() {
     </div>
   );
 }
+
+// Re-export so other modules that imported it from this file still work.
+export { DEFAULT_SETTINGS };
