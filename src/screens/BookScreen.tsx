@@ -13,6 +13,7 @@ import { suggestedNextSlot } from '../lib/datetime';
 import { currency, formatDayLabel, formatDuration, formatTime } from '../lib/format';
 import { distanceKm, geocode, travelFee } from '../lib/geocode';
 import { googleGeocode, googleRoadDistance } from '../lib/google';
+import { GOOGLE_API_KEY } from '../config';
 import { DatePickerRow } from '../components/DatePickerRow';
 import { TimePickerRow } from '../components/TimePickerRow';
 import { ServiceGrid } from '../components/ServiceGrid';
@@ -137,7 +138,7 @@ export function BookScreen({
         km: initial.travelKm,
         fee: initial.travelFee ?? 0,
         coords: initial.coords,
-        mode: settings.googleApiKey ? 'road' : 'straight',
+        mode: GOOGLE_API_KEY ? 'road' : 'straight',
       };
     }
     return { kind: 'idle' };
@@ -156,12 +157,12 @@ export function BookScreen({
       );
       return;
     }
-    if (!settings.startingCoords && !settings.googleApiKey) {
+    if (!settings.startingCoords && !GOOGLE_API_KEY) {
       setTravel({ kind: 'no_origin' });
       return;
     }
     setTravel({ kind: 'looking' });
-    const apiKey = settings.googleApiKey?.trim();
+    const apiKey = GOOGLE_API_KEY.trim();
     debounceRef.current = window.setTimeout(async () => {
       if (apiKey) {
         // Resolve the booking address coordinates (for the on-screen "X km
@@ -242,7 +243,6 @@ export function BookScreen({
     settings.startingCoords,
     settings.freeRadiusKm,
     settings.perKmRate,
-    settings.googleApiKey,
     settings,
   ]);
 
@@ -310,7 +310,7 @@ export function BookScreen({
           <AddressAutocomplete
             value={draft.address}
             onChange={(v) => setDraft((p) => ({ ...p, address: v }))}
-            apiKey={settings.googleApiKey}
+            apiKey={GOOGLE_API_KEY || undefined}
             bias={settings.startingCoords}
             placeholder="123 Main St, Montréal"
             inputClassName={INPUT}

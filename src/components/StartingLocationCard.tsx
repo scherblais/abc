@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Settings } from '../types';
 import { geocode } from '../lib/geocode';
 import { googleGeocode } from '../lib/google';
+import { GOOGLE_API_KEY } from '../config';
 
 type Props = {
   settings: Settings;
@@ -21,8 +22,6 @@ export function StartingLocationCard({ settings, onChange }: Props) {
   const [address, setAddress] = useState(settings.startingAddress);
   const [freeKm, setFreeKm] = useState(settings.freeRadiusKm);
   const [rate, setRate] = useState(settings.perKmRate);
-  const [apiKey, setApiKey] = useState(settings.googleApiKey ?? '');
-  const [showKey, setShowKey] = useState(false);
   const [status, setStatus] = useState<Status>(() =>
     settings.startingCoords
       ? {
@@ -30,16 +29,16 @@ export function StartingLocationCard({ settings, onChange }: Props) {
           lat: settings.startingCoords.lat,
           lon: settings.startingCoords.lon,
           displayName: settings.startingAddress,
-          provider: settings.googleApiKey ? 'google' : 'osm',
+          provider: GOOGLE_API_KEY ? 'google' : 'osm',
         }
       : { kind: 'idle' },
   );
 
-  // Resolve the starting address (debounced) whenever address or apiKey changes.
+  // Resolve the starting address (debounced) whenever the address changes.
   const debounceRef = useRef<number | null>(null);
   useEffect(() => {
     const trimmedAddress = address.trim();
-    const trimmedKey = apiKey.trim();
+    const trimmedKey = GOOGLE_API_KEY.trim();
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (trimmedAddress.length < 3) {
       setStatus({ kind: 'idle' });
@@ -67,7 +66,6 @@ export function StartingLocationCard({ settings, onChange }: Props) {
           startingCoords: undefined,
           freeRadiusKm: freeKm,
           perKmRate: rate,
-          googleApiKey: trimmedKey || undefined,
         });
         return;
       }
@@ -84,14 +82,13 @@ export function StartingLocationCard({ settings, onChange }: Props) {
         startingCoords: { lat: resolved.lat, lon: resolved.lon },
         freeRadiusKm: freeKm,
         perKmRate: rate,
-        googleApiKey: trimmedKey || undefined,
       });
     }, 600);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, apiKey]);
+  }, [address]);
 
   useEffect(() => {
     if (freeKm === settings.freeRadiusKm && rate === settings.perKmRate) return;
@@ -145,42 +142,10 @@ export function StartingLocationCard({ settings, onChange }: Props) {
 
       <p className="mt-3 text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
         Charged ${rate.toFixed(2)} per km beyond the first {freeKm} km.
+        {GOOGLE_API_KEY
+          ? ' Geocoded with Google Maps + road distance.'
+          : ' Geocoded with OpenStreetMap + straight-line distance.'}
       </p>
-
-      <div className="mt-5 border-t border-neutral-100 dark:border-neutral-800 pt-4">
-        <div className="mb-2 flex items-baseline justify-between gap-2">
-          <label className="text-[13px] font-medium text-neutral-900 dark:text-neutral-100">
-            Google Maps API key
-          </label>
-          <button
-            type="button"
-            onClick={() => setShowKey((v) => !v)}
-            className="tap text-[12px] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-          >
-            {showKey ? 'Hide' : 'Show'}
-          </button>
-        </div>
-        <input
-          type={showKey ? 'text' : 'password'}
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder="Paste your API key (optional)"
-          autoCapitalize="off"
-          autoCorrect="off"
-          autoComplete="off"
-          spellCheck={false}
-          className={INPUT + ' font-mono text-[13px]'}
-        />
-        <p className="mt-2 text-[12px] leading-relaxed text-neutral-500 dark:text-neutral-400">
-          With a key set, addresses resolve via Google Geocoding and travel is billed by
-          road distance (Routes API). Restrict the key to{' '}
-          <code className="rounded bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 text-[11px]">
-            scherblais.github.io
-          </code>{' '}
-          referrers in Google Cloud Console. Without a key, OpenStreetMap + straight-line
-          distance is used.
-        </p>
-      </div>
     </section>
   );
 }

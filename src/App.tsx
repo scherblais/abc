@@ -36,6 +36,7 @@ import {
 import { DEFAULT_CATALOG } from './lib/catalog';
 import { geocode } from './lib/geocode';
 import { googleGeocode } from './lib/google';
+import { GOOGLE_API_KEY } from './config';
 import {
   GST_RATE,
   QST_RATE,
@@ -112,7 +113,7 @@ export default function App() {
     if (settings.startingAddress && !settings.startingCoords) {
       let cancelled = false;
       (async () => {
-        const apiKey = settings.googleApiKey?.trim();
+        const apiKey = GOOGLE_API_KEY.trim();
         let coords: { lat: number; lon: number } | null = null;
         if (apiKey) {
           const r = await googleGeocode(settings.startingAddress, apiKey);

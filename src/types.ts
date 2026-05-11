@@ -17,6 +17,9 @@ export type Settings = {
   perKmRate: number;
   /** Optional Google Maps Platform key. When set, Geocoding API + Routes API
    *  are used (road distance). Otherwise we fall back to Nominatim + haversine. */
+  /** Optional Google Maps API key — DEPRECATED. Kept here only so that
+   *  pre-existing localStorage entries from older versions still parse;
+   *  the live key now lives in src/config.ts. */
   googleApiKey?: string;
   /** Business identity for invoices (snapshotted onto each invoice at issue). */
   businessName?: string;
