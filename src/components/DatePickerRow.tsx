@@ -38,14 +38,14 @@ export function DatePickerRow({ value, onChange }: Props) {
               className={[
                 'tap flex min-w-[64px] shrink-0 flex-col items-center rounded-lg border px-3 py-2.5',
                 selected
-                  ? 'border-neutral-900 bg-neutral-900 text-white'
-                  : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300',
+                  ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
+                  : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600',
               ].join(' ')}
             >
               <span
                 className={[
                   'text-[11px] font-medium',
-                  selected ? 'text-white/80' : 'text-neutral-500',
+                  selected ? 'text-white/80 dark:text-neutral-900/70' : 'text-neutral-500 dark:text-neutral-400',
                 ].join(' ')}
               >
                 {label}

@@ -43,28 +43,28 @@ export function ClientsScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 bg-white/85 px-4 py-3 backdrop-blur-md">
+      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-3 backdrop-blur-md">
         <button
           type="button"
           onClick={onBack}
-          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 hover:text-neutral-900"
+          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
         >
           ‹ Back
         </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900">
+        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
           Clients
         </h1>
         <span className="w-12" aria-hidden />
       </header>
 
       <main className="flex-1 pb-12 pt-4">
-        <p className="mb-3 px-0.5 text-[12.5px] leading-snug text-neutral-500">
+        <p className="mb-3 px-0.5 text-[12.5px] leading-snug text-neutral-500 dark:text-neutral-400">
           Brokerages and their agents. Pick a client from these when booking a
           shoot.
         </p>
 
         <div className="card mb-4 p-3">
-          <label className="mb-1 block text-[11.5px] font-medium text-neutral-500">
+          <label className="mb-1 block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
             New brokerage
           </label>
           <div className="flex gap-2">
@@ -88,8 +88,8 @@ export function ClientsScreen({
               className={[
                 'tap shrink-0 rounded-md px-3 text-[13px] font-medium',
                 newCompanyName.trim()
-                  ? 'bg-neutral-900 text-white hover:bg-black'
-                  : 'bg-neutral-100 text-neutral-400',
+                  ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
+                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
               ].join(' ')}
             >
               Add
@@ -99,7 +99,7 @@ export function ClientsScreen({
 
         {sortedCompanies.length === 0 ? (
           <div className="card px-5 py-8 text-center">
-            <p className="text-[14px] text-neutral-600">
+            <p className="text-[14px] text-neutral-600 dark:text-neutral-400">
               No brokerages yet. Add one above to get started.
             </p>
           </div>
@@ -115,19 +115,19 @@ export function ClientsScreen({
                   <button
                     type="button"
                     onClick={() => setExpandedId(expanded ? null : c.id)}
-                    className="tap flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50"
+                    className="tap flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[14.5px] font-medium text-neutral-900">
+                      <p className="truncate text-[14.5px] font-medium text-neutral-900 dark:text-neutral-100">
                         {c.name}
                       </p>
-                      <p className="text-[12px] text-neutral-500">
+                      <p className="text-[12px] text-neutral-500 dark:text-neutral-400">
                         {companyAgents.length}{' '}
                         {companyAgents.length === 1 ? 'agent' : 'agents'}
                       </p>
                     </div>
                     <span
-                      className={`text-neutral-400 transition-transform ${
+                      className={`text-neutral-400 dark:text-neutral-500 transition-transform ${
                         expanded ? 'rotate-90' : ''
                       }`}
                       aria-hidden
@@ -183,8 +183,8 @@ function CompanyDetail({
   };
 
   return (
-    <div className="border-t border-neutral-100 bg-neutral-50/50 px-4 py-3">
-      <label className="block text-[11px] font-medium text-neutral-500">
+    <div className="border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 px-4 py-3">
+      <label className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
         Brokerage name
       </label>
       <input
@@ -195,11 +195,11 @@ function CompanyDetail({
       />
 
       <div className="mt-4">
-        <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+        <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Agents
         </p>
         {agents.length === 0 ? (
-          <p className="mb-2 px-0.5 text-[12.5px] text-neutral-500">
+          <p className="mb-2 px-0.5 text-[12.5px] text-neutral-500 dark:text-neutral-400">
             No agents yet at {company.name}.
           </p>
         ) : (
@@ -235,8 +235,8 @@ function CompanyDetail({
             className={[
               'tap shrink-0 rounded-md px-3 text-[13px] font-medium',
               newAgentName.trim()
-                ? 'bg-neutral-900 text-white hover:bg-black'
-                : 'bg-neutral-100 text-neutral-400',
+                ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
             ].join(' ')}
           >
             Add
@@ -257,7 +257,7 @@ function CompanyDetail({
             onDeleteCompany(company.id);
           }
         }}
-        className="tap mt-4 w-full rounded-md border border-neutral-200 bg-white py-2 text-[13px] font-medium text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
+        className="tap mt-4 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white dark:text-neutral-900"
       >
         Delete brokerage
       </button>
@@ -276,18 +276,18 @@ function AgentRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <li className="rounded-md border border-neutral-200 bg-white">
+    <li className="rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         className="tap flex w-full items-center gap-2 px-3 py-2 text-left"
       >
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13.5px] font-medium text-neutral-900">
+          <p className="truncate text-[13.5px] font-medium text-neutral-900 dark:text-neutral-100">
             {agent.name || '(unnamed)'}
           </p>
           {(agent.phone || agent.email) && (
-            <p className="truncate text-[11.5px] text-neutral-500">
+            <p className="truncate text-[11.5px] text-neutral-500 dark:text-neutral-400">
               {agent.phone}
               {agent.phone && agent.email ? ' · ' : ''}
               {agent.email}
@@ -295,7 +295,7 @@ function AgentRow({
           )}
         </div>
         <span
-          className={`text-neutral-400 transition-transform ${
+          className={`text-neutral-400 dark:text-neutral-500 transition-transform ${
             expanded ? 'rotate-90' : ''
           }`}
           aria-hidden
@@ -304,7 +304,7 @@ function AgentRow({
         </span>
       </button>
       {expanded && (
-        <div className="space-y-2 border-t border-neutral-100 px-3 py-2.5">
+        <div className="space-y-2 border-t border-neutral-100 dark:border-neutral-800 px-3 py-2.5">
           <input
             value={agent.name}
             onChange={(e) => onUpdate({ name: e.target.value })}
@@ -333,7 +333,7 @@ function AgentRow({
             onClick={() => {
               if (confirm(`Remove ${agent.name || 'this agent'}?`)) onDelete();
             }}
-            className="tap w-full rounded-md border border-neutral-200 py-1.5 text-[12.5px] text-neutral-600 hover:border-neutral-300 hover:text-neutral-900"
+            className="tap w-full rounded-md border border-neutral-200 dark:border-neutral-800 py-1.5 text-[12.5px] text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white"
           >
             Remove agent
           </button>

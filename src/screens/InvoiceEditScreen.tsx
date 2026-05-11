@@ -219,15 +219,15 @@ export function InvoiceEditScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 bg-white/85 px-4 py-3 backdrop-blur-md">
+      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-3 backdrop-blur-md">
         <button
           type="button"
           onClick={onCancel}
-          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 hover:text-neutral-900"
+          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
         >
           Cancel
         </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900">
+        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
           {isNew ? 'New invoice' : draft.number}
         </h1>
         <button
@@ -237,8 +237,8 @@ export function InvoiceEditScreen({
           className={[
             'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
             canSave
-              ? 'bg-neutral-900 text-white hover:bg-black'
-              : 'bg-neutral-100 text-neutral-400',
+              ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
+              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
           ].join(' ')}
         >
           Save
@@ -263,7 +263,7 @@ export function InvoiceEditScreen({
             onCreateAgent={onCreateAgent}
           />
 
-          <label className="mt-3 block text-[11.5px] font-medium text-neutral-500">
+          <label className="mt-3 block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
             Invoice number
           </label>
           <input
@@ -273,13 +273,13 @@ export function InvoiceEditScreen({
             className="input mt-1"
           />
           {numberError && (
-            <p className="mt-1 text-[11.5px] text-red-600">{numberError}</p>
+            <p className="mt-1 text-[11.5px] text-red-600 dark:text-red-400">{numberError}</p>
           )}
         </section>
 
         <section className="card mb-4 p-4">
           <div className="mb-2 flex items-baseline justify-between gap-2">
-            <p className="text-[12px] font-medium text-neutral-500">Shoots</p>
+            <p className="text-[12px] font-medium text-neutral-500 dark:text-neutral-400">Shoots</p>
             {!isLocked && draft.companyId && eligibleBookings.length > 1 && (
               <button
                 type="button"
@@ -293,7 +293,7 @@ export function InvoiceEditScreen({
                       : eligibleBookings.map((b) => b.id),
                   }));
                 }}
-                className="tap text-[12px] font-medium text-neutral-600 hover:text-neutral-900"
+                className="tap text-[12px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
               >
                 {draft.bookingIds.length === eligibleBookings.length
                   ? 'Clear all'
@@ -302,11 +302,11 @@ export function InvoiceEditScreen({
             )}
           </div>
           {!draft.companyId ? (
-            <p className="text-[13px] text-neutral-500">
+            <p className="text-[13px] text-neutral-500 dark:text-neutral-400">
               Pick a brokerage to see eligible shoots.
             </p>
           ) : eligibleBookings.length === 0 ? (
-            <p className="text-[13px] text-neutral-500">
+            <p className="text-[13px] text-neutral-500 dark:text-neutral-400">
               No uninvoiced shoots for {company?.name ?? 'this brokerage'}.
             </p>
           ) : (
@@ -322,16 +322,16 @@ export function InvoiceEditScreen({
                       className={[
                         'tap flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left',
                         selected
-                          ? 'border-neutral-900 bg-neutral-900 text-white'
-                          : 'border-neutral-200 bg-white hover:bg-neutral-50',
+                          ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
+                          : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/60',
                       ].join(' ')}
                     >
                       <span
                         className={[
                           'grid h-4 w-4 shrink-0 place-items-center rounded border',
                           selected
-                            ? 'border-white bg-white text-neutral-900'
-                            : 'border-neutral-300',
+                            ? 'border-white bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100'
+                            : 'border-neutral-300 dark:border-neutral-700',
                         ].join(' ')}
                         aria-hidden
                       >
@@ -344,7 +344,7 @@ export function InvoiceEditScreen({
                         <span
                           className={[
                             'block text-[11.5px]',
-                            selected ? 'text-neutral-300' : 'text-neutral-500',
+                            selected ? 'text-neutral-300 dark:text-neutral-600' : 'text-neutral-500 dark:text-neutral-400',
                           ].join(' ')}
                         >
                           {formatInvoiceDate(b.scheduledAt)}
@@ -362,7 +362,7 @@ export function InvoiceEditScreen({
         </section>
 
         <section className="card mb-4 p-4">
-          <p className="mb-2 text-[12px] font-medium text-neutral-500">Totals</p>
+          <p className="mb-2 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">Totals</p>
           <TotalsRow label="Subtotal" value={taxes.subtotal} />
           {draft.gstRate > 0 && (
             <TotalsRow
@@ -376,16 +376,16 @@ export function InvoiceEditScreen({
               value={taxes.qst}
             />
           )}
-          <div className="mt-2 flex items-baseline justify-between gap-2 border-t border-neutral-100 pt-2">
-            <span className="text-[13px] font-medium text-neutral-900">Total</span>
-            <span className="text-[16px] font-semibold tabular-nums text-neutral-900">
+          <div className="mt-2 flex items-baseline justify-between gap-2 border-t border-neutral-100 dark:border-neutral-800 pt-2">
+            <span className="text-[13px] font-medium text-neutral-900 dark:text-neutral-100">Total</span>
+            <span className="text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
               {currencyExact(taxes.total)}
             </span>
           </div>
         </section>
 
         <section className="card mb-4 p-4">
-          <p className="mb-2 text-[12px] font-medium text-neutral-500">Status</p>
+          <p className="mb-2 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">Status</p>
           <div className="flex flex-wrap gap-1.5">
             {(['draft', 'sent', 'paid'] as InvoiceStatus[]).map((s) => (
               <button
@@ -396,8 +396,8 @@ export function InvoiceEditScreen({
                 className={[
                   'tap rounded-md border px-3 py-1.5 text-[12.5px] font-medium',
                   draft.status === s
-                    ? 'border-neutral-900 bg-neutral-900 text-white'
-                    : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300',
+                    ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
+                    : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600',
                 ].join(' ')}
               >
                 {INVOICE_STATUS_LABEL[s]}
@@ -441,7 +441,7 @@ export function InvoiceEditScreen({
         </section>
 
         <section className="card mb-4 p-4">
-          <label className="block text-[11.5px] font-medium text-neutral-500">
+          <label className="block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
             Notes (printed on invoice)
           </label>
           <textarea
@@ -458,7 +458,7 @@ export function InvoiceEditScreen({
           <button
             type="button"
             onClick={() => onOpenPrint(draft.id)}
-            className="tap mb-3 w-full rounded-lg bg-neutral-900 py-2.5 text-[14px] font-medium text-white hover:bg-black"
+            className="tap mb-3 w-full rounded-lg bg-neutral-900 dark:bg-neutral-100 py-2.5 text-[14px] font-medium text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200"
           >
             Print / Save as PDF
           </button>
@@ -472,7 +472,7 @@ export function InvoiceEditScreen({
                 onDelete();
               }
             }}
-            className="tap w-full rounded-lg border border-neutral-200 bg-white py-2.5 text-[14px] font-medium text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
+            className="tap w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2.5 text-[14px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white dark:text-neutral-900"
           >
             Delete draft
           </button>
@@ -489,7 +489,7 @@ export function InvoiceEditScreen({
                 onVoid();
               }
             }}
-            className="tap w-full rounded-lg border border-neutral-200 bg-white py-2.5 text-[14px] font-medium text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
+            className="tap w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2.5 text-[14px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white dark:text-neutral-900"
           >
             Void invoice
           </button>
@@ -502,8 +502,8 @@ export function InvoiceEditScreen({
 function TotalsRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-baseline justify-between gap-2 py-0.5">
-      <span className="text-[13px] text-neutral-600">{label}</span>
-      <span className="text-[13.5px] tabular-nums text-neutral-900">
+      <span className="text-[13px] text-neutral-600 dark:text-neutral-400">{label}</span>
+      <span className="text-[13.5px] tabular-nums text-neutral-900 dark:text-neutral-100">
         {currencyExact(value)}
       </span>
     </div>
@@ -524,7 +524,7 @@ function DateField({
   const isoDay = value ? value.slice(0, 10) : '';
   return (
     <label className="block">
-      <span className="block text-[11px] font-medium text-neutral-500">{label}</span>
+      <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">{label}</span>
       <input
         type="date"
         value={isoDay}

@@ -17,8 +17,8 @@ export function Chip({ selected, onClick, children, size = 'md' }: Props) {
         'tap rounded-md border font-medium',
         padding,
         selected
-          ? 'border-neutral-900 bg-neutral-900 text-white'
-          : 'border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300',
+          ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
+          : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 hover:border-neutral-300 dark:hover:border-neutral-600',
       ].join(' ')}
     >
       {children}

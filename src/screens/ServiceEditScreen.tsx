@@ -51,15 +51,15 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 bg-white/85 px-4 py-3 backdrop-blur-md">
+      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-3 backdrop-blur-md">
         <button
           type="button"
           onClick={onCancel}
-          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 hover:text-neutral-900"
+          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
         >
           Cancel
         </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900">
+        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
           {initial ? 'Edit service' : 'New service'}
         </h1>
         <button
@@ -69,8 +69,8 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
           className={[
             'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
             canSave
-              ? 'bg-neutral-900 text-white hover:bg-black'
-              : 'bg-neutral-100 text-neutral-400',
+              ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
+              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
           ].join(' ')}
         >
           Save
@@ -90,8 +90,8 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
         </Field>
 
         <div className="mb-5 grid grid-cols-2 gap-2">
-          <label className="rounded-lg border border-neutral-200 bg-white px-3 py-2.5">
-            <span className="block text-[11px] font-medium text-neutral-500">Duration (min)</span>
+          <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
+            <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Duration (min)</span>
             <input
               type="number"
               inputMode="numeric"
@@ -104,11 +104,11 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
                   durationMin: Math.max(0, Number(e.target.value) || 0),
                 }))
               }
-              className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 focus:outline-none"
+              className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
             />
           </label>
-          <label className="rounded-lg border border-neutral-200 bg-white px-3 py-2.5">
-            <span className="block text-[11px] font-medium text-neutral-500">Price ($)</span>
+          <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
+            <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Price ($)</span>
             <input
               type="number"
               inputMode="numeric"
@@ -121,7 +121,7 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
                   price: Math.max(0, Number(e.target.value) || 0),
                 }))
               }
-              className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 focus:outline-none"
+              className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
             />
           </label>
         </div>
@@ -139,7 +139,7 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
           <button
             type="button"
             onClick={onDelete}
-            className="tap mt-6 w-full rounded-lg border border-neutral-200 bg-white py-2.5 text-[14px] font-medium text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
+            className="tap mt-6 w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2.5 text-[14px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white dark:text-neutral-900"
           >
             Remove from catalog
           </button>

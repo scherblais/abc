@@ -102,8 +102,8 @@ export function StartingLocationCard({ settings, onChange }: Props) {
   return (
     <section className="card mb-6 p-4">
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 className="text-[14px] font-semibold text-neutral-900">Starting location</h2>
-        <span className="text-[12px] text-neutral-500">Travel billed one way</span>
+        <h2 className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100">Starting location</h2>
+        <span className="text-[12px] text-neutral-500 dark:text-neutral-400">Travel billed one way</span>
       </div>
 
       <input
@@ -117,8 +117,8 @@ export function StartingLocationCard({ settings, onChange }: Props) {
       <StatusLine status={status} />
 
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <label className="rounded-lg border border-neutral-200 bg-white px-3 py-2.5">
-          <span className="block text-[11px] font-medium text-neutral-500">Free km</span>
+        <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
+          <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Free km</span>
           <input
             type="number"
             inputMode="numeric"
@@ -126,11 +126,11 @@ export function StartingLocationCard({ settings, onChange }: Props) {
             step={1}
             value={freeKm}
             onChange={(e) => setFreeKm(Math.max(0, Number(e.target.value) || 0))}
-            className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 focus:outline-none"
+            className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
           />
         </label>
-        <label className="rounded-lg border border-neutral-200 bg-white px-3 py-2.5">
-          <span className="block text-[11px] font-medium text-neutral-500">$ per km</span>
+        <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
+          <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">$ per km</span>
           <input
             type="number"
             inputMode="decimal"
@@ -138,24 +138,24 @@ export function StartingLocationCard({ settings, onChange }: Props) {
             step={0.05}
             value={rate}
             onChange={(e) => setRate(Math.max(0, Number(e.target.value) || 0))}
-            className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 focus:outline-none"
+            className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
           />
         </label>
       </div>
 
-      <p className="mt-2 text-[12px] text-neutral-500">
+      <p className="mt-2 text-[12px] text-neutral-500 dark:text-neutral-400">
         Charged ${rate.toFixed(2)} per km beyond the first {freeKm} km.
       </p>
 
-      <div className="mt-4 border-t border-neutral-100 pt-3">
+      <div className="mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-3">
         <div className="mb-2 flex items-baseline justify-between gap-2">
-          <label className="text-[12.5px] font-medium text-neutral-900">
+          <label className="text-[12.5px] font-medium text-neutral-900 dark:text-neutral-100">
             Google Maps API key
           </label>
           <button
             type="button"
             onClick={() => setShowKey((v) => !v)}
-            className="tap text-[11.5px] text-neutral-500 hover:text-neutral-900"
+            className="tap text-[11.5px] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
           >
             {showKey ? 'Hide' : 'Show'}
           </button>
@@ -171,10 +171,10 @@ export function StartingLocationCard({ settings, onChange }: Props) {
           spellCheck={false}
           className={INPUT + ' font-mono text-[13px]'}
         />
-        <p className="mt-1.5 text-[11.5px] leading-snug text-neutral-500">
+        <p className="mt-1.5 text-[11.5px] leading-snug text-neutral-500 dark:text-neutral-400">
           With a key set, addresses resolve via Google Geocoding and travel is billed by
           road distance (Routes API). Restrict the key to{' '}
-          <code className="rounded bg-neutral-100 px-1 py-0.5 text-[11px]">
+          <code className="rounded bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 text-[11px]">
             scherblais.github.io
           </code>{' '}
           referrers in Google Cloud Console. Without a key, OpenStreetMap + straight-line
@@ -189,21 +189,21 @@ function StatusLine({ status }: { status: Status }) {
   if (status.kind === 'idle') return null;
   let text = '';
   let detail: string | null = null;
-  let cls = 'text-neutral-500';
+  let cls = 'text-neutral-500 dark:text-neutral-400';
   if (status.kind === 'looking') text = 'Locating…';
   else if (status.kind === 'located')
     text = `Located${status.provider === 'google' ? ' (Google)' : ''} · ${status.displayName}`;
   else if (status.kind === 'not_found') {
     text = "Couldn't locate that address";
     detail = status.reason ?? null;
-    cls = 'text-neutral-700';
+    cls = 'text-neutral-700 dark:text-neutral-300';
   } else text = 'Lookup failed — check connection';
 
   return (
     <div className="mt-1.5 px-0.5" aria-live="polite">
       <p className={`line-clamp-2 text-[11.5px] leading-snug ${cls}`}>{text}</p>
       {detail && (
-        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-neutral-500">
+        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">
           {detail}
         </p>
       )}

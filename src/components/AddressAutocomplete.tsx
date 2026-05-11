@@ -117,7 +117,7 @@ export function AddressAutocomplete({
         className={inputClassName}
       />
       {showDropdown && (
-        <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-72 overflow-auto rounded-lg border border-neutral-200 bg-white shadow-lg">
+        <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-72 overflow-auto rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg">
           {suggestions.map((s, i) => (
             <li key={s.placeId}>
               <button
@@ -127,14 +127,14 @@ export function AddressAutocomplete({
                 onMouseEnter={() => setActive(i)}
                 className={[
                   'block w-full px-3.5 py-2.5 text-left text-[14px]',
-                  i === active ? 'bg-neutral-100' : 'bg-white hover:bg-neutral-50',
+                  i === active ? 'bg-neutral-100 dark:bg-neutral-800' : 'bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/60',
                 ].join(' ')}
               >
-                <span className="block font-medium text-neutral-900">
+                <span className="block font-medium text-neutral-900 dark:text-neutral-100">
                   {s.mainText}
                 </span>
                 {s.secondaryText && (
-                  <span className="block text-[12px] text-neutral-500">
+                  <span className="block text-[12px] text-neutral-500 dark:text-neutral-400">
                     {s.secondaryText}
                   </span>
                 )}
@@ -145,7 +145,7 @@ export function AddressAutocomplete({
       )}
       {error && apiKey && value.trim().length >= 3 && !showDropdown && (
         <p
-          className="mt-1.5 line-clamp-2 px-0.5 text-[11px] leading-snug text-neutral-500"
+          className="mt-1.5 line-clamp-2 px-0.5 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400"
           aria-live="polite"
         >
           Suggestions unavailable: {error}

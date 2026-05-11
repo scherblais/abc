@@ -263,15 +263,15 @@ export function BookScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 bg-white/85 px-4 py-3 backdrop-blur-md">
+      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-3 backdrop-blur-md">
         <button
           type="button"
           onClick={onCancel}
-          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 hover:text-neutral-900"
+          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
         >
           Cancel
         </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900">
+        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
           {initial ? 'Edit shoot' : 'New shoot'}
         </h1>
         <button
@@ -281,8 +281,8 @@ export function BookScreen({
           className={[
             'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
             canSave
-              ? 'bg-neutral-900 text-white hover:bg-black'
-              : 'bg-neutral-100 text-neutral-400',
+              ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
+              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
           ].join(' ')}
         >
           {initial ? 'Save' : 'Book'}
@@ -291,8 +291,8 @@ export function BookScreen({
 
       <div className="flex-1 pb-32 pt-4">
         {currentInvoice && currentInvoice.status !== 'draft' && (
-          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5">
-            <p className="text-[12.5px] leading-snug text-amber-900">
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 dark:border-amber-900/60 dark:bg-amber-950/40">
+            <p className="text-[12.5px] leading-snug text-amber-900 dark:text-amber-200">
               On invoice{' '}
               <button
                 type="button"
@@ -332,7 +332,7 @@ export function BookScreen({
             onCreateAgent={onCreateAgent}
           />
           {!draft.companyId && draft.client?.name && (
-            <p className="mt-1.5 px-0.5 text-[11.5px] leading-snug text-neutral-500">
+            <p className="mt-1.5 px-0.5 text-[11.5px] leading-snug text-neutral-500 dark:text-neutral-400">
               Previously: {draft.client.name}
               {draft.client.brokerage ? ` · ${draft.client.brokerage}` : ''}
             </p>
@@ -357,13 +357,13 @@ export function BookScreen({
         >
           {catalog.length === 0 ? (
             <div className="card px-4 py-6 text-center">
-              <p className="text-[13.5px] text-neutral-600">
+              <p className="text-[13.5px] text-neutral-600 dark:text-neutral-400">
                 Your catalog is empty. Add a service before you can book.
               </p>
               <button
                 type="button"
                 onClick={onManageCatalog}
-                className="tap mt-3 rounded-md bg-neutral-900 px-3.5 py-1.5 text-[13px] font-medium text-white hover:bg-black"
+                className="tap mt-3 rounded-md bg-neutral-900 dark:bg-neutral-100 px-3.5 py-1.5 text-[13px] font-medium text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200"
               >
                 Manage catalog
               </button>
@@ -379,22 +379,22 @@ export function BookScreen({
             <button
               type="button"
               onClick={() => setOverrideTotals((v) => !v)}
-              className="tap text-[12.5px] font-medium text-neutral-700 underline-offset-4 hover:underline"
+              className="tap text-[12.5px] font-medium text-neutral-700 dark:text-neutral-300 underline-offset-4 hover:underline"
             >
               {overrideTotals ? 'Use catalog totals' : 'Override price / duration'}
             </button>
             <button
               type="button"
               onClick={onManageCatalog}
-              className="tap text-[12.5px] text-neutral-500 hover:text-neutral-900"
+              className="tap text-[12.5px] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
             >
               Edit catalog ›
             </button>
           </div>
           {overrideTotals && (
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <label className="rounded-lg border border-neutral-200 bg-white px-3 py-2">
-                <span className="block text-[11px] font-medium text-neutral-500">
+              <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2">
+                <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
                   Duration (min)
                 </span>
                 <input
@@ -409,11 +409,11 @@ export function BookScreen({
                       durationMin: Math.max(0, Number(e.target.value) || 0),
                     }))
                   }
-                  className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 focus:outline-none"
+                  className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
                 />
               </label>
-              <label className="rounded-lg border border-neutral-200 bg-white px-3 py-2">
-                <span className="block text-[11px] font-medium text-neutral-500">Price ($)</span>
+              <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2">
+                <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Price ($)</span>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -426,7 +426,7 @@ export function BookScreen({
                       price: Math.max(0, Number(e.target.value) || 0),
                     }))
                   }
-                  className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 focus:outline-none"
+                  className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
                 />
               </label>
             </div>
@@ -434,24 +434,24 @@ export function BookScreen({
         </Field>
 
         {(draft.travelFee ?? 0) > 0 && (
-          <div className="mb-5 rounded-lg border border-neutral-200 bg-white p-3">
+          <div className="mb-5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-[13px] text-neutral-600">Services</span>
-              <span className="text-[13.5px] font-medium tabular-nums text-neutral-900">
+              <span className="text-[13px] text-neutral-600 dark:text-neutral-400">Services</span>
+              <span className="text-[13.5px] font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
                 {currency(draft.price)}
               </span>
             </div>
             <div className="mt-1 flex items-baseline justify-between gap-2">
-              <span className="text-[13px] text-neutral-600">
+              <span className="text-[13px] text-neutral-600 dark:text-neutral-400">
                 Travel · {(draft.travelKm ?? 0).toFixed(1)} km
               </span>
-              <span className="text-[13.5px] font-medium tabular-nums text-neutral-900">
+              <span className="text-[13.5px] font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
                 {currency(draft.travelFee ?? 0)}
               </span>
             </div>
-            <div className="mt-2 flex items-baseline justify-between gap-2 border-t border-neutral-100 pt-2">
-              <span className="text-[13px] font-medium text-neutral-900">Total</span>
-              <span className="text-[15px] font-semibold tabular-nums text-neutral-900">
+            <div className="mt-2 flex items-baseline justify-between gap-2 border-t border-neutral-100 dark:border-neutral-800 pt-2">
+              <span className="text-[13px] font-medium text-neutral-900 dark:text-neutral-100">Total</span>
+              <span className="text-[15px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
                 {currency(total)}
               </span>
             </div>
@@ -537,7 +537,7 @@ export function BookScreen({
           <button
             type="button"
             onClick={() => setShowExtras(true)}
-            className="tap mb-4 mt-1 inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-[13px] text-neutral-700 hover:border-neutral-300"
+            className="tap mb-4 mt-1 inline-flex items-center gap-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-1.5 text-[13px] text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
           >
             <span aria-hidden>+</span> Add property contact / notes
           </button>
@@ -558,14 +558,14 @@ export function BookScreen({
               }
               onDelete();
             }}
-            className="tap mt-6 w-full rounded-lg border border-neutral-200 bg-white py-2.5 text-[14px] font-medium text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
+            className="tap mt-6 w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2.5 text-[14px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white dark:text-neutral-900"
           >
             Delete shoot
           </button>
         )}
       </div>
 
-      <div className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-10 border-t border-neutral-200/80 bg-white/90 backdrop-blur-md">
+      <div className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-10 border-t border-neutral-200/80 dark:border-neutral-800 bg-white/90 backdrop-blur-md">
         <div className="mx-auto max-w-[480px] px-4 py-3">
           <button
             type="button"
@@ -574,8 +574,8 @@ export function BookScreen({
             className={[
               'pointer-events-auto tap flex w-full items-center justify-between rounded-xl px-5 py-3.5 text-[15px] font-medium',
               canSave
-                ? 'bg-neutral-900 text-white shadow-lg shadow-neutral-900/15 hover:bg-black'
-                : 'bg-neutral-100 text-neutral-400',
+                ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 shadow-lg shadow-neutral-900/15 hover:bg-black dark:hover:bg-neutral-200'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
             ].join(' ')}
           >
             <span>{initial ? 'Save changes' : 'Book this shoot'}</span>
@@ -616,13 +616,13 @@ function TravelLine({ state, settings }: { state: TravelState; settings: Setting
     <div className="mt-1.5 px-0.5" aria-live="polite">
       <p
         className={`line-clamp-2 text-[11.5px] leading-snug ${
-          muted ? 'text-neutral-500' : 'text-neutral-700'
+          muted ? 'text-neutral-500 dark:text-neutral-400' : 'text-neutral-700 dark:text-neutral-300'
         }`}
       >
         {text}
       </p>
       {detail && (
-        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-neutral-500">
+        <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">
           {detail}
         </p>
       )}
@@ -667,18 +667,18 @@ function InvoiceSection({
   if (currentInvoice) {
     return (
       <Field label="Invoice">
-        <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5">
-          <span className="flex-1 truncate text-[14.5px] text-neutral-900">
+        <div className="flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3.5 py-2.5">
+          <span className="flex-1 truncate text-[14.5px] text-neutral-900 dark:text-neutral-100">
             On invoice{' '}
             <span className="font-semibold">{currentInvoice.number}</span>
-            <span className="ml-1.5 text-[12px] text-neutral-500">
+            <span className="ml-1.5 text-[12px] text-neutral-500 dark:text-neutral-400">
               ({currentInvoice.status})
             </span>
           </span>
           <button
             type="button"
             onClick={() => onOpen(currentInvoice.id)}
-            className="tap rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
+            className="tap rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800/70 hover:text-neutral-900 dark:hover:text-white"
           >
             Open
           </button>
@@ -690,7 +690,7 @@ function InvoiceSection({
                   onRemove();
                 }
               }}
-              className="tap rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+              className="tap rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/70 hover:text-neutral-900 dark:hover:text-white"
             >
               Remove
             </button>
@@ -703,7 +703,7 @@ function InvoiceSection({
   if (!companyId) {
     return (
       <Field label="Invoice">
-        <p className="rounded-lg border border-dashed border-neutral-200 bg-neutral-50/50 px-3.5 py-2.5 text-[12.5px] text-neutral-500">
+        <p className="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 px-3.5 py-2.5 text-[12.5px] text-neutral-500 dark:text-neutral-400">
           Pick a brokerage above to invoice this shoot.
         </p>
       </Field>
@@ -717,21 +717,21 @@ function InvoiceSection({
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="tap flex w-full items-center justify-between rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5 text-left hover:border-neutral-300"
+          className="tap flex w-full items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3.5 py-2.5 text-left hover:border-neutral-300 dark:hover:border-neutral-600"
         >
-          <span className="text-[14px] text-neutral-700">Not on an invoice</span>
-          <span className="text-[12.5px] font-medium text-neutral-900">
+          <span className="text-[14px] text-neutral-700 dark:text-neutral-300">Not on an invoice</span>
+          <span className="text-[12.5px] font-medium text-neutral-900 dark:text-neutral-100">
             Add to invoice ›
           </span>
         </button>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+        <div className="overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
           {draftInvoicesForCompany.length === 0 ? (
-            <p className="px-3.5 py-2.5 text-[12.5px] text-neutral-500">
+            <p className="px-3.5 py-2.5 text-[12.5px] text-neutral-500 dark:text-neutral-400">
               No draft invoices for this brokerage yet.
             </p>
           ) : (
-            <ul className="divide-y divide-neutral-100">
+            <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {draftInvoicesForCompany.map((inv) => (
                 <li key={inv.id}>
                   <button
@@ -740,12 +740,12 @@ function InvoiceSection({
                       onAdd(inv.id);
                       setPickerOpen(false);
                     }}
-                    className="tap flex w-full items-center justify-between px-3.5 py-2.5 text-left hover:bg-neutral-50"
+                    className="tap flex w-full items-center justify-between px-3.5 py-2.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
                   >
-                    <span className="text-[14px] text-neutral-900">
+                    <span className="text-[14px] text-neutral-900 dark:text-neutral-100">
                       {inv.number}
                     </span>
-                    <span className="text-[12px] text-neutral-500">
+                    <span className="text-[12px] text-neutral-500 dark:text-neutral-400">
                       {inv.bookingIds.length}{' '}
                       {inv.bookingIds.length === 1 ? 'shoot' : 'shoots'}
                     </span>
@@ -757,17 +757,17 @@ function InvoiceSection({
           <button
             type="button"
             onClick={onCreateNew}
-            className="tap flex w-full items-center justify-between border-t border-neutral-100 bg-neutral-50/50 px-3.5 py-2.5 text-left hover:bg-neutral-100"
+            className="tap flex w-full items-center justify-between border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 px-3.5 py-2.5 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800/70"
           >
-            <span className="text-[14px] font-medium text-neutral-900">
+            <span className="text-[14px] font-medium text-neutral-900 dark:text-neutral-100">
               + New invoice
             </span>
-            <span className="text-[12px] text-neutral-500">starts in draft</span>
+            <span className="text-[12px] text-neutral-500 dark:text-neutral-400">starts in draft</span>
           </button>
           <button
             type="button"
             onClick={() => setPickerOpen(false)}
-            className="tap w-full border-t border-neutral-100 px-3.5 py-2 text-[12px] text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900"
+            className="tap w-full border-t border-neutral-100 dark:border-neutral-800 px-3.5 py-2 text-[12px] text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white"
           >
             Cancel
           </button>

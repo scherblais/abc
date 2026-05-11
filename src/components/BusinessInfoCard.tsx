@@ -34,13 +34,13 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
   return (
     <section className="card mb-6 p-4">
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 className="text-[14px] font-semibold text-neutral-900">
+        <h2 className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100">
           Business info
         </h2>
-        <span className="text-[12px] text-neutral-500">For invoices</span>
+        <span className="text-[12px] text-neutral-500 dark:text-neutral-400">For invoices</span>
       </div>
 
-      <label className="block text-[11.5px] font-medium text-neutral-500">
+      <label className="block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
         Business name
       </label>
       <input
@@ -51,7 +51,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         className="input mt-1"
       />
 
-      <label className="mt-3 block text-[11.5px] font-medium text-neutral-500">
+      <label className="mt-3 block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
         Address
       </label>
       <textarea
@@ -64,7 +64,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <label>
-          <span className="block text-[11.5px] font-medium text-neutral-500">
+          <span className="block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
             Phone
           </span>
           <input
@@ -77,7 +77,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
           />
         </label>
         <label>
-          <span className="block text-[11.5px] font-medium text-neutral-500">
+          <span className="block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
             Email
           </span>
           <input
@@ -92,7 +92,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         </label>
       </div>
 
-      <label className="mt-3 block text-[11.5px] font-medium text-neutral-500">
+      <label className="mt-3 block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
         Default payment terms (days)
       </label>
       <input
@@ -105,7 +105,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         className="input mt-1"
       />
 
-      <p className="mt-2 text-[11.5px] leading-snug text-neutral-500">
+      <p className="mt-2 text-[11.5px] leading-snug text-neutral-500 dark:text-neutral-400">
         Invoices automatically add GST (5%) and QST (9.975%).
       </p>
     </section>

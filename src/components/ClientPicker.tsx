@@ -129,11 +129,11 @@ function Combobox<T extends { id: string }>({
   if (selected) {
     return (
       <div>
-        <label className="mb-1 block px-0.5 text-[11.5px] font-medium text-neutral-500">
+        <label className="mb-1 block px-0.5 text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
           {label}
         </label>
-        <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5">
-          <span className="flex-1 truncate text-[15px] text-neutral-900">
+        <div className="flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3.5 py-2.5">
+          <span className="flex-1 truncate text-[15px] text-neutral-900 dark:text-neutral-100">
             {getLabel(selected)}
           </span>
           <button
@@ -143,7 +143,7 @@ function Combobox<T extends { id: string }>({
               setQuery('');
               setTimeout(() => inputRef.current?.focus(), 0);
             }}
-            className="tap rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+            className="tap rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/70 hover:text-neutral-900 dark:hover:text-white"
           >
             Change
           </button>
@@ -154,7 +154,7 @@ function Combobox<T extends { id: string }>({
 
   return (
     <div className="relative">
-      <label className="mb-1 block px-0.5 text-[11.5px] font-medium text-neutral-500">
+      <label className="mb-1 block px-0.5 text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
         {label}
       </label>
       <input
@@ -197,12 +197,12 @@ function Combobox<T extends { id: string }>({
         disabled={disabled}
         className={
           'input' +
-          (disabled ? ' cursor-not-allowed bg-neutral-50 text-neutral-400' : '')
+          (disabled ? ' cursor-not-allowed bg-neutral-50 dark:bg-neutral-800/50 text-neutral-400 dark:text-neutral-500' : '')
         }
       />
       {showDropdown && (filtered.length > 0 || canCreate || emptyHint) && (
         <ul
-          className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-lg border border-neutral-200 bg-white shadow-lg"
+          className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg"
           role="listbox"
         >
           {filtered.map((item, i) => (
@@ -217,8 +217,8 @@ function Combobox<T extends { id: string }>({
                 }}
                 onMouseEnter={() => setActive(i)}
                 className={[
-                  'block w-full px-3.5 py-2.5 text-left text-[14px] text-neutral-900',
-                  i === active ? 'bg-neutral-100' : 'bg-white hover:bg-neutral-50',
+                  'block w-full px-3.5 py-2.5 text-left text-[14px] text-neutral-900 dark:text-neutral-100',
+                  i === active ? 'bg-neutral-100 dark:bg-neutral-800' : 'bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/60',
                 ].join(' ')}
               >
                 {getLabel(item)}
@@ -237,10 +237,10 @@ function Combobox<T extends { id: string }>({
                 }}
                 onMouseEnter={() => setActive(filtered.length)}
                 className={[
-                  'block w-full border-t border-neutral-100 px-3.5 py-2.5 text-left text-[14px]',
+                  'block w-full border-t border-neutral-100 dark:border-neutral-800 px-3.5 py-2.5 text-left text-[14px]',
                   active === filtered.length
-                    ? 'bg-neutral-100 text-neutral-900'
-                    : 'bg-white text-neutral-700 hover:bg-neutral-50',
+                    ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100'
+                    : 'bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/60',
                 ].join(' ')}
               >
                 + Add new {kind} <span className="font-medium">"{trimmed}"</span>
@@ -248,7 +248,7 @@ function Combobox<T extends { id: string }>({
             </li>
           )}
           {!canCreate && filtered.length === 0 && emptyHint && (
-            <li className="px-3.5 py-2.5 text-[12.5px] leading-snug text-neutral-500">
+            <li className="px-3.5 py-2.5 text-[12.5px] leading-snug text-neutral-500 dark:text-neutral-400">
               {emptyHint}
             </li>
           )}
@@ -261,7 +261,7 @@ function Combobox<T extends { id: string }>({
 function ContactSummary({ phone, email }: { phone?: string; email?: string }) {
   if (!phone && !email) return null;
   return (
-    <p className="px-0.5 text-[11.5px] leading-snug text-neutral-500">
+    <p className="px-0.5 text-[11.5px] leading-snug text-neutral-500 dark:text-neutral-400">
       {phone}
       {phone && email ? ' · ' : ''}
       {email}

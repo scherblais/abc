@@ -37,7 +37,7 @@ export function TimePickerRow({ value, onChange }: Props) {
             >
               <span className="tabular-nums">{formatTime(candidate)}</span>
               {p.label && (
-                <span className={selected ? 'ml-1 text-white/70' : 'ml-1 text-neutral-500'}>
+                <span className={selected ? 'ml-1 text-white/70 dark:text-neutral-900/70' : 'ml-1 text-neutral-500 dark:text-neutral-400'}>
                   {p.label}
                 </span>
               )}

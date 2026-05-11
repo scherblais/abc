@@ -51,21 +51,21 @@ export function InvoicesScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 bg-white/85 px-4 py-3 backdrop-blur-md">
+      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-3 backdrop-blur-md">
         <button
           type="button"
           onClick={onBack}
-          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 hover:text-neutral-900"
+          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
         >
           ‹ Back
         </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900">
+        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
           Invoices
         </h1>
         <button
           type="button"
           onClick={onNew}
-          className="tap rounded-md bg-neutral-900 px-3 py-1.5 text-[13px] font-medium text-white hover:bg-black"
+          className="tap rounded-md bg-neutral-900 dark:bg-neutral-100 px-3 py-1.5 text-[13px] font-medium text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200"
         >
           + New
         </button>
@@ -74,11 +74,11 @@ export function InvoicesScreen({
       <main className="flex-1 pb-12 pt-4">
         {invoices.length === 0 ? (
           <div className="card px-5 py-8 text-center">
-            <p className="text-[14px] text-neutral-600">No invoices yet.</p>
+            <p className="text-[14px] text-neutral-600 dark:text-neutral-400">No invoices yet.</p>
             <button
               type="button"
               onClick={onNew}
-              className="tap mt-4 rounded-md bg-neutral-900 px-4 py-2 text-[14px] font-medium text-white hover:bg-black"
+              className="tap mt-4 rounded-md bg-neutral-900 dark:bg-neutral-100 px-4 py-2 text-[14px] font-medium text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200"
             >
               + Create your first invoice
             </button>
@@ -90,10 +90,10 @@ export function InvoicesScreen({
               if (list.length === 0) return null;
               return (
                 <section key={status} className="mb-5">
-                  <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500">
+                  <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
                     {INVOICE_STATUS_LABEL[status]} · {list.length}
                   </p>
-                  <ul className="card divide-y divide-neutral-100 overflow-hidden">
+                  <ul className="card divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden">
                     {list.map((inv) => (
                       <Row
                         key={inv.id}
@@ -115,7 +115,7 @@ export function InvoicesScreen({
                 <button
                   type="button"
                   onClick={() => setShowVoid((v) => !v)}
-                  className="tap mb-2 flex w-full items-center justify-between px-0.5 text-[12px] font-medium text-neutral-500 hover:text-neutral-700"
+                  className="tap mb-2 flex w-full items-center justify-between px-0.5 text-[12px] font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                 >
                   <span>
                     Void · {grouped.void.length}
@@ -128,7 +128,7 @@ export function InvoicesScreen({
                   </span>
                 </button>
                 {showVoid && (
-                  <ul className="card divide-y divide-neutral-100 overflow-hidden">
+                  <ul className="card divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden">
                     {grouped.void.map((inv) => (
                       <Row
                         key={inv.id}
@@ -167,16 +167,16 @@ function Row({
       <button
         type="button"
         onClick={onClick}
-        className="tap flex w-full items-stretch gap-3 px-4 py-3 text-left hover:bg-neutral-50"
+        className="tap flex w-full items-stretch gap-3 px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
-            <p className="truncate text-[14.5px] font-medium text-neutral-900">
+            <p className="truncate text-[14.5px] font-medium text-neutral-900 dark:text-neutral-100">
               {invoice.number}
             </p>
             <StatusPill status={invoice.status} />
           </div>
-          <p className="truncate text-[12.5px] text-neutral-500">
+          <p className="truncate text-[12.5px] text-neutral-500 dark:text-neutral-400">
             {companyName} · {invoice.bookingIds.length}{' '}
             {invoice.bookingIds.length === 1 ? 'shoot' : 'shoots'}
             {invoice.issuedAt
@@ -185,10 +185,10 @@ function Row({
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end justify-between pt-0.5">
-          <span className="text-[14px] font-semibold tabular-nums text-neutral-900">
+          <span className="text-[14px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
             {currencyExact(totals.total)}
           </span>
-          <span className="text-neutral-300" aria-hidden>
+          <span className="text-neutral-300 dark:text-neutral-600" aria-hidden>
             ›
           </span>
         </div>

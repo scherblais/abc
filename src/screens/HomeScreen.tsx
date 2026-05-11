@@ -119,33 +119,33 @@ export function HomeScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 border-b border-neutral-200/80 bg-white/85 px-4 pb-3 pt-3 backdrop-blur-md">
+      <header className="safe-top sticky top-0 z-10 -mx-4 border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 pb-3 pt-3 backdrop-blur-md">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-[20px] font-semibold tracking-tightish text-neutral-900">
+            <h1 className="text-[20px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
               Lensbook
             </h1>
             {monthStats.total > 0 ? (
               <button
                 type="button"
                 onClick={onOpenRevenue}
-                className="tap mt-0.5 inline-flex items-baseline gap-1 text-[13px] text-neutral-500 hover:text-neutral-900"
+                className="tap mt-0.5 inline-flex items-baseline gap-1 text-[13px] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
               >
-                <span className="font-medium text-neutral-900 tabular-nums">
+                <span className="font-medium text-neutral-900 dark:text-neutral-100 tabular-nums">
                   {currency(monthStats.total)}
                 </span>
                 <span>in {monthStats.label}</span>
                 {upcoming.length > 0 && <span>· {upcoming.length} upcoming</span>}
-                <span className="text-neutral-400" aria-hidden>
+                <span className="text-neutral-400 dark:text-neutral-500" aria-hidden>
                   ›
                 </span>
               </button>
             ) : upcoming.length > 0 ? (
-              <p className="mt-0.5 text-[13px] text-neutral-500">
+              <p className="mt-0.5 text-[13px] text-neutral-500 dark:text-neutral-400">
                 {upcoming.length} upcoming
               </p>
             ) : (
-              <p className="mt-0.5 text-[13px] text-neutral-500">No shoots booked</p>
+              <p className="mt-0.5 text-[13px] text-neutral-500 dark:text-neutral-400">No shoots booked</p>
             )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -153,7 +153,7 @@ export function HomeScreen({
               type="button"
               onClick={onOpenInvoices}
               aria-label="Invoices"
-              className="tap relative grid h-9 w-9 place-items-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
+              className="tap relative grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
             >
               <InvoiceIcon />
               {outstanding.count > 0 && (
@@ -169,7 +169,7 @@ export function HomeScreen({
               type="button"
               onClick={onOpenAdmin}
               aria-label="Manage catalog"
-              className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
+              className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
             >
               <SettingsIcon />
             </button>
@@ -186,10 +186,10 @@ export function HomeScreen({
               <div className="space-y-5">
                 {groups.map((g) => (
                   <section key={g.date.toISOString()}>
-                    <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500">
+                    <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
                       {formatDayLabel(g.date, now)}
                     </p>
-                    <ul className="card divide-y divide-neutral-100 overflow-hidden">
+                    <ul className="card divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden">
                       {g.items.map((b) => (
                         <BookingRow
                           key={b.id}
@@ -210,7 +210,7 @@ export function HomeScreen({
                 <button
                   type="button"
                   onClick={() => setPastOpen((v) => !v)}
-                  className="tap flex w-full items-center justify-between px-0.5 py-1 text-[12px] font-medium text-neutral-500 hover:text-neutral-700"
+                  className="tap flex w-full items-center justify-between px-0.5 py-1 text-[12px] font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
                 >
                   <span>
                     Past shoots · {past.length}
@@ -223,7 +223,7 @@ export function HomeScreen({
                   </span>
                 </button>
                 {pastOpen && pastVisible.length > 0 && (
-                  <ul className="card mt-2 divide-y divide-neutral-100 overflow-hidden opacity-90">
+                  <ul className="card mt-2 divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden opacity-90">
                     {pastVisible.map((b) => (
                       <PastBookingRow
                         key={b.id}
@@ -239,7 +239,7 @@ export function HomeScreen({
                   <button
                     type="button"
                     onClick={onOpenRevenue}
-                    className="tap mt-2 w-full rounded-lg border border-neutral-200 bg-white py-2 text-[12.5px] text-neutral-600 hover:border-neutral-300 hover:text-neutral-900"
+                    className="tap mt-2 w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2 text-[12.5px] text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white dark:text-neutral-900"
                   >
                     {past.length - pastVisible.length} older shoots · view in Revenue ›
                   </button>
@@ -255,7 +255,7 @@ export function HomeScreen({
           <button
             type="button"
             onClick={onAdd}
-            className="pointer-events-auto tap flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 px-5 py-3.5 text-[15px] font-medium text-white shadow-lg shadow-neutral-900/15 hover:bg-black"
+            className="pointer-events-auto tap flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 dark:bg-neutral-100 px-5 py-3.5 text-[15px] font-medium text-white dark:text-neutral-900 shadow-lg shadow-neutral-900/15 hover:bg-black dark:hover:bg-neutral-200"
           >
             <span className="text-[18px] leading-none" aria-hidden>
               +
@@ -289,19 +289,19 @@ function BookingRow({
       <button
         type="button"
         onClick={onClick}
-        className="tap flex w-full items-stretch gap-3 px-4 py-3 text-left hover:bg-neutral-50"
+        className="tap flex w-full items-stretch gap-3 px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
       >
         <div className="flex w-[60px] shrink-0 flex-col items-start pt-0.5">
-          <span className="text-[14.5px] font-semibold leading-tight tabular-nums text-neutral-900">
+          <span className="text-[14.5px] font-semibold leading-tight tabular-nums text-neutral-900 dark:text-neutral-100">
             {formatTime(start)}
           </span>
-          <span className="text-[11.5px] text-neutral-400">{b.durationMin}m</span>
+          <span className="text-[11.5px] text-neutral-400 dark:text-neutral-500">{b.durationMin}m</span>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14.5px] font-medium text-neutral-900">
+          <p className="truncate text-[14.5px] font-medium text-neutral-900 dark:text-neutral-100">
             {b.address || 'No address'}
           </p>
-          <p className="truncate text-[12.5px] text-neutral-500">
+          <p className="truncate text-[12.5px] text-neutral-500 dark:text-neutral-400">
             {clientLine ?? 'No client'}
           </p>
           {labels.length > 0 && (
@@ -309,22 +309,22 @@ function BookingRow({
               {labels.slice(0, 3).map((label, i) => (
                 <span
                   key={`${label}-${i}`}
-                  className="pill border border-neutral-200 bg-neutral-50 text-neutral-600"
+                  className="pill border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400"
                 >
                   {label}
                 </span>
               ))}
               {labels.length > 3 && (
-                <span className="pill text-neutral-400">+{labels.length - 3}</span>
+                <span className="pill text-neutral-400 dark:text-neutral-500">+{labels.length - 3}</span>
               )}
             </div>
           )}
         </div>
         <div className="flex shrink-0 flex-col items-end justify-between pt-0.5">
-          <span className="text-[14px] font-semibold tabular-nums text-neutral-900">
+          <span className="text-[14px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
             {currency(bookingTotal(b))}
           </span>
-          <span className="text-neutral-300" aria-hidden>
+          <span className="text-neutral-300 dark:text-neutral-600" aria-hidden>
             ›
           </span>
         </div>
@@ -355,20 +355,20 @@ function PastBookingRow({
       <button
         type="button"
         onClick={onClick}
-        className="tap flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-neutral-50"
+        className="tap flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
       >
-        <span className="w-12 shrink-0 text-[12px] font-medium tabular-nums text-neutral-500">
+        <span className="w-12 shrink-0 text-[12px] font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
           {dateLabel}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13.5px] font-medium text-neutral-800">
+          <p className="truncate text-[13.5px] font-medium text-neutral-800 dark:text-neutral-200">
             {b.address || 'No address'}
           </p>
-          <p className="truncate text-[11.5px] text-neutral-500">
+          <p className="truncate text-[11.5px] text-neutral-500 dark:text-neutral-400">
             {clientLine ?? firstService ?? '—'}
           </p>
         </div>
-        <span className="shrink-0 text-[13px] font-medium tabular-nums text-neutral-700">
+        <span className="shrink-0 text-[13px] font-medium tabular-nums text-neutral-700 dark:text-neutral-300">
           {currency(bookingTotal(b))}
         </span>
       </button>
@@ -379,7 +379,7 @@ function PastBookingRow({
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="mt-12 flex flex-col items-center justify-center px-6 text-center">
-      <div className="mb-5 grid h-14 w-14 place-items-center rounded-2xl border border-neutral-200 bg-white">
+      <div className="mb-5 grid h-14 w-14 place-items-center rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path
             d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"
@@ -391,16 +391,16 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
           <circle cx="12" cy="13" r="3.5" stroke="#0a0a0a" strokeWidth="1.6" />
         </svg>
       </div>
-      <h2 className="text-[17px] font-semibold tracking-tightish text-neutral-900">
+      <h2 className="text-[17px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
         Book your first shoot
       </h2>
-      <p className="mt-1.5 max-w-[20rem] text-[13.5px] leading-snug text-neutral-500">
+      <p className="mt-1.5 max-w-[20rem] text-[13.5px] leading-snug text-neutral-500 dark:text-neutral-400">
         Tap the button below — address, day, time, services. Done in under 30 seconds.
       </p>
       <button
         type="button"
         onClick={onAdd}
-        className="tap mt-5 rounded-lg bg-neutral-900 px-4 py-2 text-[14px] font-medium text-white hover:bg-black"
+        className="tap mt-5 rounded-lg bg-neutral-900 dark:bg-neutral-100 px-4 py-2 text-[14px] font-medium text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200"
       >
         + New shoot
       </button>
