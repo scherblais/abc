@@ -15,6 +15,9 @@ export type Settings = {
   freeRadiusKm: number;
   /** Dollars per billable km. */
   perKmRate: number;
+  /** Optional Google Maps Platform key. When set, Geocoding API + Routes API
+   *  are used (road distance). Otherwise we fall back to Nominatim + haversine. */
+  googleApiKey?: string;
 };
 
 export type Booking = {

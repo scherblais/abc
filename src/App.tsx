@@ -16,6 +16,7 @@ import {
 } from './lib/storage';
 import { DEFAULT_CATALOG } from './lib/catalog';
 import { geocode } from './lib/geocode';
+import { googleGeocode } from './lib/google';
 
 type Screen =
   | { name: 'home' }
@@ -51,7 +52,12 @@ export default function App() {
     if (settings.startingAddress && !settings.startingCoords) {
       let cancelled = false;
       (async () => {
-        const result = await geocode(settings.startingAddress);
+        const apiKey = settings.googleApiKey?.trim();
+        const result = apiKey
+          ? await googleGeocode(settings.startingAddress, apiKey)
+          : await geocode(settings.startingAddress).then((r) =>
+              r ? { lat: r.lat, lon: r.lon } : null,
+            );
         if (!cancelled && result) {
           setSettings((prev) => ({
             ...prev,

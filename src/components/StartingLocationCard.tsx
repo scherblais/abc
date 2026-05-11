@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Settings } from '../types';
 import { geocode } from '../lib/geocode';
+import { googleGeocode } from '../lib/google';
 
 type Props = {
   settings: Settings;
@@ -10,7 +11,7 @@ type Props = {
 type Status =
   | { kind: 'idle' }
   | { kind: 'looking' }
-  | { kind: 'located'; lat: number; lon: number; displayName: string }
+  | { kind: 'located'; lat: number; lon: number; displayName: string; provider: 'google' | 'osm' }
   | { kind: 'not_found' }
   | { kind: 'error' };
 
@@ -21,6 +22,8 @@ export function StartingLocationCard({ settings, onChange }: Props) {
   const [address, setAddress] = useState(settings.startingAddress);
   const [freeKm, setFreeKm] = useState(settings.freeRadiusKm);
   const [rate, setRate] = useState(settings.perKmRate);
+  const [apiKey, setApiKey] = useState(settings.googleApiKey ?? '');
+  const [showKey, setShowKey] = useState(false);
   const [status, setStatus] = useState<Status>(() =>
     settings.startingCoords
       ? {
@@ -28,62 +31,62 @@ export function StartingLocationCard({ settings, onChange }: Props) {
           lat: settings.startingCoords.lat,
           lon: settings.startingCoords.lon,
           displayName: settings.startingAddress,
+          provider: settings.googleApiKey ? 'google' : 'osm',
         }
       : { kind: 'idle' },
   );
 
-  // Resolve the starting address (debounced). Persist coordinates on success.
+  // Resolve the starting address (debounced) whenever address or apiKey changes.
   const debounceRef = useRef<number | null>(null);
   useEffect(() => {
-    const trimmed = address.trim();
+    const trimmedAddress = address.trim();
+    const trimmedKey = apiKey.trim();
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (trimmed.length < 3) {
+    if (trimmedAddress.length < 3) {
       setStatus({ kind: 'idle' });
-      return;
-    }
-    if (
-      status.kind === 'located' &&
-      settings.startingAddress.trim() === trimmed &&
-      settings.startingCoords
-    ) {
       return;
     }
     setStatus({ kind: 'looking' });
     debounceRef.current = window.setTimeout(async () => {
-      const res = await geocode(trimmed);
-      if (!res) {
+      const result = trimmedKey
+        ? await googleGeocode(trimmedAddress, trimmedKey)
+        : await geocode(trimmedAddress).then((r) =>
+            r ? { lat: r.lat, lon: r.lon, formattedAddress: r.displayName } : null,
+          );
+      if (!result) {
         setStatus({ kind: 'not_found' });
         onChange({
           ...settings,
-          startingAddress: trimmed,
+          startingAddress: trimmedAddress,
           startingCoords: undefined,
           freeRadiusKm: freeKm,
           perKmRate: rate,
+          googleApiKey: trimmedKey || undefined,
         });
         return;
       }
       setStatus({
         kind: 'located',
-        lat: res.lat,
-        lon: res.lon,
-        displayName: res.displayName,
+        lat: result.lat,
+        lon: result.lon,
+        displayName: result.formattedAddress,
+        provider: trimmedKey ? 'google' : 'osm',
       });
       onChange({
         ...settings,
-        startingAddress: trimmed,
-        startingCoords: { lat: res.lat, lon: res.lon },
+        startingAddress: trimmedAddress,
+        startingCoords: { lat: result.lat, lon: result.lon },
         freeRadiusKm: freeKm,
         perKmRate: rate,
+        googleApiKey: trimmedKey || undefined,
       });
     }, 600);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address]);
+  }, [address, apiKey]);
 
-  // Sync numeric fields back to settings on change (no debounce — they
-  // don't trigger any network).
   useEffect(() => {
     if (freeKm === settings.freeRadiusKm && rate === settings.perKmRate) return;
     onChange({ ...settings, freeRadiusKm: freeKm, perKmRate: rate });
@@ -137,6 +140,41 @@ export function StartingLocationCard({ settings, onChange }: Props) {
       <p className="mt-2 text-[12px] text-neutral-500">
         Charged ${rate.toFixed(2)} per km beyond the first {freeKm} km.
       </p>
+
+      <div className="mt-4 border-t border-neutral-100 pt-3">
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <label className="text-[12.5px] font-medium text-neutral-900">
+            Google Maps API key
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowKey((v) => !v)}
+            className="tap text-[11.5px] text-neutral-500 hover:text-neutral-900"
+          >
+            {showKey ? 'Hide' : 'Show'}
+          </button>
+        </div>
+        <input
+          type={showKey ? 'text' : 'password'}
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder="Paste your API key (optional)"
+          autoCapitalize="off"
+          autoCorrect="off"
+          autoComplete="off"
+          spellCheck={false}
+          className={INPUT + ' font-mono text-[13px]'}
+        />
+        <p className="mt-1.5 text-[11.5px] leading-snug text-neutral-500">
+          With a key set, addresses resolve via Google Geocoding and travel is billed by
+          road distance (Routes API). Restrict the key to{' '}
+          <code className="rounded bg-neutral-100 px-1 py-0.5 text-[11px]">
+            scherblais.github.io
+          </code>{' '}
+          referrers in Google Cloud Console. Without a key, OpenStreetMap + straight-line
+          distance is used.
+        </p>
+      </div>
     </section>
   );
 }
@@ -146,7 +184,8 @@ function StatusLine({ status }: { status: Status }) {
   let text = '';
   let cls = 'text-neutral-500';
   if (status.kind === 'looking') text = 'Locating…';
-  else if (status.kind === 'located') text = `Located · ${status.displayName}`;
+  else if (status.kind === 'located')
+    text = `Located${status.provider === 'google' ? ' (Google)' : ''} · ${status.displayName}`;
   else if (status.kind === 'not_found') {
     text = "Couldn't locate that address";
     cls = 'text-neutral-700';

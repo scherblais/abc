@@ -4,6 +4,7 @@ import { sumServices } from '../lib/catalog';
 import { suggestedNextSlot } from '../lib/datetime';
 import { currency, formatDayLabel, formatDuration, formatTime } from '../lib/format';
 import { distanceKm, geocode, travelFee } from '../lib/geocode';
+import { googleGeocode, googleRoadDistance } from '../lib/google';
 import { DatePickerRow } from '../components/DatePickerRow';
 import { TimePickerRow } from '../components/TimePickerRow';
 import { ServiceGrid } from '../components/ServiceGrid';
@@ -24,7 +25,13 @@ type TravelState =
   | { kind: 'looking' }
   | { kind: 'no_origin' }
   | { kind: 'not_found' }
-  | { kind: 'resolved'; km: number; fee: number; coords: { lat: number; lon: number } };
+  | {
+      kind: 'resolved';
+      km: number;
+      fee: number;
+      coords: { lat: number; lon: number };
+      mode: 'road' | 'straight';
+    };
 
 const draftFromBooking = (b: Booking): DraftBooking => ({
   address: b.address,
@@ -91,6 +98,7 @@ export function BookScreen({
         km: initial.travelKm,
         fee: initial.travelFee ?? 0,
         coords: initial.coords,
+        mode: settings.googleApiKey ? 'road' : 'straight',
       };
     }
     return { kind: 'idle' };
@@ -109,20 +117,61 @@ export function BookScreen({
       );
       return;
     }
-    if (!settings.startingCoords) {
+    if (!settings.startingCoords && !settings.googleApiKey) {
       setTravel({ kind: 'no_origin' });
       return;
     }
     setTravel({ kind: 'looking' });
+    const apiKey = settings.googleApiKey?.trim();
     debounceRef.current = window.setTimeout(async () => {
+      if (apiKey) {
+        // Resolve the booking address coordinates (for the on-screen "X km
+        // from..." display) and fetch road distance in parallel.
+        const [addressResult, route] = await Promise.all([
+          googleGeocode(trimmed, apiKey),
+          googleRoadDistance(settings.startingAddress, trimmed, apiKey),
+        ]);
+        if (!addressResult || !route) {
+          setTravel({ kind: 'not_found' });
+          return;
+        }
+        const km = route.meters / 1000;
+        const fee = travelFee(km, settings);
+        setTravel({
+          kind: 'resolved',
+          km,
+          fee,
+          coords: { lat: addressResult.lat, lon: addressResult.lon },
+          mode: 'road',
+        });
+        setDraft((p) => ({
+          ...p,
+          travelKm: km,
+          travelFee: fee,
+          coords: { lat: addressResult.lat, lon: addressResult.lon },
+        }));
+        return;
+      }
+
+      // No Google key — fall back to Nominatim + haversine.
+      if (!settings.startingCoords) {
+        setTravel({ kind: 'no_origin' });
+        return;
+      }
       const result = await geocode(trimmed);
       if (!result) {
         setTravel({ kind: 'not_found' });
         return;
       }
-      const km = distanceKm(settings.startingCoords!, result);
+      const km = distanceKm(settings.startingCoords, result);
       const fee = travelFee(km, settings);
-      setTravel({ kind: 'resolved', km, fee, coords: { lat: result.lat, lon: result.lon } });
+      setTravel({
+        kind: 'resolved',
+        km,
+        fee,
+        coords: { lat: result.lat, lon: result.lon },
+        mode: 'straight',
+      });
       setDraft((p) => ({
         ...p,
         travelKm: km,
@@ -134,7 +183,15 @@ export function BookScreen({
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [draft.address, settings.startingCoords, settings.freeRadiusKm, settings.perKmRate, settings]);
+  }, [
+    draft.address,
+    settings.startingAddress,
+    settings.startingCoords,
+    settings.freeRadiusKm,
+    settings.perKmRate,
+    settings.googleApiKey,
+    settings,
+  ]);
 
   const setScheduled = (d: Date) =>
     setDraft((p) => ({ ...p, scheduledAt: d.toISOString() }));
@@ -411,11 +468,12 @@ function TravelLine({ state, settings }: { state: TravelState; settings: Setting
     muted = false;
   } else {
     const km = state.km.toFixed(1);
+    const kind = state.mode === 'road' ? 'road' : 'straight-line';
     if (state.fee > 0) {
-      text = `${km} km from ${settings.startingAddress} · +${formatMoney(state.fee)} travel`;
+      text = `${km} km ${kind} from ${settings.startingAddress} · +${formatMoney(state.fee)} travel`;
       muted = false;
     } else {
-      text = `${km} km from ${settings.startingAddress} · within free radius`;
+      text = `${km} km ${kind} from ${settings.startingAddress} · within free radius`;
     }
   }
   return (
