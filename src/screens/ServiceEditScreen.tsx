@@ -77,7 +77,7 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
         </button>
       </header>
 
-      <div className="flex-1 pb-12 pt-4">
+      <div className="flex-1 pb-12 pt-5">
         <Field label="Name">
           <input
             ref={nameRef}

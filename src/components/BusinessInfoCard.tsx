@@ -32,15 +32,15 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
   }, [name, address, phone, email, terms]);
 
   return (
-    <section className="card mb-6 p-4">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
+    <section className="card mb-6 p-5">
+      <div className="mb-4 flex items-baseline justify-between gap-3">
         <h2 className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100">
           Business info
         </h2>
         <span className="text-[12px] text-neutral-500 dark:text-neutral-400">For invoices</span>
       </div>
 
-      <label className="block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
+      <label className="block text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
         Business name
       </label>
       <input
@@ -48,10 +48,10 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         onChange={(e) => setName(e.target.value)}
         placeholder="Your studio / DBA"
         autoCapitalize="words"
-        className="input mt-1"
+        className="input mt-1.5"
       />
 
-      <label className="mt-3 block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
+      <label className="mt-4 block text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
         Address
       </label>
       <textarea
@@ -59,12 +59,12 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         onChange={(e) => setAddress(e.target.value)}
         rows={2}
         placeholder="Mailing address shown on invoices"
-        className="input mt-1 resize-none"
+        className="input mt-1.5 resize-none"
       />
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-3">
         <label>
-          <span className="block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
+          <span className="block text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
             Phone
           </span>
           <input
@@ -73,11 +73,11 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
             type="tel"
             autoComplete="tel"
             placeholder="(514) 555-0123"
-            className="input mt-1"
+            className="input mt-1.5"
           />
         </label>
         <label>
-          <span className="block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
+          <span className="block text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
             Email
           </span>
           <input
@@ -87,12 +87,12 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
             autoComplete="email"
             autoCapitalize="off"
             placeholder="hello@yourstudio.ca"
-            className="input mt-1"
+            className="input mt-1.5"
           />
         </label>
       </div>
 
-      <label className="mt-3 block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
+      <label className="mt-4 block text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
         Default payment terms (days)
       </label>
       <input
@@ -102,10 +102,10 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         step={1}
         value={terms}
         onChange={(e) => setTerms(Number(e.target.value) || 0)}
-        className="input mt-1"
+        className="input mt-1.5"
       />
 
-      <p className="mt-2 text-[11.5px] leading-snug text-neutral-500 dark:text-neutral-400">
+      <p className="mt-3 text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
         Invoices automatically add GST (5%) and QST (9.975%).
       </p>
     </section>

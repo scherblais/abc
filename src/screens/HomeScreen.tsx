@@ -177,16 +177,16 @@ export function HomeScreen({
         </div>
       </header>
 
-      <main className="flex-1 pb-28 pt-4">
+      <main className="flex-1 pb-28 pt-5">
         {upcoming.length === 0 && past.length === 0 ? (
           <EmptyState onAdd={onAdd} />
         ) : (
           <>
             {upcoming.length > 0 && (
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {groups.map((g) => (
                   <section key={g.date.toISOString()}>
-                    <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
+                    <p className="mb-2.5 px-0.5 text-[12.5px] font-medium text-neutral-500 dark:text-neutral-400">
                       {formatDayLabel(g.date, now)}
                     </p>
                     <ul className="card divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden">
@@ -289,7 +289,7 @@ function BookingRow({
       <button
         type="button"
         onClick={onClick}
-        className="tap flex w-full items-stretch gap-3 px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+        className="tap flex w-full items-stretch gap-3 px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
       >
         <div className="flex w-[60px] shrink-0 flex-col items-start pt-0.5">
           <span className="text-[14.5px] font-semibold leading-tight tabular-nums text-neutral-900 dark:text-neutral-100">

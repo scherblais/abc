@@ -129,7 +129,7 @@ function Combobox<T extends { id: string }>({
   if (selected) {
     return (
       <div>
-        <label className="mb-1 block px-0.5 text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
+        <label className="mb-1 block px-0.5 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
           {label}
         </label>
         <div className="flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3.5 py-2.5">
@@ -154,7 +154,7 @@ function Combobox<T extends { id: string }>({
 
   return (
     <div className="relative">
-      <label className="mb-1 block px-0.5 text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
+      <label className="mb-1 block px-0.5 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
         {label}
       </label>
       <input

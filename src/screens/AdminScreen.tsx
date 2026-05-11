@@ -48,7 +48,7 @@ export function AdminScreen({
         <span className="w-12" aria-hidden />
       </header>
 
-      <main className="flex-1 pb-12 pt-4">
+      <main className="flex-1 pb-12 pt-5">
         <ThemeToggleCard />
         <StartingLocationCard settings={settings} onChange={onSaveSettings} />
         <BusinessInfoCard settings={settings} onChange={onSaveSettings} />
@@ -56,7 +56,7 @@ export function AdminScreen({
         <button
           type="button"
           onClick={onOpenClients}
-          className="card tap mb-6 flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+          className="card tap mb-6 flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
         >
           <div className="min-w-0 flex-1">
             <p className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100">Clients</p>
@@ -99,7 +99,7 @@ export function AdminScreen({
                 <button
                   type="button"
                   onClick={() => onEdit(s)}
-                  className="tap flex w-full items-stretch gap-3 px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+                  className="tap flex w-full items-stretch gap-3 px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[14.5px] font-medium text-neutral-900 dark:text-neutral-100">

@@ -57,14 +57,14 @@ export function ClientsScreen({
         <span className="w-12" aria-hidden />
       </header>
 
-      <main className="flex-1 pb-12 pt-4">
+      <main className="flex-1 pb-12 pt-5">
         <p className="mb-3 px-0.5 text-[12.5px] leading-snug text-neutral-500 dark:text-neutral-400">
           Brokerages and their agents. Pick a client from these when booking a
           shoot.
         </p>
 
         <div className="card mb-4 p-3">
-          <label className="mb-1 block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
+          <label className="mb-1 block text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
             New brokerage
           </label>
           <div className="flex gap-2">
@@ -115,7 +115,7 @@ export function ClientsScreen({
                   <button
                     type="button"
                     onClick={() => setExpandedId(expanded ? null : c.id)}
-                    className="tap flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+                    className="tap flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[14.5px] font-medium text-neutral-900 dark:text-neutral-100">

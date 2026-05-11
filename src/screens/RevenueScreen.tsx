@@ -39,9 +39,9 @@ export function RevenueScreen({ bookings, onBack }: Props) {
         <span className="w-12" aria-hidden />
       </header>
 
-      <main className="flex-1 pb-12 pt-4">
+      <main className="flex-1 pb-12 pt-5">
         {thisMonth && (
-          <section className="card mb-5 p-4">
+          <section className="card mb-6 p-5">
             <p className="text-[12px] font-medium text-neutral-500 dark:text-neutral-400">{thisMonth.label}</p>
             <div className="mt-1 flex items-baseline gap-2">
               <p className="text-[32px] font-semibold tracking-tightish tabular-nums text-neutral-900 dark:text-neutral-100">
@@ -68,7 +68,7 @@ export function RevenueScreen({ bookings, onBack }: Props) {
           </section>
         )}
 
-        <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">By month</p>
+        <p className="mb-2.5 px-0.5 text-[12.5px] font-medium text-neutral-500 dark:text-neutral-400">By month</p>
 
         {months.length === 0 ? (
           <div className="card px-5 py-8 text-center">

@@ -100,8 +100,8 @@ export function StartingLocationCard({ settings, onChange }: Props) {
   }, [freeKm, rate]);
 
   return (
-    <section className="card mb-6 p-4">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
+    <section className="card mb-6 p-5">
+      <div className="mb-4 flex items-baseline justify-between gap-3">
         <h2 className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100">Starting location</h2>
         <span className="text-[12px] text-neutral-500 dark:text-neutral-400">Travel billed one way</span>
       </div>
@@ -116,7 +116,7 @@ export function StartingLocationCard({ settings, onChange }: Props) {
       />
       <StatusLine status={status} />
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-3">
         <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
           <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Free km</span>
           <input
@@ -143,19 +143,19 @@ export function StartingLocationCard({ settings, onChange }: Props) {
         </label>
       </div>
 
-      <p className="mt-2 text-[12px] text-neutral-500 dark:text-neutral-400">
+      <p className="mt-3 text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
         Charged ${rate.toFixed(2)} per km beyond the first {freeKm} km.
       </p>
 
-      <div className="mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-3">
+      <div className="mt-5 border-t border-neutral-100 dark:border-neutral-800 pt-4">
         <div className="mb-2 flex items-baseline justify-between gap-2">
-          <label className="text-[12.5px] font-medium text-neutral-900 dark:text-neutral-100">
+          <label className="text-[13px] font-medium text-neutral-900 dark:text-neutral-100">
             Google Maps API key
           </label>
           <button
             type="button"
             onClick={() => setShowKey((v) => !v)}
-            className="tap text-[11.5px] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+            className="tap text-[12px] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
           >
             {showKey ? 'Hide' : 'Show'}
           </button>
@@ -171,7 +171,7 @@ export function StartingLocationCard({ settings, onChange }: Props) {
           spellCheck={false}
           className={INPUT + ' font-mono text-[13px]'}
         />
-        <p className="mt-1.5 text-[11.5px] leading-snug text-neutral-500 dark:text-neutral-400">
+        <p className="mt-2 text-[12px] leading-relaxed text-neutral-500 dark:text-neutral-400">
           With a key set, addresses resolve via Google Geocoding and travel is billed by
           road distance (Routes API). Restrict the key to{' '}
           <code className="rounded bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 text-[11px]">

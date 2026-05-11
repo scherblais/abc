@@ -71,7 +71,7 @@ export function InvoicesScreen({
         </button>
       </header>
 
-      <main className="flex-1 pb-12 pt-4">
+      <main className="flex-1 pb-12 pt-5">
         {invoices.length === 0 ? (
           <div className="card px-5 py-8 text-center">
             <p className="text-[14px] text-neutral-600 dark:text-neutral-400">No invoices yet.</p>
@@ -90,7 +90,7 @@ export function InvoicesScreen({
               if (list.length === 0) return null;
               return (
                 <section key={status} className="mb-5">
-                  <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
+                  <p className="mb-2.5 px-0.5 text-[12.5px] font-medium text-neutral-500 dark:text-neutral-400">
                     {INVOICE_STATUS_LABEL[status]} · {list.length}
                   </p>
                   <ul className="card divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden">
@@ -167,7 +167,7 @@ function Row({
       <button
         type="button"
         onClick={onClick}
-        className="tap flex w-full items-stretch gap-3 px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+        className="tap flex w-full items-stretch gap-3 px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">

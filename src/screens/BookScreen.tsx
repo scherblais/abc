@@ -289,7 +289,7 @@ export function BookScreen({
         </button>
       </header>
 
-      <div className="flex-1 pb-32 pt-4">
+      <div className="flex-1 pb-32 pt-5">
         {currentInvoice && currentInvoice.status !== 'draft' && (
           <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 dark:border-amber-900/60 dark:bg-amber-950/40">
             <p className="text-[12.5px] leading-snug text-amber-900 dark:text-amber-200">
@@ -392,7 +392,7 @@ export function BookScreen({
             </button>
           </div>
           {overrideTotals && (
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-3">
               <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2">
                 <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
                   Duration (min)

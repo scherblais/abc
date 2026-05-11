@@ -245,8 +245,8 @@ export function InvoiceEditScreen({
         </button>
       </header>
 
-      <div className="flex-1 pb-12 pt-4">
-        <section className="card mb-4 p-4">
+      <div className="flex-1 pb-12 pt-5">
+        <section className="card mb-5 p-5">
           <ClientPicker
             companies={companies}
             agents={agents}
@@ -263,21 +263,21 @@ export function InvoiceEditScreen({
             onCreateAgent={onCreateAgent}
           />
 
-          <label className="mt-3 block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
+          <label className="mt-4 block text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
             Invoice number
           </label>
           <input
             value={draft.number}
             onChange={(e) => setDraft((p) => ({ ...p, number: e.target.value }))}
             disabled={isLocked}
-            className="input mt-1"
+            className="input mt-1.5"
           />
           {numberError && (
             <p className="mt-1 text-[11.5px] text-red-600 dark:text-red-400">{numberError}</p>
           )}
         </section>
 
-        <section className="card mb-4 p-4">
+        <section className="card mb-5 p-5">
           <div className="mb-2 flex items-baseline justify-between gap-2">
             <p className="text-[12px] font-medium text-neutral-500 dark:text-neutral-400">Shoots</p>
             {!isLocked && draft.companyId && eligibleBookings.length > 1 && (
@@ -361,7 +361,7 @@ export function InvoiceEditScreen({
           )}
         </section>
 
-        <section className="card mb-4 p-4">
+        <section className="card mb-5 p-5">
           <p className="mb-2 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">Totals</p>
           <TotalsRow label="Subtotal" value={taxes.subtotal} />
           {draft.gstRate > 0 && (
@@ -384,7 +384,7 @@ export function InvoiceEditScreen({
           </div>
         </section>
 
-        <section className="card mb-4 p-4">
+        <section className="card mb-5 p-5">
           <p className="mb-2 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">Status</p>
           <div className="flex flex-wrap gap-1.5">
             {(['draft', 'sent', 'paid'] as InvoiceStatus[]).map((s) => (
@@ -407,7 +407,7 @@ export function InvoiceEditScreen({
           </div>
 
           {draft.status !== 'draft' && (
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-3">
               <DateField
                 label="Issued"
                 value={draft.issuedAt}
@@ -440,8 +440,8 @@ export function InvoiceEditScreen({
           )}
         </section>
 
-        <section className="card mb-4 p-4">
-          <label className="block text-[11.5px] font-medium text-neutral-500 dark:text-neutral-400">
+        <section className="card mb-5 p-5">
+          <label className="block text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
             Notes (printed on invoice)
           </label>
           <textarea
@@ -450,7 +450,7 @@ export function InvoiceEditScreen({
             disabled={isLocked}
             rows={3}
             placeholder="Payment terms, e-transfer email, thank-you note…"
-            className="input mt-1 resize-none"
+            className="input mt-1.5 resize-none"
           />
         </section>
 

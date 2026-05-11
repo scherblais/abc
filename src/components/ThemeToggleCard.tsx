@@ -27,8 +27,8 @@ export function ThemeToggleCard() {
   };
 
   return (
-    <section className="card mb-6 p-4">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
+    <section className="card mb-6 p-5">
+      <div className="mb-4 flex items-baseline justify-between gap-3">
         <h2 className="text-[14px] font-semibold text-neutral-900 dark:text-neutral-100">
           Appearance
         </h2>
