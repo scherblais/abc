@@ -45,6 +45,20 @@
   .tap {
     @apply transition-[transform,background-color,border-color,color] duration-150 active:scale-[0.985];
   }
+  /* Default form input — comfortable mobile target, used everywhere a value
+   * is entered as the primary action of a field. */
+  .input {
+    @apply w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-3 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900;
+  }
+  /* Compact input — for dense lists / sub-fields where the field is one of
+   * many in a tight grid (agent rows, settings sub-fields). */
+  .input-compact {
+    @apply w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-[14px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900;
+  }
+  /* Inline status pill: pass a colour variant via additional class. */
+  .pill-status {
+    @apply inline-flex items-center rounded-md border px-1.5 py-0.5 text-[11px] font-medium;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {

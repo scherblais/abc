@@ -6,9 +6,6 @@ type Props = {
   onChange: (s: Settings) => void;
 };
 
-const INPUT =
-  'w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900';
-
 export function BusinessInfoCard({ settings, onChange }: Props) {
   const [name, setName] = useState(settings.businessName ?? '');
   const [address, setAddress] = useState(settings.businessAddress ?? '');
@@ -51,7 +48,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         onChange={(e) => setName(e.target.value)}
         placeholder="Your studio / DBA"
         autoCapitalize="words"
-        className={INPUT + ' mt-1'}
+        className="input mt-1"
       />
 
       <label className="mt-3 block text-[11.5px] font-medium text-neutral-500">
@@ -62,7 +59,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         onChange={(e) => setAddress(e.target.value)}
         rows={2}
         placeholder="Mailing address shown on invoices"
-        className={INPUT + ' mt-1 resize-none'}
+        className="input mt-1 resize-none"
       />
 
       <div className="mt-3 grid grid-cols-2 gap-2">
@@ -74,7 +71,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
             value={gst}
             onChange={(e) => setGst(e.target.value)}
             placeholder="123456789 RT0001"
-            className={INPUT + ' mt-1'}
+            className="input mt-1"
           />
         </label>
         <label>
@@ -85,7 +82,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
             value={qst}
             onChange={(e) => setQst(e.target.value)}
             placeholder="1234567890 TQ0001"
-            className={INPUT + ' mt-1'}
+            className="input mt-1"
           />
         </label>
       </div>
@@ -100,7 +97,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         step={1}
         value={terms}
         onChange={(e) => setTerms(Number(e.target.value) || 0)}
-        className={INPUT + ' mt-1'}
+        className="input mt-1"
       />
 
       <p className="mt-2 text-[11.5px] leading-snug text-neutral-500">

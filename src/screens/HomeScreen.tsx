@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Agent, Booking, Company, Invoice, Service } from '../types';
 import { startOfDay } from '../lib/datetime';
 import { currency, formatDayLabel, formatTime } from '../lib/format';
@@ -65,7 +65,19 @@ export function HomeScreen({
     [bookings, now],
   );
 
+  const past = useMemo(
+    () =>
+      bookings
+        .filter(
+          (b) => new Date(b.scheduledAt).getTime() + b.durationMin * 60000 < now.getTime(),
+        )
+        .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt)),
+    [bookings, now],
+  );
+
   const groups = useMemo(() => groupByDay(upcoming), [upcoming]);
+  const [pastOpen, setPastOpen] = useState(false);
+  const pastVisible = pastOpen ? past.slice(0, 25) : [];
 
   const monthStats = useMemo(() => {
     const year = now.getFullYear();
@@ -75,7 +87,7 @@ export function HomeScreen({
       return d.getFullYear() === year && d.getMonth() === month;
     });
     const total = inThisMonth.reduce((sum, b) => sum + bookingTotal(b), 0);
-    const label = now.toLocaleDateString('en-US', { month: 'long' });
+    const label = now.toLocaleDateString('en-CA', { month: 'long' });
     return { total, count: inThisMonth.length, label };
   }, [bookings, now]);
 
@@ -166,29 +178,75 @@ export function HomeScreen({
       </header>
 
       <main className="flex-1 pb-28 pt-4">
-        {upcoming.length === 0 ? (
+        {upcoming.length === 0 && past.length === 0 ? (
           <EmptyState onAdd={onAdd} />
         ) : (
-          <div className="space-y-5">
-            {groups.map((g) => (
-              <section key={g.date.toISOString()}>
-                <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500">
-                  {formatDayLabel(g.date, now)}
-                </p>
-                <ul className="card divide-y divide-neutral-100 overflow-hidden">
-                  {g.items.map((b) => (
-                    <BookingRow
-                      key={b.id}
-                      b={b}
-                      labelFor={labelFor}
-                      clientLine={clientLineFor(b)}
-                      onClick={() => onOpen(b)}
-                    />
-                  ))}
-                </ul>
+          <>
+            {upcoming.length > 0 && (
+              <div className="space-y-5">
+                {groups.map((g) => (
+                  <section key={g.date.toISOString()}>
+                    <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500">
+                      {formatDayLabel(g.date, now)}
+                    </p>
+                    <ul className="card divide-y divide-neutral-100 overflow-hidden">
+                      {g.items.map((b) => (
+                        <BookingRow
+                          key={b.id}
+                          b={b}
+                          labelFor={labelFor}
+                          clientLine={clientLineFor(b)}
+                          onClick={() => onOpen(b)}
+                        />
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            )}
+
+            {past.length > 0 && (
+              <section className="mt-7">
+                <button
+                  type="button"
+                  onClick={() => setPastOpen((v) => !v)}
+                  className="tap flex w-full items-center justify-between px-0.5 py-1 text-[12px] font-medium text-neutral-500 hover:text-neutral-700"
+                >
+                  <span>
+                    Past shoots · {past.length}
+                  </span>
+                  <span
+                    className={`transition-transform ${pastOpen ? 'rotate-90' : ''}`}
+                    aria-hidden
+                  >
+                    ›
+                  </span>
+                </button>
+                {pastOpen && pastVisible.length > 0 && (
+                  <ul className="card mt-2 divide-y divide-neutral-100 overflow-hidden opacity-90">
+                    {pastVisible.map((b) => (
+                      <PastBookingRow
+                        key={b.id}
+                        b={b}
+                        labelFor={labelFor}
+                        clientLine={clientLineFor(b)}
+                        onClick={() => onOpen(b)}
+                      />
+                    ))}
+                  </ul>
+                )}
+                {pastOpen && past.length > pastVisible.length && (
+                  <button
+                    type="button"
+                    onClick={onOpenRevenue}
+                    className="tap mt-2 w-full rounded-lg border border-neutral-200 bg-white py-2 text-[12.5px] text-neutral-600 hover:border-neutral-300 hover:text-neutral-900"
+                  >
+                    {past.length - pastVisible.length} older shoots · view in Revenue ›
+                  </button>
+                )}
               </section>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </main>
 
@@ -270,6 +328,49 @@ function BookingRow({
             ›
           </span>
         </div>
+      </button>
+    </li>
+  );
+}
+
+function PastBookingRow({
+  b,
+  labelFor,
+  clientLine,
+  onClick,
+}: {
+  b: Booking;
+  labelFor: (id: string) => string | undefined;
+  clientLine: string | null;
+  onClick: () => void;
+}) {
+  const start = new Date(b.scheduledAt);
+  const dateLabel = start.toLocaleDateString('en-CA', {
+    month: 'short',
+    day: 'numeric',
+  });
+  const firstService = b.services.map(labelFor).find(Boolean);
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="tap flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-neutral-50"
+      >
+        <span className="w-12 shrink-0 text-[12px] font-medium tabular-nums text-neutral-500">
+          {dateLabel}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13.5px] font-medium text-neutral-800">
+            {b.address || 'No address'}
+          </p>
+          <p className="truncate text-[11.5px] text-neutral-500">
+            {clientLine ?? firstService ?? '—'}
+          </p>
+        </div>
+        <span className="shrink-0 text-[13px] font-medium tabular-nums text-neutral-700">
+          {currency(bookingTotal(b))}
+        </span>
       </button>
     </li>
   );

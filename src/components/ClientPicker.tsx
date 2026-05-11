@@ -11,9 +11,6 @@ type Props = {
   onCreateAgent: (companyId: string, name: string) => Agent;
 };
 
-const INPUT =
-  'w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-3 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900';
-
 export function ClientPicker({
   companies,
   agents,
@@ -146,7 +143,7 @@ function Combobox<T extends { id: string }>({
               setQuery('');
               setTimeout(() => inputRef.current?.focus(), 0);
             }}
-            className="tap rounded-md px-2 py-1 text-[12px] text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+            className="tap rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
           >
             Change
           </button>
@@ -199,7 +196,8 @@ function Combobox<T extends { id: string }>({
         autoCapitalize="words"
         disabled={disabled}
         className={
-          INPUT + (disabled ? ' cursor-not-allowed bg-neutral-50 text-neutral-400' : '')
+          'input' +
+          (disabled ? ' cursor-not-allowed bg-neutral-50 text-neutral-400' : '')
         }
       />
       {showDropdown && (filtered.length > 0 || canCreate || emptyHint) && (

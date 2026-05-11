@@ -98,12 +98,15 @@ export function RevenueScreen({ bookings, onBack }: Props) {
                       {currency(m.total)}
                     </p>
                   </div>
-                  <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-neutral-100">
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-neutral-100">
                     <div
-                      className="h-full bg-neutral-900/80"
+                      className="h-full bg-neutral-900/80 transition-[width] duration-200"
                       style={{ width: `${widthPct}%` }}
                     />
                   </div>
+                  <p className="mt-1 text-[10.5px] text-neutral-400 tabular-nums">
+                    {widthPct.toFixed(0)}% of peak ({currency(maxMonth)})
+                  </p>
                 </li>
               );
             })}

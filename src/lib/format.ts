@@ -1,9 +1,10 @@
 import { isSameDay, addDays } from './datetime';
 
+/** Whole-dollar CAD for in-app totals and totals breakdowns. */
 export const currency = (n: number) =>
-  new Intl.NumberFormat('en-US', {
+  new Intl.NumberFormat('en-CA', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'CAD',
     maximumFractionDigits: 0,
   }).format(n);
 
@@ -24,16 +25,23 @@ export const formatInvoiceDate = (d: Date | string) => {
   return `${y}-${m}-${day}`;
 };
 
+/** "3:45pm" — compact 12h. We force 'en-US' for predictable AM/PM (en-CA
+ *  inserts periods on some engines). */
 export const formatTime = (d: Date) =>
   d
-    .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
     .toLowerCase()
-    .replace(' ', '');
+    .replace(/\s+/g, '');
 
 export const formatDayLabel = (d: Date, today: Date = new Date()) => {
   if (isSameDay(d, today)) return 'Today';
   if (isSameDay(d, addDays(today, 1))) return 'Tomorrow';
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  if (isSameDay(d, addDays(today, -1))) return 'Yesterday';
+  return d.toLocaleDateString('en-CA', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
 };
 
 export const formatDuration = (min: number) => {

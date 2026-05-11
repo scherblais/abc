@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { Booking, Company, Invoice, InvoiceStatus } from '../types';
 import { currencyExact, formatInvoiceDate } from '../lib/format';
 import { invoiceSubtotal, invoiceTaxes } from '../lib/invoices';
+import { INVOICE_STATUS_LABEL, StatusPill } from '../components/StatusPill';
 
 type Props = {
   invoices: Invoice[];
@@ -13,20 +14,6 @@ type Props = {
 };
 
 const STATUS_ORDER: InvoiceStatus[] = ['draft', 'sent', 'paid'];
-
-const STATUS_LABEL: Record<InvoiceStatus, string> = {
-  draft: 'Draft',
-  sent: 'Sent',
-  paid: 'Paid',
-  void: 'Void',
-};
-
-const STATUS_PILL: Record<InvoiceStatus, string> = {
-  draft: 'border-neutral-200 bg-neutral-50 text-neutral-700',
-  sent: 'border-amber-200 bg-amber-50 text-amber-800',
-  paid: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  void: 'border-neutral-200 bg-neutral-50 text-neutral-400 line-through',
-};
 
 export function InvoicesScreen({
   invoices,
@@ -104,7 +91,7 @@ export function InvoicesScreen({
               return (
                 <section key={status} className="mb-5">
                   <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500">
-                    {STATUS_LABEL[status]} · {list.length}
+                    {INVOICE_STATUS_LABEL[status]} · {list.length}
                   </p>
                   <ul className="card divide-y divide-neutral-100 overflow-hidden">
                     {list.map((inv) => (
@@ -187,11 +174,7 @@ function Row({
             <p className="truncate text-[14.5px] font-medium text-neutral-900">
               {invoice.number}
             </p>
-            <span
-              className={`pill border ${STATUS_PILL[invoice.status]}`}
-            >
-              {STATUS_LABEL[invoice.status]}
-            </span>
+            <StatusPill status={invoice.status} />
           </div>
           <p className="truncate text-[12.5px] text-neutral-500">
             {companyName} · {invoice.bookingIds.length}{' '}

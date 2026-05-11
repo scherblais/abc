@@ -23,8 +23,8 @@ export function DatePickerRow({ value, onChange }: Props) {
           const label = isToday
             ? 'Today'
             : isTomorrow
-              ? 'Tom'
-              : d.toLocaleDateString('en-US', { weekday: 'short' });
+              ? 'Tmrw'
+              : d.toLocaleDateString('en-CA', { weekday: 'short' });
           const num = d.getDate();
           return (
             <button

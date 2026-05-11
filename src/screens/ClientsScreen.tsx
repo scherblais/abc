@@ -13,8 +13,7 @@ type Props = {
   onDeleteAgent: (id: string) => void;
 };
 
-const INPUT =
-  'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-[14px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900';
+const INPUT = 'input-compact';
 
 export function ClientsScreen({
   companies,

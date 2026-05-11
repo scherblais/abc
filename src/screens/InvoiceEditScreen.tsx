@@ -19,6 +19,8 @@ import {
   invoiceTaxes,
   nextInvoiceNumber,
 } from '../lib/invoices';
+import { ClientPicker } from '../components/ClientPicker';
+import { INVOICE_STATUS_LABEL, StatusPill } from '../components/StatusPill';
 
 type Props = {
   initial?: Invoice;
@@ -35,18 +37,8 @@ type Props = {
   onVoid?: () => void;
   onCancel: () => void;
   onOpenPrint: (id: string) => void;
-};
-
-const INPUT =
-  'w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900';
-const SMALL_INPUT =
-  'w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-[14px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900';
-
-const STATUS_LABEL: Record<InvoiceStatus, string> = {
-  draft: 'Draft',
-  sent: 'Sent',
-  paid: 'Paid',
-  void: 'Void',
+  onCreateCompany: (name: string) => Company;
+  onCreateAgent: (companyId: string, name: string) => Agent;
 };
 
 const buildInitial = (
@@ -96,6 +88,8 @@ export function InvoiceEditScreen({
   onVoid,
   onCancel,
   onOpenPrint,
+  onCreateCompany,
+  onCreateAgent,
 }: Props) {
   const preselectCompanyId = preselectBookingId
     ? bookings.find((b) => b.id === preselectBookingId)?.companyId
@@ -110,7 +104,6 @@ export function InvoiceEditScreen({
   const isLocked = draft.status === 'void';
 
   const company = companies.find((c) => c.id === draft.companyId);
-  const companyAgents = agents.filter((a) => a.companyId === draft.companyId);
 
   // Bookings eligible to attach: same company, not on another non-void invoice.
   const eligibleBookings = useMemo(() => {
@@ -250,48 +243,21 @@ export function InvoiceEditScreen({
 
       <div className="flex-1 pb-12 pt-4">
         <section className="card mb-4 p-4">
-          <label className="block text-[11.5px] font-medium text-neutral-500">
-            Brokerage
-          </label>
-          <select
-            value={draft.companyId}
-            onChange={(e) => setDraft((p) => ({ ...p, companyId: e.target.value }))}
-            disabled={isLocked}
-            className={INPUT + ' mt-1'}
-          >
-            <option value="">Pick a brokerage…</option>
-            {companies
-              .slice()
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-          </select>
-
-          {companyAgents.length > 0 && (
-            <>
-              <label className="mt-3 block text-[11.5px] font-medium text-neutral-500">
-                Attn (optional)
-              </label>
-              <select
-                value={draft.agentId ?? ''}
-                onChange={(e) =>
-                  setDraft((p) => ({ ...p, agentId: e.target.value || undefined }))
-                }
-                disabled={isLocked}
-                className={INPUT + ' mt-1'}
-              >
-                <option value="">No specific agent</option>
-                {companyAgents.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
+          <ClientPicker
+            companies={companies}
+            agents={agents}
+            companyId={draft.companyId || undefined}
+            agentId={draft.agentId}
+            onChange={(companyId, agentId) =>
+              setDraft((p) => ({
+                ...p,
+                companyId: companyId ?? '',
+                agentId,
+              }))
+            }
+            onCreateCompany={onCreateCompany}
+            onCreateAgent={onCreateAgent}
+          />
 
           <label className="mt-3 block text-[11.5px] font-medium text-neutral-500">
             Invoice number
@@ -300,7 +266,7 @@ export function InvoiceEditScreen({
             value={draft.number}
             onChange={(e) => setDraft((p) => ({ ...p, number: e.target.value }))}
             disabled={isLocked}
-            className={INPUT + ' mt-1'}
+            className="input mt-1"
           />
           {numberError && (
             <p className="mt-1 text-[11.5px] text-red-600">{numberError}</p>
@@ -308,9 +274,29 @@ export function InvoiceEditScreen({
         </section>
 
         <section className="card mb-4 p-4">
-          <p className="mb-2 text-[12px] font-medium text-neutral-500">
-            Shoots
-          </p>
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <p className="text-[12px] font-medium text-neutral-500">Shoots</p>
+            {!isLocked && draft.companyId && eligibleBookings.length > 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const allSelected =
+                    draft.bookingIds.length === eligibleBookings.length;
+                  setDraft((p) => ({
+                    ...p,
+                    bookingIds: allSelected
+                      ? []
+                      : eligibleBookings.map((b) => b.id),
+                  }));
+                }}
+                className="tap text-[12px] font-medium text-neutral-600 hover:text-neutral-900"
+              >
+                {draft.bookingIds.length === eligibleBookings.length
+                  ? 'Clear all'
+                  : 'Select all'}
+              </button>
+            )}
+          </div>
           {!draft.companyId ? (
             <p className="text-[13px] text-neutral-500">
               Pick a brokerage to see eligible shoots.
@@ -410,14 +396,10 @@ export function InvoiceEditScreen({
                     : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300',
                 ].join(' ')}
               >
-                {STATUS_LABEL[s]}
+                {INVOICE_STATUS_LABEL[s]}
               </button>
             ))}
-            {draft.status === 'void' && (
-              <span className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-[12.5px] font-medium text-neutral-400 line-through">
-                Void
-              </span>
-            )}
+            {draft.status === 'void' && <StatusPill status="void" />}
           </div>
 
           {draft.status !== 'draft' && (
@@ -464,7 +446,7 @@ export function InvoiceEditScreen({
             disabled={isLocked}
             rows={3}
             placeholder="Payment terms, e-transfer email, thank-you note…"
-            className={INPUT + ' mt-1 resize-none'}
+            className="input mt-1 resize-none"
           />
         </section>
 
@@ -547,7 +529,7 @@ function DateField({
           else onChange(new Date(e.target.value + 'T00:00:00').toISOString());
         }}
         disabled={disabled}
-        className={SMALL_INPUT + ' mt-1'}
+        className="input-compact mt-1"
       />
     </label>
   );

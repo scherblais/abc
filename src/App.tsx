@@ -431,6 +431,8 @@ export default function App() {
           }
           onCancel={() => setScreen({ name: 'invoices' })}
           onOpenPrint={(id) => setScreen({ name: 'invoice-print', invoiceId: id })}
+          onCreateCompany={createCompany}
+          onCreateAgent={createAgent}
         />
       )}
     </div>

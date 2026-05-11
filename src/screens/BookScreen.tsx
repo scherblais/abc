@@ -82,8 +82,7 @@ const emptyDraft = (catalog: Service[]): DraftBooking => {
   };
 };
 
-const INPUT =
-  'w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-3 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900';
+const INPUT = 'input';
 
 export function BookScreen({
   initial,
@@ -632,9 +631,9 @@ function TravelLine({ state, settings }: { state: TravelState; settings: Setting
 }
 
 function formatMoney(n: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-CA', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'CAD',
     maximumFractionDigits: 2,
   }).format(n);
 }
@@ -679,7 +678,7 @@ function InvoiceSection({
           <button
             type="button"
             onClick={() => onOpen(currentInvoice.id)}
-            className="tap rounded-md px-2 py-1 text-[12px] text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
+            className="tap rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
           >
             Open
           </button>
@@ -691,7 +690,7 @@ function InvoiceSection({
                   onRemove();
                 }
               }}
-              className="tap rounded-md px-2 py-1 text-[12px] text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+              className="tap rounded-md px-2.5 py-1.5 text-[12.5px] font-medium text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
             >
               Remove
             </button>

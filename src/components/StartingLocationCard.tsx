@@ -15,8 +15,7 @@ type Status =
   | { kind: 'not_found'; reason?: string }
   | { kind: 'error' };
 
-const INPUT =
-  'w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-3 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900';
+const INPUT = 'input';
 
 export function StartingLocationCard({ settings, onChange }: Props) {
   const [address, setAddress] = useState(settings.startingAddress);
