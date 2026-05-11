@@ -3,6 +3,7 @@ import { HomeScreen } from './screens/HomeScreen';
 import { BookScreen } from './screens/BookScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { ServiceEditScreen } from './screens/ServiceEditScreen';
+import { RevenueScreen } from './screens/RevenueScreen';
 import type { Booking, DraftBooking, DraftService, Service } from './types';
 import {
   loadBookings,
@@ -17,7 +18,8 @@ type Screen =
   | { name: 'home' }
   | { name: 'book'; editingId?: string }
   | { name: 'admin' }
-  | { name: 'service-edit'; serviceId?: string };
+  | { name: 'service-edit'; serviceId?: string }
+  | { name: 'revenue' };
 
 export default function App() {
   const [bookings, setBookings] = useState<Booking[]>(() => loadBookings());
@@ -95,7 +97,11 @@ export default function App() {
           onAdd={() => setScreen({ name: 'book' })}
           onOpen={(b) => setScreen({ name: 'book', editingId: b.id })}
           onOpenAdmin={() => setScreen({ name: 'admin' })}
+          onOpenRevenue={() => setScreen({ name: 'revenue' })}
         />
+      )}
+      {screen.name === 'revenue' && (
+        <RevenueScreen bookings={bookings} onBack={() => setScreen({ name: 'home' })} />
       )}
       {screen.name === 'book' && (
         <BookScreen

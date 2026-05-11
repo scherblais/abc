@@ -9,6 +9,7 @@ type Props = {
   onAdd: () => void;
   onOpen: (b: Booking) => void;
   onOpenAdmin: () => void;
+  onOpenRevenue: () => void;
 };
 
 const groupByDay = (items: Booking[]) => {
@@ -26,7 +27,14 @@ const groupByDay = (items: Booking[]) => {
   return [...groups.values()].sort((a, b) => a.date.getTime() - b.date.getTime());
 };
 
-export function HomeScreen({ bookings, catalog, onAdd, onOpen, onOpenAdmin }: Props) {
+export function HomeScreen({
+  bookings,
+  catalog,
+  onAdd,
+  onOpen,
+  onOpenAdmin,
+  onOpenRevenue,
+}: Props) {
   const now = useMemo(() => new Date(), []);
   const upcoming = useMemo(
     () =>
@@ -40,13 +48,17 @@ export function HomeScreen({ bookings, catalog, onAdd, onOpen, onOpenAdmin }: Pr
 
   const groups = useMemo(() => groupByDay(upcoming), [upcoming]);
 
-  const weekTotal = useMemo(() => {
-    const weekEnd = new Date(now);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    return upcoming
-      .filter((b) => new Date(b.scheduledAt).getTime() <= weekEnd.getTime())
-      .reduce((sum, b) => sum + b.price, 0);
-  }, [upcoming, now]);
+  const monthStats = useMemo(() => {
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const inThisMonth = bookings.filter((b) => {
+      const d = new Date(b.scheduledAt);
+      return d.getFullYear() === year && d.getMonth() === month;
+    });
+    const total = inThisMonth.reduce((sum, b) => sum + b.price, 0);
+    const label = now.toLocaleDateString('en-US', { month: 'long' });
+    return { total, count: inThisMonth.length, label };
+  }, [bookings, now]);
 
   const labelFor = useMemo(() => {
     const byId = new Map(catalog.map((s) => [s.id, s.name]));
@@ -61,11 +73,28 @@ export function HomeScreen({ bookings, catalog, onAdd, onOpen, onOpenAdmin }: Pr
             <h1 className="text-[20px] font-semibold tracking-tightish text-neutral-900">
               Lensbook
             </h1>
-            <p className="mt-0.5 text-[13px] text-neutral-500">
-              {upcoming.length === 0
-                ? 'No shoots booked'
-                : `${upcoming.length} upcoming · ${currency(weekTotal)} this week`}
-            </p>
+            {monthStats.total > 0 ? (
+              <button
+                type="button"
+                onClick={onOpenRevenue}
+                className="tap mt-0.5 inline-flex items-baseline gap-1 text-[13px] text-neutral-500 hover:text-neutral-900"
+              >
+                <span className="font-medium text-neutral-900 tabular-nums">
+                  {currency(monthStats.total)}
+                </span>
+                <span>in {monthStats.label}</span>
+                {upcoming.length > 0 && <span>· {upcoming.length} upcoming</span>}
+                <span className="text-neutral-400" aria-hidden>
+                  ›
+                </span>
+              </button>
+            ) : upcoming.length > 0 ? (
+              <p className="mt-0.5 text-[13px] text-neutral-500">
+                {upcoming.length} upcoming
+              </p>
+            ) : (
+              <p className="mt-0.5 text-[13px] text-neutral-500">No shoots booked</p>
+            )}
           </div>
           <button
             type="button"
