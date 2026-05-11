@@ -11,12 +11,12 @@
  * pure local-only behaviour (legacy localStorage).
  */
 export const FIREBASE_CONFIG = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: 'AIzaSyDiP7sPz6ohktbjUoVC1R6zLwehY7Tm9Iw',
+  authDomain: 'lum-abc.firebaseapp.com',
+  projectId: 'lum-abc',
+  storageBucket: 'lum-abc.firebasestorage.app',
+  messagingSenderId: '342261144181',
+  appId: '1:342261144181:web:0ad03a81b6f7c929fff63c',
 };
 
 /** True when the config has been filled in. */
