@@ -1,9 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { signInWithGoogle } from '../lib/firebase';
 
 export function SignInScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // If the previous attempt was a redirect that failed, getRedirectResult
+  // logged it to sessionStorage. Surface it so the user sees what broke.
+  useEffect(() => {
+    try {
+      const stashed = sessionStorage.getItem('lensbook.auth.lastError');
+      if (stashed) {
+        setError(stashed);
+        sessionStorage.removeItem('lensbook.auth.lastError');
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const onSignIn = async () => {
     setError(null);
@@ -11,7 +25,7 @@ export function SignInScreen() {
     try {
       await signInWithGoogle();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Sign-in failed');
+      setError(e instanceof Error ? `${e.name}: ${e.message}` : 'Sign-in failed');
       setBusy(false);
     }
   };

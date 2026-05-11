@@ -18,7 +18,18 @@ export function useAuth(): AuthState {
     if (!FIREBASE_ENABLED) return;
     const auth = getFirebaseAuth();
     // Resolve any redirect-flow sign-in (iOS Safari path) before subscribing.
-    getRedirectResult(auth).catch(() => {});
+    // Stash an error on sessionStorage so the SignInScreen can show it after
+    // the redirect lands.
+    getRedirectResult(auth).catch((err: unknown) => {
+      const message =
+        err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+      console.error('[auth] redirect result failed:', err);
+      try {
+        sessionStorage.setItem('lensbook.auth.lastError', message);
+      } catch {
+        // ignore
+      }
+    });
     const unsub = onAuthStateChanged(auth, (user) => {
       setState(user ? { status: 'signed-in', user } : { status: 'signed-out' });
     });

@@ -48,21 +48,29 @@ export function getFirebaseDb(): Firestore {
   return _db!;
 }
 
-/** True if Google sign-in popup is likely supported (desktop browsers).
- *  On iOS Safari / in-app browsers, redirect flow is more reliable. */
-function preferRedirect(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent;
-  return /iPhone|iPad|iPod/.test(ua);
-}
-
+/** Try popup first (works in normal mobile Safari + every desktop browser),
+ *  fall back to redirect when popup is blocked, dismissed by the user, or
+ *  outright unsupported by the environment (iOS standalone PWA, in-app
+ *  webviews). Both paths funnel through onAuthStateChanged → useAuth. */
 export async function signInWithGoogle(): Promise<void> {
   const auth = getFirebaseAuth();
   const provider = new GoogleAuthProvider();
-  if (preferRedirect()) {
-    await signInWithRedirect(auth, provider);
-  } else {
+  try {
     await signInWithPopup(auth, provider);
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code ?? '';
+    const fallback = new Set([
+      'auth/popup-blocked',
+      'auth/popup-closed-by-user',
+      'auth/operation-not-supported-in-this-environment',
+      'auth/cancelled-popup-request',
+      'auth/web-storage-unsupported',
+    ]);
+    if (fallback.has(code)) {
+      await signInWithRedirect(auth, provider);
+      return;
+    }
+    throw err;
   }
 }
 
