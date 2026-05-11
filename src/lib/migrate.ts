@@ -8,6 +8,7 @@ import {
   loadServices,
   loadSettings,
 } from './storage';
+import { DEFAULT_CATALOG } from './catalog';
 
 const MARKER_KEY = 'lensbook.migrated.v1';
 
@@ -49,7 +50,10 @@ export async function migrateLocalToCloud(uid: string): Promise<void> {
   const invoices = loadInvoices();
   const companies = loadCompanies();
   const agents = loadAgents();
-  const services = loadServices() ?? [];
+  // Brand-new account with no local services? Seed the default catalog so
+  // the Book screen isn't empty. After this one-time seed, the catalog is
+  // the user's to manage — deletions stay deleted.
+  const services = loadServices() ?? DEFAULT_CATALOG.map((s) => ({ ...s }));
   const settings = loadSettings();
 
   const hasAnything =

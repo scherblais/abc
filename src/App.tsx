@@ -148,23 +148,6 @@ function AppShell({
   );
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
 
-  // Seed the catalog the first time a freshly signed-in user has no services
-  // (and no localStorage to migrate). Avoids an empty Book screen.
-  useEffect(() => {
-    if (!uid) return;
-    if (services.length === 0) {
-      // Only seed once per app load; subsequent zero-length states are
-      // intentional and shouldn't re-seed.
-      const t = window.setTimeout(() => {
-        if (services.length === 0) {
-          setServices(DEFAULT_CATALOG.map((s) => ({ ...s })));
-        }
-      }, 1500);
-      return () => window.clearTimeout(t);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid, services.length === 0]);
-
   // One-shot migration: invoices created before tax was made automatic have
   // gstRate/qstRate snapshotted as 0. Bring them up to current rates so they
   // actually charge tax. New invoices already snapshot the correct rates.
