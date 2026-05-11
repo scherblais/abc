@@ -16,10 +16,7 @@ const groupByDay = (items: Booking[]) => {
   for (const a of items) {
     const d = new Date(a.scheduledAt);
     const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    const bucket = groups.get(key) ?? {
-      date: startOfDay(d),
-      items: [],
-    };
+    const bucket = groups.get(key) ?? { date: startOfDay(d), items: [] };
     bucket.items.push(a);
     groups.set(key, bucket);
   }
@@ -58,48 +55,40 @@ export function HomeScreen({ bookings, catalog, onAdd, onOpen, onOpenAdmin }: Pr
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 bg-ink-950/85 px-4 pb-3 pt-3 backdrop-blur-md">
-        <div className="flex items-end justify-between gap-3">
+      <header className="safe-top sticky top-0 z-10 -mx-4 border-b border-neutral-200/80 bg-white/85 px-4 pb-3 pt-3 backdrop-blur-md">
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+            <h1 className="text-[20px] font-semibold tracking-tightish text-neutral-900">
               Lensbook
-            </p>
-            <h1 className="truncate text-[22px] font-semibold leading-tight">
-              {upcoming.length === 0 ? 'No shoots booked' : `${upcoming.length} upcoming`}
             </h1>
+            <p className="mt-0.5 text-[13px] text-neutral-500">
+              {upcoming.length === 0
+                ? 'No shoots booked'
+                : `${upcoming.length} upcoming · ${currency(weekTotal)} this week`}
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            {weekTotal > 0 && (
-              <div className="text-right">
-                <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white/40">
-                  Next 7 days
-                </p>
-                <p className="text-[18px] font-semibold tabular-nums">{currency(weekTotal)}</p>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={onOpenAdmin}
-              aria-label="Manage catalog"
-              className="tap grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/5 ring-1 ring-white/10"
-            >
-              <SettingsIcon />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onOpenAdmin}
+            aria-label="Manage catalog"
+            className="tap grid h-9 w-9 shrink-0 place-items-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
+          >
+            <SettingsIcon />
+          </button>
         </div>
       </header>
 
-      <main className="flex-1 pb-28">
+      <main className="flex-1 pb-28 pt-4">
         {upcoming.length === 0 ? (
           <EmptyState onAdd={onAdd} />
         ) : (
-          <div className="space-y-5 pt-1">
+          <div className="space-y-5">
             {groups.map((g) => (
               <section key={g.date.toISOString()}>
-                <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">
+                <p className="mb-2 px-0.5 text-[12px] font-medium text-neutral-500">
                   {formatDayLabel(g.date, now)}
                 </p>
-                <ul className="card divide-y divide-white/[0.04] overflow-hidden">
+                <ul className="card divide-y divide-neutral-100 overflow-hidden">
                   {g.items.map((b) => (
                     <BookingRow
                       key={b.id}
@@ -120,9 +109,9 @@ export function HomeScreen({ bookings, catalog, onAdd, onOpen, onOpenAdmin }: Pr
           <button
             type="button"
             onClick={onAdd}
-            className="pointer-events-auto tap flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-5 py-4 text-[16px] font-semibold text-white shadow-[0_10px_30px_-10px_rgba(124,92,255,0.7)]"
+            className="pointer-events-auto tap flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 px-5 py-3.5 text-[15px] font-medium text-white shadow-lg shadow-neutral-900/15 hover:bg-black"
           >
-            <span className="text-[20px] leading-none" aria-hidden>
+            <span className="text-[18px] leading-none" aria-hidden>
               +
             </span>
             Book a shoot
@@ -143,45 +132,52 @@ function BookingRow({
   onClick: () => void;
 }) {
   const start = new Date(b.scheduledAt);
-  const visibleLabels = b.services
+  const labels = b.services
     .map((id) => labelFor(id))
     .filter((s): s is string => Boolean(s));
+
   return (
     <li>
       <button
         type="button"
         onClick={onClick}
-        className="tap flex w-full items-stretch gap-3 px-4 py-3 text-left"
+        className="tap flex w-full items-stretch gap-3 px-4 py-3 text-left hover:bg-neutral-50"
       >
-        <div className="flex w-[58px] shrink-0 flex-col items-start pt-0.5">
-          <span className="text-[15px] font-semibold leading-tight tabular-nums">
+        <div className="flex w-[60px] shrink-0 flex-col items-start pt-0.5">
+          <span className="text-[14.5px] font-semibold leading-tight tabular-nums text-neutral-900">
             {formatTime(start)}
           </span>
-          <span className="text-[11px] text-white/40">{b.durationMin}m</span>
+          <span className="text-[11.5px] text-neutral-400">{b.durationMin}m</span>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-medium">{b.address || 'No address'}</p>
-          <p className="truncate text-[12.5px] text-white/55">
+          <p className="truncate text-[14.5px] font-medium text-neutral-900">
+            {b.address || 'No address'}
+          </p>
+          <p className="truncate text-[12.5px] text-neutral-500">
             {b.client.name ? b.client.name : 'No client name'}
             {b.client.brokerage ? ` · ${b.client.brokerage}` : ''}
           </p>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {visibleLabels.slice(0, 3).map((label, i) => (
-              <span
-                key={`${label}-${i}`}
-                className="pill bg-white/[0.04] text-white/65 ring-1 ring-inset ring-white/5"
-              >
-                {label}
-              </span>
-            ))}
-            {visibleLabels.length > 3 && (
-              <span className="pill text-white/45">+{visibleLabels.length - 3}</span>
-            )}
-          </div>
+          {labels.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {labels.slice(0, 3).map((label, i) => (
+                <span
+                  key={`${label}-${i}`}
+                  className="pill border border-neutral-200 bg-neutral-50 text-neutral-600"
+                >
+                  {label}
+                </span>
+              ))}
+              {labels.length > 3 && (
+                <span className="pill text-neutral-400">+{labels.length - 3}</span>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex shrink-0 flex-col items-end justify-between pt-0.5">
-          <span className="text-[14px] font-semibold tabular-nums">{currency(b.price)}</span>
-          <span className="text-white/30" aria-hidden>
+          <span className="text-[14px] font-semibold tabular-nums text-neutral-900">
+            {currency(b.price)}
+          </span>
+          <span className="text-neutral-300" aria-hidden>
             ›
           </span>
         </div>
@@ -192,27 +188,29 @@ function BookingRow({
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="mt-16 flex flex-col items-center justify-center px-6 text-center">
-      <div className="mb-5 grid h-16 w-16 place-items-center rounded-3xl bg-accent/15 ring-1 ring-accent/30">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <div className="mt-12 flex flex-col items-center justify-center px-6 text-center">
+      <div className="mb-5 grid h-14 w-14 place-items-center rounded-2xl border border-neutral-200 bg-white">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path
             d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"
-            stroke="#a594ff"
+            stroke="#0a0a0a"
             strokeWidth="1.6"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <circle cx="12" cy="13" r="3.5" stroke="#a594ff" strokeWidth="1.6" />
+          <circle cx="12" cy="13" r="3.5" stroke="#0a0a0a" strokeWidth="1.6" />
         </svg>
       </div>
-      <h2 className="text-[18px] font-semibold">Book your first shoot</h2>
-      <p className="mt-1.5 max-w-[18rem] text-[13.5px] leading-snug text-white/55">
+      <h2 className="text-[17px] font-semibold tracking-tightish text-neutral-900">
+        Book your first shoot
+      </h2>
+      <p className="mt-1.5 max-w-[20rem] text-[13.5px] leading-snug text-neutral-500">
         Tap the button below — address, day, time, services. Done in under 30 seconds.
       </p>
       <button
         type="button"
         onClick={onAdd}
-        className="tap mt-6 rounded-full bg-accent px-5 py-2.5 text-[14px] font-semibold text-white"
+        className="tap mt-5 rounded-lg bg-neutral-900 px-4 py-2 text-[14px] font-medium text-white hover:bg-black"
       >
         + New shoot
       </button>
@@ -222,7 +220,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 
 function SettingsIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
         stroke="currentColor"

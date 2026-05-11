@@ -5,6 +5,7 @@ export default {
     extend: {
       fontFamily: {
         sans: [
+          'Inter',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',
@@ -16,18 +17,8 @@ export default {
           'sans-serif',
         ],
       },
-      colors: {
-        ink: {
-          950: '#0b0d12',
-          900: '#11141b',
-          800: '#171b25',
-          700: '#222837',
-          500: '#6b7280',
-        },
-        accent: {
-          DEFAULT: '#7c5cff',
-          soft: '#a594ff',
-        },
+      letterSpacing: {
+        tightish: '-0.01em',
       },
     },
   },

@@ -30,9 +30,17 @@ export function TimePickerRow({ value, onChange }: Props) {
           const selected =
             value.getHours() === p.hour && value.getMinutes() === p.minute;
           return (
-            <Chip key={`${p.hour}:${p.minute}`} selected={selected} onClick={() => onChange(candidate)}>
+            <Chip
+              key={`${p.hour}:${p.minute}`}
+              selected={selected}
+              onClick={() => onChange(candidate)}
+            >
               <span className="tabular-nums">{formatTime(candidate)}</span>
-              {p.label && <span className="ml-1 opacity-70">{p.label}</span>}
+              {p.label && (
+                <span className={selected ? 'ml-1 text-white/70' : 'ml-1 text-neutral-500'}>
+                  {p.label}
+                </span>
+              )}
             </Chip>
           );
         })}

@@ -28,8 +28,6 @@ const draftFromBooking = (b: Booking): DraftBooking => ({
 });
 
 const emptyDraft = (catalog: Service[]): DraftBooking => {
-  // Default to the first service in the catalog (if any) so a fresh booking
-  // already has a price and duration. The user can change it instantly.
   const first = catalog[0];
   return {
     address: '',
@@ -41,6 +39,9 @@ const emptyDraft = (catalog: Service[]): DraftBooking => {
     notes: '',
   };
 };
+
+const INPUT =
+  'w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-3 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900';
 
 export function BookScreen({
   initial,
@@ -74,7 +75,6 @@ export function BookScreen({
     setDraft((p) => {
       const has = p.services.includes(id);
       const next = has ? p.services.filter((s) => s !== id) : [...p.services, id];
-      // If user hasn't overridden totals, recompute from catalog.
       if (!overrideTotals) {
         const { durationMin, price } = sumServices(next, catalog);
         return { ...p, services: next, durationMin, price };
@@ -85,29 +85,33 @@ export function BookScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between bg-ink-950/85 px-4 py-3 backdrop-blur-md">
+      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 bg-white/85 px-4 py-3 backdrop-blur-md">
         <button
           type="button"
           onClick={onCancel}
-          className="tap -ml-1 rounded-lg px-2 py-1.5 text-[15px] text-white/70 hover:text-white"
+          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 hover:text-neutral-900"
         >
           Cancel
         </button>
-        <h1 className="text-[15px] font-semibold">{initial ? 'Edit shoot' : 'New shoot'}</h1>
+        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900">
+          {initial ? 'Edit shoot' : 'New shoot'}
+        </h1>
         <button
           type="button"
           onClick={() => canSave && onSave(draft)}
           disabled={!canSave}
           className={[
-            'tap rounded-full px-3.5 py-1.5 text-[14px] font-semibold transition-colors',
-            canSave ? 'bg-accent text-white' : 'bg-white/10 text-white/40',
+            'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
+            canSave
+              ? 'bg-neutral-900 text-white hover:bg-black'
+              : 'bg-neutral-100 text-neutral-400',
           ].join(' ')}
         >
           {initial ? 'Save' : 'Book'}
         </button>
       </header>
 
-      <div className="flex-1 pb-32 pt-2">
+      <div className="flex-1 pb-32 pt-4">
         <Field label="Address">
           <input
             ref={addressRef}
@@ -116,7 +120,7 @@ export function BookScreen({
             placeholder="123 Main St, San Francisco"
             autoComplete="street-address"
             autoCapitalize="words"
-            className="w-full rounded-2xl bg-white/[0.04] px-4 py-3.5 text-[16px] text-white ring-1 ring-inset ring-white/10 placeholder:text-white/30 focus:bg-white/[0.06] focus:outline-none focus:ring-accent/60"
+            className={INPUT}
           />
         </Field>
 
@@ -132,19 +136,19 @@ export function BookScreen({
           label="Services"
           hint={
             draft.services.length === 0
-              ? 'pick at least one'
+              ? 'Pick at least one'
               : `${formatDuration(draft.durationMin)} · ${currency(draft.price)}`
           }
         >
           {catalog.length === 0 ? (
             <div className="card px-4 py-6 text-center">
-              <p className="text-[13.5px] text-white/55">
+              <p className="text-[13.5px] text-neutral-600">
                 Your catalog is empty. Add a service before you can book.
               </p>
               <button
                 type="button"
                 onClick={onManageCatalog}
-                className="tap mt-3 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-white"
+                className="tap mt-3 rounded-md bg-neutral-900 px-3.5 py-1.5 text-[13px] font-medium text-white hover:bg-black"
               >
                 Manage catalog
               </button>
@@ -160,22 +164,22 @@ export function BookScreen({
             <button
               type="button"
               onClick={() => setOverrideTotals((v) => !v)}
-              className="tap text-[12.5px] text-accent-soft"
+              className="tap text-[12.5px] font-medium text-neutral-700 underline-offset-4 hover:underline"
             >
               {overrideTotals ? 'Use catalog totals' : 'Override price / duration'}
             </button>
             <button
               type="button"
               onClick={onManageCatalog}
-              className="tap text-[12.5px] text-white/45"
+              className="tap text-[12.5px] text-neutral-500 hover:text-neutral-900"
             >
               Edit catalog ›
             </button>
           </div>
           {overrideTotals && (
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <label className="rounded-2xl bg-white/[0.04] px-3 py-2 ring-1 ring-inset ring-white/10">
-                <span className="block text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+              <label className="rounded-lg border border-neutral-200 bg-white px-3 py-2">
+                <span className="block text-[11px] font-medium text-neutral-500">
                   Duration (min)
                 </span>
                 <input
@@ -190,13 +194,11 @@ export function BookScreen({
                       durationMin: Math.max(0, Number(e.target.value) || 0),
                     }))
                   }
-                  className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-white focus:outline-none"
+                  className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 focus:outline-none"
                 />
               </label>
-              <label className="rounded-2xl bg-white/[0.04] px-3 py-2 ring-1 ring-inset ring-white/10">
-                <span className="block text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
-                  Price ($)
-                </span>
+              <label className="rounded-lg border border-neutral-200 bg-white px-3 py-2">
+                <span className="block text-[11px] font-medium text-neutral-500">Price ($)</span>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -209,7 +211,7 @@ export function BookScreen({
                       price: Math.max(0, Number(e.target.value) || 0),
                     }))
                   }
-                  className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-white focus:outline-none"
+                  className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 focus:outline-none"
                 />
               </label>
             </div>
@@ -217,7 +219,7 @@ export function BookScreen({
         </Field>
 
         {showClient ? (
-          <Field label="Client (optional)">
+          <Field label="Client" hint="optional">
             <div className="space-y-2">
               <input
                 value={draft.client.name ?? ''}
@@ -227,7 +229,7 @@ export function BookScreen({
                 placeholder="Name"
                 autoComplete="name"
                 autoCapitalize="words"
-                className="w-full rounded-2xl bg-white/[0.04] px-4 py-3 text-[15px] text-white ring-1 ring-inset ring-white/10 placeholder:text-white/30 focus:outline-none focus:ring-accent/60"
+                className={INPUT}
               />
               <div className="grid grid-cols-2 gap-2">
                 <input
@@ -238,7 +240,7 @@ export function BookScreen({
                   placeholder="Phone"
                   type="tel"
                   autoComplete="tel"
-                  className="rounded-2xl bg-white/[0.04] px-4 py-3 text-[15px] text-white ring-1 ring-inset ring-white/10 placeholder:text-white/30 focus:outline-none focus:ring-accent/60"
+                  className={INPUT}
                 />
                 <input
                   value={draft.client.brokerage ?? ''}
@@ -250,14 +252,14 @@ export function BookScreen({
                   }
                   placeholder="Brokerage"
                   autoCapitalize="words"
-                  className="rounded-2xl bg-white/[0.04] px-4 py-3 text-[15px] text-white ring-1 ring-inset ring-white/10 placeholder:text-white/30 focus:outline-none focus:ring-accent/60"
+                  className={INPUT}
                 />
               </div>
               <input
                 value={draft.notes ?? ''}
                 onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))}
                 placeholder="Notes (gate code, lockbox, owner home...)"
-                className="w-full rounded-2xl bg-white/[0.04] px-4 py-3 text-[15px] text-white ring-1 ring-inset ring-white/10 placeholder:text-white/30 focus:outline-none focus:ring-accent/60"
+                className={INPUT}
               />
             </div>
           </Field>
@@ -265,7 +267,7 @@ export function BookScreen({
           <button
             type="button"
             onClick={() => setShowClient(true)}
-            className="tap mb-4 mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3.5 py-2 text-[13px] text-white/70 ring-1 ring-inset ring-white/10"
+            className="tap mb-4 mt-1 inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-[13px] text-neutral-700 hover:border-neutral-300"
           >
             <span aria-hidden>+</span> Add client / notes
           </button>
@@ -275,22 +277,24 @@ export function BookScreen({
           <button
             type="button"
             onClick={onDelete}
-            className="tap mt-4 w-full rounded-2xl bg-rose-500/10 py-3 text-[14px] font-semibold text-rose-300 ring-1 ring-inset ring-rose-400/20"
+            className="tap mt-6 w-full rounded-lg border border-neutral-200 bg-white py-2.5 text-[14px] font-medium text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
           >
             Delete shoot
           </button>
         )}
       </div>
 
-      <div className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-10">
-        <div className="mx-auto max-w-[480px] px-4 pb-3">
+      <div className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-10 border-t border-neutral-200/80 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto max-w-[480px] px-4 py-3">
           <button
             type="button"
             onClick={() => canSave && onSave(draft)}
             disabled={!canSave}
             className={[
-              'pointer-events-auto tap flex w-full items-center justify-between rounded-2xl px-5 py-4 text-[16px] font-semibold shadow-[0_8px_24px_-8px_rgba(124,92,255,0.6)] transition-colors',
-              canSave ? 'bg-accent text-white' : 'bg-white/10 text-white/40 shadow-none',
+              'pointer-events-auto tap flex w-full items-center justify-between rounded-xl px-5 py-3.5 text-[15px] font-medium',
+              canSave
+                ? 'bg-neutral-900 text-white shadow-lg shadow-neutral-900/15 hover:bg-black'
+                : 'bg-neutral-100 text-neutral-400',
             ].join(' ')}
           >
             <span>{initial ? 'Save changes' : 'Book this shoot'}</span>

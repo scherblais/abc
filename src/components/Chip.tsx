@@ -8,17 +8,17 @@ type Props = {
 };
 
 export function Chip({ selected, onClick, children, size = 'md' }: Props) {
-  const padding = size === 'sm' ? 'px-3 py-1.5 text-[12.5px]' : 'px-3.5 py-2 text-[13.5px]';
+  const padding = size === 'sm' ? 'px-2.5 py-1.5 text-[12.5px]' : 'px-3 py-2 text-[13.5px]';
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
-        'tap rounded-full font-medium ring-1 ring-inset transition-colors',
+        'tap rounded-md border font-medium',
         padding,
         selected
-          ? 'bg-accent text-white ring-accent'
-          : 'bg-white/[0.04] text-white/80 ring-white/10 hover:bg-white/[0.07]',
+          ? 'border-neutral-900 bg-neutral-900 text-white'
+          : 'border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300',
       ].join(' ')}
     >
       {children}

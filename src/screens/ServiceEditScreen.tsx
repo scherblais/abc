@@ -23,6 +23,9 @@ const fromService = (s: Service): DraftService => ({
   description: s.description ?? '',
 });
 
+const INPUT =
+  'w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-3 text-[15px] text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900';
+
 export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props) {
   const [draft, setDraft] = useState<DraftService>(() =>
     initial ? fromService(initial) : empty(),
@@ -49,29 +52,33 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between bg-ink-950/85 px-4 py-3 backdrop-blur-md">
+      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 bg-white/85 px-4 py-3 backdrop-blur-md">
         <button
           type="button"
           onClick={onCancel}
-          className="tap -ml-1 rounded-lg px-2 py-1.5 text-[15px] text-white/70 hover:text-white"
+          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 hover:text-neutral-900"
         >
           Cancel
         </button>
-        <h1 className="text-[15px] font-semibold">{initial ? 'Edit service' : 'New service'}</h1>
+        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900">
+          {initial ? 'Edit service' : 'New service'}
+        </h1>
         <button
           type="button"
           onClick={save}
           disabled={!canSave}
           className={[
-            'tap rounded-full px-3.5 py-1.5 text-[14px] font-semibold transition-colors',
-            canSave ? 'bg-accent text-white' : 'bg-white/10 text-white/40',
+            'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
+            canSave
+              ? 'bg-neutral-900 text-white hover:bg-black'
+              : 'bg-neutral-100 text-neutral-400',
           ].join(' ')}
         >
           Save
         </button>
       </header>
 
-      <div className="flex-1 pb-12 pt-2">
+      <div className="flex-1 pb-12 pt-4">
         <Field label="Name">
           <input
             ref={nameRef}
@@ -79,15 +86,13 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
             onChange={(e) => setDraft((p) => ({ ...p, name: e.target.value }))}
             placeholder="e.g. Photo + Drone"
             autoCapitalize="words"
-            className="w-full rounded-2xl bg-white/[0.04] px-4 py-3.5 text-[16px] text-white ring-1 ring-inset ring-white/10 placeholder:text-white/30 focus:bg-white/[0.06] focus:outline-none focus:ring-accent/60"
+            className={INPUT}
           />
         </Field>
 
         <div className="mb-5 grid grid-cols-2 gap-2">
-          <label className="rounded-2xl bg-white/[0.04] px-3 py-2.5 ring-1 ring-inset ring-white/10">
-            <span className="block text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
-              Duration (min)
-            </span>
+          <label className="rounded-lg border border-neutral-200 bg-white px-3 py-2.5">
+            <span className="block text-[11px] font-medium text-neutral-500">Duration (min)</span>
             <input
               type="number"
               inputMode="numeric"
@@ -95,15 +100,16 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
               step={5}
               value={draft.durationMin}
               onChange={(e) =>
-                setDraft((p) => ({ ...p, durationMin: Math.max(0, Number(e.target.value) || 0) }))
+                setDraft((p) => ({
+                  ...p,
+                  durationMin: Math.max(0, Number(e.target.value) || 0),
+                }))
               }
-              className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-white focus:outline-none"
+              className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 focus:outline-none"
             />
           </label>
-          <label className="rounded-2xl bg-white/[0.04] px-3 py-2.5 ring-1 ring-inset ring-white/10">
-            <span className="block text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
-              Price ($)
-            </span>
+          <label className="rounded-lg border border-neutral-200 bg-white px-3 py-2.5">
+            <span className="block text-[11px] font-medium text-neutral-500">Price ($)</span>
             <input
               type="number"
               inputMode="numeric"
@@ -111,9 +117,12 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
               step={5}
               value={draft.price}
               onChange={(e) =>
-                setDraft((p) => ({ ...p, price: Math.max(0, Number(e.target.value) || 0) }))
+                setDraft((p) => ({
+                  ...p,
+                  price: Math.max(0, Number(e.target.value) || 0),
+                }))
               }
-              className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-white focus:outline-none"
+              className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 focus:outline-none"
             />
           </label>
         </div>
@@ -123,7 +132,7 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
             value={draft.description ?? ''}
             onChange={(e) => setDraft((p) => ({ ...p, description: e.target.value }))}
             placeholder="Shown on the booking screen"
-            className="w-full rounded-2xl bg-white/[0.04] px-4 py-3 text-[15px] text-white ring-1 ring-inset ring-white/10 placeholder:text-white/30 focus:outline-none focus:ring-accent/60"
+            className={INPUT}
           />
         </Field>
 
@@ -131,7 +140,7 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
           <button
             type="button"
             onClick={onDelete}
-            className="tap mt-4 w-full rounded-2xl bg-rose-500/10 py-3 text-[14px] font-semibold text-rose-300 ring-1 ring-inset ring-rose-400/20"
+            className="tap mt-6 w-full rounded-lg border border-neutral-200 bg-white py-2.5 text-[14px] font-medium text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
           >
             Remove from catalog
           </button>

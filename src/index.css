@@ -9,15 +9,24 @@
     height: 100%;
   }
 
+  html {
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
   body {
-    background:
-      radial-gradient(1200px 600px at 100% -10%, rgba(124, 92, 255, 0.18), transparent 60%),
-      radial-gradient(900px 500px at -10% 110%, rgba(80, 200, 255, 0.10), transparent 60%),
-      #0b0d12;
+    background-color: #fafaf9;
+    color: #0a0a0a;
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Respect iOS safe areas */
+  /* Native form elements inherit our fonts and look */
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+  }
+
   .safe-top {
     padding-top: max(env(safe-area-inset-top), 0px);
   }
@@ -28,17 +37,16 @@
 
 @layer components {
   .card {
-    @apply rounded-2xl bg-ink-900/80 ring-1 ring-white/5 backdrop-blur-sm shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset];
+    @apply rounded-2xl bg-white ring-1 ring-neutral-200/80;
   }
   .pill {
-    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium;
+    @apply inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium;
   }
   .tap {
-    @apply active:scale-[0.985] transition-transform duration-100;
+    @apply transition-[transform,background-color,border-color,color] duration-150 active:scale-[0.985];
   }
 }
 
-/* Hide scrollbars on horizontal scrollers but keep accessible */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

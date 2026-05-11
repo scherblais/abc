@@ -19,24 +19,28 @@ export function ServiceGrid({ services, selectedIds, onToggle }: Props) {
             type="button"
             onClick={() => onToggle(s.id)}
             className={[
-              'tap rounded-2xl p-3 text-left ring-1 ring-inset transition-colors',
-              isOn ? 'bg-accent/15 ring-accent/60' : 'bg-white/[0.03] ring-white/10',
+              'tap rounded-xl border p-3 text-left',
+              isOn
+                ? 'border-neutral-900 bg-neutral-50 ring-1 ring-neutral-900'
+                : 'border-neutral-200 bg-white hover:border-neutral-300',
             ].join(' ')}
           >
             <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate text-[14px] font-semibold text-white">{s.name}</span>
-              <span className="text-[13px] font-semibold tabular-nums text-white/90">
+              <span className="truncate text-[14px] font-semibold text-neutral-900">
+                {s.name}
+              </span>
+              <span className="text-[13px] font-semibold tabular-nums text-neutral-900">
                 {currency(s.price)}
               </span>
             </div>
             {s.description ? (
-              <p className="mt-1 line-clamp-2 text-[11.5px] leading-snug text-white/55">
+              <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-neutral-500">
                 {s.description}
               </p>
             ) : (
-              <p className="mt-1 text-[11.5px] text-white/40">&nbsp;</p>
+              <p className="mt-1 text-[12px] text-transparent">&nbsp;</p>
             )}
-            <p className="mt-1 text-[11px] text-white/40">{formatDuration(s.durationMin)}</p>
+            <p className="mt-1 text-[11.5px] text-neutral-400">{formatDuration(s.durationMin)}</p>
           </button>
         );
       })}
