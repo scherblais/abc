@@ -1,57 +1,67 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Booking, DraftBooking, ServiceKey } from '../types';
-import { PACKAGES, SERVICES, sumServices } from '../lib/services';
+import type { Booking, DraftBooking, Service } from '../types';
+import { sumServices } from '../lib/catalog';
 import { suggestedNextSlot } from '../lib/datetime';
 import { currency, formatDayLabel, formatDuration, formatTime } from '../lib/format';
 import { DatePickerRow } from '../components/DatePickerRow';
 import { TimePickerRow } from '../components/TimePickerRow';
-import { PackagePicker } from '../components/PackagePicker';
+import { ServiceGrid } from '../components/ServiceGrid';
 import { Field } from '../components/Field';
-import { Chip } from '../components/Chip';
 
 type Props = {
   initial?: Booking;
+  catalog: Service[];
   onSave: (draft: DraftBooking) => void;
   onDelete?: () => void;
   onCancel: () => void;
+  onManageCatalog: () => void;
 };
-
-const DEFAULT_PKG = PACKAGES[1]; // Photo + Drone
 
 const draftFromBooking = (b: Booking): DraftBooking => ({
   address: b.address,
   scheduledAt: b.scheduledAt,
   durationMin: b.durationMin,
-  services: b.services,
+  services: [...b.services],
   price: b.price,
   client: { ...b.client },
   notes: b.notes,
 });
 
-const emptyDraft = (): DraftBooking => ({
-  address: '',
-  scheduledAt: suggestedNextSlot().toISOString(),
-  durationMin: DEFAULT_PKG.durationMin,
-  services: [...DEFAULT_PKG.services],
-  price: DEFAULT_PKG.price,
-  client: {},
-  notes: '',
-});
+const emptyDraft = (catalog: Service[]): DraftBooking => {
+  // Default to the first service in the catalog (if any) so a fresh booking
+  // already has a price and duration. The user can change it instantly.
+  const first = catalog[0];
+  return {
+    address: '',
+    scheduledAt: suggestedNextSlot().toISOString(),
+    durationMin: first?.durationMin ?? 60,
+    services: first ? [first.id] : [],
+    price: first?.price ?? 0,
+    client: {},
+    notes: '',
+  };
+};
 
-export function BookScreen({ initial, onSave, onDelete, onCancel }: Props) {
+export function BookScreen({
+  initial,
+  catalog,
+  onSave,
+  onDelete,
+  onCancel,
+  onManageCatalog,
+}: Props) {
   const [draft, setDraft] = useState<DraftBooking>(() =>
-    initial ? draftFromBooking(initial) : emptyDraft(),
+    initial ? draftFromBooking(initial) : emptyDraft(catalog),
   );
-  const [customServices, setCustomServices] = useState(false);
   const [showClient, setShowClient] = useState(() => Boolean(initial?.client?.name));
+  const [overrideTotals, setOverrideTotals] = useState(false);
 
   const scheduled = useMemo(() => new Date(draft.scheduledAt), [draft.scheduledAt]);
-  const canSave = draft.address.trim().length > 1;
+  const canSave = draft.address.trim().length > 1 && draft.services.length > 0;
 
   const addressRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!initial) {
-      // Focus address on first open for new bookings
       const t = setTimeout(() => addressRef.current?.focus(), 80);
       return () => clearTimeout(t);
     }
@@ -60,13 +70,16 @@ export function BookScreen({ initial, onSave, onDelete, onCancel }: Props) {
   const setScheduled = (d: Date) =>
     setDraft((p) => ({ ...p, scheduledAt: d.toISOString() }));
 
-  const toggleService = (k: ServiceKey) => {
-    setCustomServices(true);
+  const toggleService = (id: string) => {
     setDraft((p) => {
-      const has = p.services.includes(k);
-      const next = has ? p.services.filter((s) => s !== k) : [...p.services, k];
-      const { durationMin, price } = sumServices(next);
-      return { ...p, services: next, durationMin, price };
+      const has = p.services.includes(id);
+      const next = has ? p.services.filter((s) => s !== id) : [...p.services, id];
+      // If user hasn't overridden totals, recompute from catalog.
+      if (!overrideTotals) {
+        const { durationMin, price } = sumServices(next, catalog);
+        return { ...p, services: next, durationMin, price };
+      }
+      return { ...p, services: next };
     });
   };
 
@@ -87,9 +100,7 @@ export function BookScreen({ initial, onSave, onDelete, onCancel }: Props) {
           disabled={!canSave}
           className={[
             'tap rounded-full px-3.5 py-1.5 text-[14px] font-semibold transition-colors',
-            canSave
-              ? 'bg-accent text-white'
-              : 'bg-white/10 text-white/40',
+            canSave ? 'bg-accent text-white' : 'bg-white/10 text-white/40',
           ].join(' ')}
         >
           {initial ? 'Save' : 'Book'}
@@ -118,59 +129,65 @@ export function BookScreen({ initial, onSave, onDelete, onCancel }: Props) {
         </Field>
 
         <Field
-          label="Package"
-          hint={`${formatDuration(draft.durationMin)} · ${currency(draft.price)}`}
+          label="Services"
+          hint={
+            draft.services.length === 0
+              ? 'pick at least one'
+              : `${formatDuration(draft.durationMin)} · ${currency(draft.price)}`
+          }
         >
-          <PackagePicker
-            selectedServices={draft.services}
-            price={draft.price}
-            durationMin={draft.durationMin}
-            onPick={(pkg) => {
-              setCustomServices(false);
-              setDraft((p) => ({
-                ...p,
-                services: [...pkg.services],
-                durationMin: pkg.durationMin,
-                price: pkg.price,
-              }));
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => setCustomServices((v) => !v)}
-            className="tap mt-3 text-[12.5px] text-accent-soft hover:text-white"
-          >
-            {customServices ? 'Hide custom services' : 'Or pick services manually'}
-          </button>
-          {customServices && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {Object.values(SERVICES).map((s) => (
-                <Chip
-                  key={s.key}
-                  size="sm"
-                  selected={draft.services.includes(s.key)}
-                  onClick={() => toggleService(s.key)}
-                >
-                  {s.label} · {currency(s.basePrice)}
-                </Chip>
-              ))}
+          {catalog.length === 0 ? (
+            <div className="card px-4 py-6 text-center">
+              <p className="text-[13.5px] text-white/55">
+                Your catalog is empty. Add a service before you can book.
+              </p>
+              <button
+                type="button"
+                onClick={onManageCatalog}
+                className="tap mt-3 rounded-full bg-accent px-4 py-2 text-[13px] font-semibold text-white"
+              >
+                Manage catalog
+              </button>
             </div>
+          ) : (
+            <ServiceGrid
+              services={catalog}
+              selectedIds={draft.services}
+              onToggle={toggleService}
+            />
           )}
-          {customServices && (
+          <div className="mt-3 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setOverrideTotals((v) => !v)}
+              className="tap text-[12.5px] text-accent-soft"
+            >
+              {overrideTotals ? 'Use catalog totals' : 'Override price / duration'}
+            </button>
+            <button
+              type="button"
+              onClick={onManageCatalog}
+              className="tap text-[12.5px] text-white/45"
+            >
+              Edit catalog ›
+            </button>
+          </div>
+          {overrideTotals && (
             <div className="mt-3 grid grid-cols-2 gap-2">
               <label className="rounded-2xl bg-white/[0.04] px-3 py-2 ring-1 ring-inset ring-white/10">
                 <span className="block text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
-                  Duration
+                  Duration (min)
                 </span>
                 <input
                   type="number"
-                  min={15}
-                  step={15}
+                  inputMode="numeric"
+                  min={5}
+                  step={5}
                   value={draft.durationMin}
                   onChange={(e) =>
                     setDraft((p) => ({
                       ...p,
-                      durationMin: Math.max(15, Number(e.target.value) || 0),
+                      durationMin: Math.max(0, Number(e.target.value) || 0),
                     }))
                   }
                   className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-white focus:outline-none"
@@ -178,10 +195,11 @@ export function BookScreen({ initial, onSave, onDelete, onCancel }: Props) {
               </label>
               <label className="rounded-2xl bg-white/[0.04] px-3 py-2 ring-1 ring-inset ring-white/10">
                 <span className="block text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
-                  Price
+                  Price ($)
                 </span>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={0}
                   step={5}
                   value={draft.price}
@@ -204,10 +222,7 @@ export function BookScreen({ initial, onSave, onDelete, onCancel }: Props) {
               <input
                 value={draft.client.name ?? ''}
                 onChange={(e) =>
-                  setDraft((p) => ({
-                    ...p,
-                    client: { ...p.client, name: e.target.value },
-                  }))
+                  setDraft((p) => ({ ...p, client: { ...p.client, name: e.target.value } }))
                 }
                 placeholder="Name"
                 autoComplete="name"
@@ -218,10 +233,7 @@ export function BookScreen({ initial, onSave, onDelete, onCancel }: Props) {
                 <input
                   value={draft.client.phone ?? ''}
                   onChange={(e) =>
-                    setDraft((p) => ({
-                      ...p,
-                      client: { ...p.client, phone: e.target.value },
-                    }))
+                    setDraft((p) => ({ ...p, client: { ...p.client, phone: e.target.value } }))
                   }
                   placeholder="Phone"
                   type="tel"
@@ -278,9 +290,7 @@ export function BookScreen({ initial, onSave, onDelete, onCancel }: Props) {
             disabled={!canSave}
             className={[
               'pointer-events-auto tap flex w-full items-center justify-between rounded-2xl px-5 py-4 text-[16px] font-semibold shadow-[0_8px_24px_-8px_rgba(124,92,255,0.6)] transition-colors',
-              canSave
-                ? 'bg-accent text-white'
-                : 'bg-white/10 text-white/40 shadow-none',
+              canSave ? 'bg-accent text-white' : 'bg-white/10 text-white/40 shadow-none',
             ].join(' ')}
           >
             <span>{initial ? 'Save changes' : 'Book this shoot'}</span>

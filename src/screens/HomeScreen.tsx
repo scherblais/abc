@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
-import type { Booking } from '../types';
-import { labelFor } from '../lib/services';
+import type { Booking, Service } from '../types';
 import { startOfDay } from '../lib/datetime';
 import { currency, formatDayLabel, formatTime } from '../lib/format';
 
 type Props = {
   bookings: Booking[];
+  catalog: Service[];
   onAdd: () => void;
   onOpen: (b: Booking) => void;
+  onOpenAdmin: () => void;
 };
 
 const groupByDay = (items: Booking[]) => {
@@ -28,12 +29,14 @@ const groupByDay = (items: Booking[]) => {
   return [...groups.values()].sort((a, b) => a.date.getTime() - b.date.getTime());
 };
 
-export function HomeScreen({ bookings, onAdd, onOpen }: Props) {
+export function HomeScreen({ bookings, catalog, onAdd, onOpen, onOpenAdmin }: Props) {
   const now = useMemo(() => new Date(), []);
   const upcoming = useMemo(
     () =>
       bookings
-        .filter((b) => new Date(b.scheduledAt).getTime() + b.durationMin * 60000 >= now.getTime())
+        .filter(
+          (b) => new Date(b.scheduledAt).getTime() + b.durationMin * 60000 >= now.getTime(),
+        )
         .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)),
     [bookings, now],
   );
@@ -48,26 +51,41 @@ export function HomeScreen({ bookings, onAdd, onOpen }: Props) {
       .reduce((sum, b) => sum + b.price, 0);
   }, [upcoming, now]);
 
+  const labelFor = useMemo(() => {
+    const byId = new Map(catalog.map((s) => [s.id, s.name]));
+    return (id: string) => byId.get(id);
+  }, [catalog]);
+
   return (
     <div className="flex h-full min-h-full flex-col">
       <header className="safe-top sticky top-0 z-10 -mx-4 bg-ink-950/85 px-4 pb-3 pt-3 backdrop-blur-md">
         <div className="flex items-end justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
               Lensbook
             </p>
-            <h1 className="text-[22px] font-semibold leading-tight">
+            <h1 className="truncate text-[22px] font-semibold leading-tight">
               {upcoming.length === 0 ? 'No shoots booked' : `${upcoming.length} upcoming`}
             </h1>
           </div>
-          {weekTotal > 0 && (
-            <div className="text-right">
-              <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white/40">
-                Next 7 days
-              </p>
-              <p className="text-[18px] font-semibold tabular-nums">{currency(weekTotal)}</p>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {weekTotal > 0 && (
+              <div className="text-right">
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white/40">
+                  Next 7 days
+                </p>
+                <p className="text-[18px] font-semibold tabular-nums">{currency(weekTotal)}</p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onOpenAdmin}
+              aria-label="Manage catalog"
+              className="tap grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/5 ring-1 ring-white/10"
+            >
+              <SettingsIcon />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -83,7 +101,12 @@ export function HomeScreen({ bookings, onAdd, onOpen }: Props) {
                 </p>
                 <ul className="card divide-y divide-white/[0.04] overflow-hidden">
                   {g.items.map((b) => (
-                    <BookingRow key={b.id} b={b} onClick={() => onOpen(b)} />
+                    <BookingRow
+                      key={b.id}
+                      b={b}
+                      labelFor={labelFor}
+                      onClick={() => onOpen(b)}
+                    />
                   ))}
                 </ul>
               </section>
@@ -110,8 +133,19 @@ export function HomeScreen({ bookings, onAdd, onOpen }: Props) {
   );
 }
 
-function BookingRow({ b, onClick }: { b: Booking; onClick: () => void }) {
+function BookingRow({
+  b,
+  labelFor,
+  onClick,
+}: {
+  b: Booking;
+  labelFor: (id: string) => string | undefined;
+  onClick: () => void;
+}) {
   const start = new Date(b.scheduledAt);
+  const visibleLabels = b.services
+    .map((id) => labelFor(id))
+    .filter((s): s is string => Boolean(s));
   return (
     <li>
       <button
@@ -128,20 +162,20 @@ function BookingRow({ b, onClick }: { b: Booking; onClick: () => void }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] font-medium">{b.address || 'No address'}</p>
           <p className="truncate text-[12.5px] text-white/55">
-            {b.client.name ? `${b.client.name}` : 'No client name'}
+            {b.client.name ? b.client.name : 'No client name'}
             {b.client.brokerage ? ` · ${b.client.brokerage}` : ''}
           </p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {b.services.slice(0, 3).map((s) => (
+            {visibleLabels.slice(0, 3).map((label, i) => (
               <span
-                key={s}
+                key={`${label}-${i}`}
                 className="pill bg-white/[0.04] text-white/65 ring-1 ring-inset ring-white/5"
               >
-                {labelFor(s)}
+                {label}
               </span>
             ))}
-            {b.services.length > 3 && (
-              <span className="pill text-white/45">+{b.services.length - 3}</span>
+            {visibleLabels.length > 3 && (
+              <span className="pill text-white/45">+{visibleLabels.length - 3}</span>
             )}
           </div>
         </div>
@@ -173,7 +207,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       </div>
       <h2 className="text-[18px] font-semibold">Book your first shoot</h2>
       <p className="mt-1.5 max-w-[18rem] text-[13.5px] leading-snug text-white/55">
-        Tap the button below — address, day, time, package. Done in under 30 seconds.
+        Tap the button below — address, day, time, services. Done in under 30 seconds.
       </p>
       <button
         type="button"
@@ -183,5 +217,23 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         + New shoot
       </button>
     </div>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="m19.4 13.6.1-1.6-.1-1.6 2-1.5-2-3.4-2.3.9a7 7 0 0 0-2.7-1.6L13.9 2h-3.8l-.5 2.8a7 7 0 0 0-2.7 1.6l-2.3-.9-2 3.4 2 1.5-.1 1.6.1 1.6-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2.7 1.6L10.1 22h3.8l.5-2.8a7 7 0 0 0 2.7-1.6l2.3.9 2-3.4-2-1.5Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

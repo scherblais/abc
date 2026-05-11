@@ -1,19 +1,9 @@
-export type ServiceKey = 'photo' | 'photo_video' | 'drone' | 'twilight' | 'floor_plan' | 'tour_3d';
-
 export type Service = {
-  key: ServiceKey;
-  label: string;
-  durationMin: number;
-  basePrice: number;
-};
-
-export type Package = {
   id: string;
-  label: string;
-  services: ServiceKey[];
+  name: string;
   durationMin: number;
   price: number;
-  description: string;
+  description?: string;
 };
 
 export type Booking = {
@@ -21,8 +11,8 @@ export type Booking = {
   address: string;
   scheduledAt: string; // ISO
   durationMin: number;
-  services: ServiceKey[];
   price: number;
+  services: string[]; // service IDs (may include stale IDs after a service is removed)
   client: {
     name?: string;
     phone?: string;
@@ -35,3 +25,5 @@ export type Booking = {
 };
 
 export type DraftBooking = Omit<Booking, 'id' | 'createdAt' | 'source'>;
+
+export type DraftService = Omit<Service, 'id'>;

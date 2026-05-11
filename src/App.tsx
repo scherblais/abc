@@ -1,45 +1,89 @@
 import { useEffect, useState } from 'react';
 import { HomeScreen } from './screens/HomeScreen';
 import { BookScreen } from './screens/BookScreen';
-import type { Booking, DraftBooking } from './types';
-import { loadBookings, newId, saveBookings } from './lib/storage';
+import { AdminScreen } from './screens/AdminScreen';
+import { ServiceEditScreen } from './screens/ServiceEditScreen';
+import type { Booking, DraftBooking, DraftService, Service } from './types';
+import {
+  loadBookings,
+  loadServices,
+  newId,
+  saveBookings,
+  saveServices,
+} from './lib/storage';
+import { DEFAULT_CATALOG } from './lib/catalog';
 
-type Screen = { name: 'home' } | { name: 'book'; editingId?: string };
+type Screen =
+  | { name: 'home' }
+  | { name: 'book'; editingId?: string }
+  | { name: 'admin' }
+  | { name: 'service-edit'; serviceId?: string };
 
 export default function App() {
   const [bookings, setBookings] = useState<Booking[]>(() => loadBookings());
+  const [services, setServices] = useState<Service[]>(() => {
+    const stored = loadServices();
+    return stored ?? DEFAULT_CATALOG;
+  });
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
 
   useEffect(() => {
     saveBookings(bookings);
   }, [bookings]);
 
-  const editing =
+  useEffect(() => {
+    saveServices(services);
+  }, [services]);
+
+  const editingBooking =
     screen.name === 'book' && screen.editingId
       ? bookings.find((b) => b.id === screen.editingId)
       : undefined;
 
-  const handleSave = (draft: DraftBooking) => {
-    if (editing) {
+  const editingService =
+    screen.name === 'service-edit' && screen.serviceId
+      ? services.find((s) => s.id === screen.serviceId)
+      : undefined;
+
+  const handleSaveBooking = (draft: DraftBooking) => {
+    if (editingBooking) {
       setBookings((prev) =>
-        prev.map((b) => (b.id === editing.id ? { ...b, ...draft } : b)),
+        prev.map((b) => (b.id === editingBooking.id ? { ...b, ...draft } : b)),
       );
     } else {
-      const newBooking: Booking = {
+      const next: Booking = {
         ...draft,
         id: newId(),
         createdAt: new Date().toISOString(),
         source: 'me',
       };
-      setBookings((prev) => [...prev, newBooking]);
+      setBookings((prev) => [...prev, next]);
     }
     setScreen({ name: 'home' });
   };
 
-  const handleDelete = () => {
-    if (!editing) return;
-    setBookings((prev) => prev.filter((b) => b.id !== editing.id));
+  const handleDeleteBooking = () => {
+    if (!editingBooking) return;
+    setBookings((prev) => prev.filter((b) => b.id !== editingBooking.id));
     setScreen({ name: 'home' });
+  };
+
+  const handleSaveService = (draft: DraftService) => {
+    if (editingService) {
+      setServices((prev) =>
+        prev.map((s) => (s.id === editingService.id ? { ...s, ...draft } : s)),
+      );
+    } else {
+      const next: Service = { ...draft, id: newId() };
+      setServices((prev) => [...prev, next]);
+    }
+    setScreen({ name: 'admin' });
+  };
+
+  const handleDeleteService = () => {
+    if (!editingService) return;
+    setServices((prev) => prev.filter((s) => s.id !== editingService.id));
+    setScreen({ name: 'admin' });
   };
 
   return (
@@ -47,16 +91,36 @@ export default function App() {
       {screen.name === 'home' && (
         <HomeScreen
           bookings={bookings}
+          catalog={services}
           onAdd={() => setScreen({ name: 'book' })}
           onOpen={(b) => setScreen({ name: 'book', editingId: b.id })}
+          onOpenAdmin={() => setScreen({ name: 'admin' })}
         />
       )}
       {screen.name === 'book' && (
         <BookScreen
-          initial={editing}
-          onSave={handleSave}
-          onDelete={editing ? handleDelete : undefined}
+          initial={editingBooking}
+          catalog={services}
+          onSave={handleSaveBooking}
+          onDelete={editingBooking ? handleDeleteBooking : undefined}
           onCancel={() => setScreen({ name: 'home' })}
+          onManageCatalog={() => setScreen({ name: 'admin' })}
+        />
+      )}
+      {screen.name === 'admin' && (
+        <AdminScreen
+          services={services}
+          onBack={() => setScreen({ name: 'home' })}
+          onAdd={() => setScreen({ name: 'service-edit' })}
+          onEdit={(s) => setScreen({ name: 'service-edit', serviceId: s.id })}
+        />
+      )}
+      {screen.name === 'service-edit' && (
+        <ServiceEditScreen
+          initial={editingService}
+          onSave={handleSaveService}
+          onDelete={editingService ? handleDeleteService : undefined}
+          onCancel={() => setScreen({ name: 'admin' })}
         />
       )}
     </div>
