@@ -1,18 +1,21 @@
 import { useMemo } from 'react';
-import type { Agent, Booking, Company, Service } from '../types';
+import type { Agent, Booking, Company, Invoice, Service } from '../types';
 import { startOfDay } from '../lib/datetime';
 import { currency, formatDayLabel, formatTime } from '../lib/format';
 import { bookingTotal } from '../lib/bookings';
+import { invoiceSubtotal, invoiceTaxes } from '../lib/invoices';
 
 type Props = {
   bookings: Booking[];
   catalog: Service[];
   companies: Company[];
   agents: Agent[];
+  invoices: Invoice[];
   onAdd: () => void;
   onOpen: (b: Booking) => void;
   onOpenAdmin: () => void;
   onOpenRevenue: () => void;
+  onOpenInvoices: () => void;
 };
 
 const groupByDay = (items: Booking[]) => {
@@ -35,11 +38,22 @@ export function HomeScreen({
   catalog,
   companies,
   agents,
+  invoices,
   onAdd,
   onOpen,
   onOpenAdmin,
   onOpenRevenue,
+  onOpenInvoices,
 }: Props) {
+  const outstanding = useMemo(() => {
+    const sent = invoices.filter((i) => i.status === 'sent');
+    let total = 0;
+    for (const inv of sent) {
+      const sub = invoiceSubtotal(inv, bookings);
+      total += invoiceTaxes(sub, inv.gstRate, inv.qstRate).total;
+    }
+    return { count: sent.length, total };
+  }, [invoices, bookings]);
   const now = useMemo(() => new Date(), []);
   const upcoming = useMemo(
     () =>
@@ -122,14 +136,32 @@ export function HomeScreen({
               <p className="mt-0.5 text-[13px] text-neutral-500">No shoots booked</p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onOpenAdmin}
-            aria-label="Manage catalog"
-            className="tap grid h-9 w-9 shrink-0 place-items-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
-          >
-            <SettingsIcon />
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={onOpenInvoices}
+              aria-label="Invoices"
+              className="tap relative grid h-9 w-9 place-items-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
+            >
+              <InvoiceIcon />
+              {outstanding.count > 0 && (
+                <span
+                  aria-hidden
+                  className="absolute -right-1 -top-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold text-white"
+                >
+                  {outstanding.count}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={onOpenAdmin}
+              aria-label="Manage catalog"
+              className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
+            >
+              <SettingsIcon />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -272,6 +304,21 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         + New shoot
       </button>
     </div>
+  );
+}
+
+function InvoiceIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M14 3v5h5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M9 13h7M9 17h7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
   );
 }
 

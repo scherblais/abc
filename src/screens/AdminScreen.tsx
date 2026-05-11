@@ -1,6 +1,7 @@
 import type { Service, Settings } from '../types';
 import { currency, formatDuration } from '../lib/format';
 import { StartingLocationCard } from '../components/StartingLocationCard';
+import { BusinessInfoCard } from '../components/BusinessInfoCard';
 
 type Props = {
   services: Service[];
@@ -48,6 +49,7 @@ export function AdminScreen({
 
       <main className="flex-1 pb-12 pt-4">
         <StartingLocationCard settings={settings} onChange={onSaveSettings} />
+        <BusinessInfoCard settings={settings} onChange={onSaveSettings} />
 
         <button
           type="button"

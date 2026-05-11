@@ -1,16 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { HomeScreen } from './screens/HomeScreen';
 import { BookScreen } from './screens/BookScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { ServiceEditScreen } from './screens/ServiceEditScreen';
 import { RevenueScreen } from './screens/RevenueScreen';
 import { ClientsScreen } from './screens/ClientsScreen';
+import { InvoicesScreen } from './screens/InvoicesScreen';
+import { InvoiceEditScreen } from './screens/InvoiceEditScreen';
+import { InvoicePrintScreen } from './screens/InvoicePrintScreen';
 import type {
   Agent,
   Booking,
   Company,
   DraftBooking,
   DraftService,
+  Invoice,
   Service,
   Settings,
 } from './types';
@@ -18,18 +22,26 @@ import {
   loadAgents,
   loadBookings,
   loadCompanies,
+  loadInvoices,
   loadServices,
   loadSettings,
   newId,
   saveAgents,
   saveBookings,
   saveCompanies,
+  saveInvoices,
   saveServices,
   saveSettings,
 } from './lib/storage';
 import { DEFAULT_CATALOG } from './lib/catalog';
 import { geocode } from './lib/geocode';
 import { googleGeocode } from './lib/google';
+import {
+  GST_RATE,
+  QST_RATE,
+  bookingToInvoiceIndex,
+  nextInvoiceNumber,
+} from './lib/invoices';
 
 type Screen =
   | { name: 'home' }
@@ -37,7 +49,10 @@ type Screen =
   | { name: 'admin' }
   | { name: 'service-edit'; serviceId?: string }
   | { name: 'clients' }
-  | { name: 'revenue' };
+  | { name: 'revenue' }
+  | { name: 'invoices' }
+  | { name: 'invoice-edit'; invoiceId?: string; preselectBookingId?: string }
+  | { name: 'invoice-print'; invoiceId: string };
 
 export default function App() {
   const [bookings, setBookings] = useState<Booking[]>(() => loadBookings());
@@ -47,6 +62,7 @@ export default function App() {
   });
   const [companies, setCompanies] = useState<Company[]>(() => loadCompanies());
   const [agents, setAgents] = useState<Agent[]>(() => loadAgents());
+  const [invoices, setInvoices] = useState<Invoice[]>(() => loadInvoices());
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
 
@@ -67,11 +83,13 @@ export default function App() {
   }, [agents]);
 
   useEffect(() => {
+    saveInvoices(invoices);
+  }, [invoices]);
+
+  useEffect(() => {
     saveSettings(settings);
   }, [settings]);
 
-  // Resolve the starting address on first launch so travel works immediately,
-  // before the user ever opens Settings.
   useEffect(() => {
     if (settings.startingAddress && !settings.startingCoords) {
       let cancelled = false;
@@ -96,6 +114,12 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // bookingId → invoiceId, rebuilt only when invoices change.
+  const bookingInvoiceIndex = useMemo(
+    () => bookingToInvoiceIndex(invoices),
+    [invoices],
+  );
+
   const editingBooking =
     screen.name === 'book' && screen.editingId
       ? bookings.find((b) => b.id === screen.editingId)
@@ -104,6 +128,16 @@ export default function App() {
   const editingService =
     screen.name === 'service-edit' && screen.serviceId
       ? services.find((s) => s.id === screen.serviceId)
+      : undefined;
+
+  const editingInvoice =
+    screen.name === 'invoice-edit' && screen.invoiceId
+      ? invoices.find((i) => i.id === screen.invoiceId)
+      : undefined;
+
+  const printInvoice =
+    screen.name === 'invoice-print'
+      ? invoices.find((i) => i.id === screen.invoiceId)
       : undefined;
 
   const handleSaveBooking = (draft: DraftBooking) => {
@@ -126,6 +160,14 @@ export default function App() {
   const handleDeleteBooking = () => {
     if (!editingBooking) return;
     setBookings((prev) => prev.filter((b) => b.id !== editingBooking.id));
+    // Drop the booking from any invoices referencing it.
+    setInvoices((prev) =>
+      prev.map((i) =>
+        i.bookingIds.includes(editingBooking.id)
+          ? { ...i, bookingIds: i.bookingIds.filter((x) => x !== editingBooking.id) }
+          : i,
+      ),
+    );
     setScreen({ name: 'home' });
   };
 
@@ -163,9 +205,6 @@ export default function App() {
 
   const deleteCompany = (id: string) => {
     setCompanies((prev) => prev.filter((c) => c.id !== id));
-    // Cascade: drop agents under this company. Bookings keep companyId/agentId
-    // as orphaned IDs — the UI resolves them as "(deleted)" which is fine for
-    // historical records.
     setAgents((prev) => prev.filter((a) => a.companyId !== id));
   };
 
@@ -188,6 +227,101 @@ export default function App() {
     setAgents((prev) => prev.filter((a) => a.id !== id));
   };
 
+  // --- Invoices ---
+
+  const addBookingToInvoice = (invoiceId: string, bookingId: string) => {
+    setInvoices((prev) =>
+      prev.map((i) =>
+        i.id === invoiceId && !i.bookingIds.includes(bookingId)
+          ? { ...i, bookingIds: [...i.bookingIds, bookingId] }
+          : i,
+      ),
+    );
+  };
+
+  const removeBookingFromInvoice = (bookingId: string) => {
+    setInvoices((prev) =>
+      prev.map((i) =>
+        i.bookingIds.includes(bookingId)
+          ? { ...i, bookingIds: i.bookingIds.filter((x) => x !== bookingId) }
+          : i,
+      ),
+    );
+  };
+
+  const createInvoiceForBooking = (bookingId: string) => {
+    const booking = bookings.find((b) => b.id === bookingId);
+    if (!booking || !booking.companyId) return;
+    const now = new Date();
+    const next: Invoice = {
+      id: newId(),
+      number: nextInvoiceNumber(invoices, now.getFullYear()),
+      companyId: booking.companyId,
+      agentId: booking.agentId,
+      bookingIds: [bookingId],
+      billTo: { name: '' },
+      business: {
+        name: settings.businessName ?? '',
+        address: settings.businessAddress,
+        gstNumber: settings.gstNumber,
+        qstNumber: settings.qstNumber,
+      },
+      gstRate: settings.gstNumber ? GST_RATE : 0,
+      qstRate: settings.qstNumber ? QST_RATE : 0,
+      status: 'draft',
+      notes: '',
+      createdAt: now.toISOString(),
+    };
+    setInvoices((prev) => [...prev, next]);
+    setScreen({ name: 'invoice-edit', invoiceId: next.id });
+  };
+
+  const saveInvoice = (invoice: Invoice) => {
+    if (!invoice.id) {
+      // Brand-new invoice from the InvoicesScreen "+ New" path.
+      const final: Invoice = {
+        ...invoice,
+        id: newId(),
+        createdAt: new Date().toISOString(),
+      };
+      setInvoices((prev) => [...prev, final]);
+    } else {
+      setInvoices((prev) => prev.map((i) => (i.id === invoice.id ? invoice : i)));
+    }
+    setScreen({ name: 'invoices' });
+  };
+
+  const deleteInvoice = () => {
+    if (!editingInvoice || editingInvoice.status !== 'draft') return;
+    setInvoices((prev) => prev.filter((i) => i.id !== editingInvoice.id));
+    setScreen({ name: 'invoices' });
+  };
+
+  const voidInvoice = () => {
+    if (!editingInvoice) return;
+    setInvoices((prev) =>
+      prev.map((i) =>
+        i.id === editingInvoice.id ? { ...i, status: 'void' as const } : i,
+      ),
+    );
+    setScreen({ name: 'invoices' });
+  };
+
+  // Print route renders outside the mobile-width wrapper so the invoice can
+  // span the full page when printed to PDF.
+  if (screen.name === 'invoice-print' && printInvoice) {
+    return (
+      <InvoicePrintScreen
+        invoice={printInvoice}
+        bookings={bookings}
+        services={services}
+        onBack={() =>
+          setScreen({ name: 'invoice-edit', invoiceId: printInvoice.id })
+        }
+      />
+    );
+  }
+
   return (
     <div className="mx-auto flex min-h-full w-full max-w-[480px] flex-col px-4">
       {screen.name === 'home' && (
@@ -196,10 +330,12 @@ export default function App() {
           catalog={services}
           companies={companies}
           agents={agents}
+          invoices={invoices}
           onAdd={() => setScreen({ name: 'book' })}
           onOpen={(b) => setScreen({ name: 'book', editingId: b.id })}
           onOpenAdmin={() => setScreen({ name: 'admin' })}
           onOpenRevenue={() => setScreen({ name: 'revenue' })}
+          onOpenInvoices={() => setScreen({ name: 'invoices' })}
         />
       )}
       {screen.name === 'revenue' && (
@@ -211,6 +347,8 @@ export default function App() {
           catalog={services}
           companies={companies}
           agents={agents}
+          invoices={invoices}
+          bookingInvoiceIndex={bookingInvoiceIndex}
           settings={settings}
           onSave={handleSaveBooking}
           onDelete={editingBooking ? handleDeleteBooking : undefined}
@@ -218,6 +356,10 @@ export default function App() {
           onManageCatalog={() => setScreen({ name: 'admin' })}
           onCreateCompany={createCompany}
           onCreateAgent={createAgent}
+          onAddBookingToInvoice={addBookingToInvoice}
+          onRemoveBookingFromInvoice={removeBookingFromInvoice}
+          onCreateInvoiceForBooking={createInvoiceForBooking}
+          onOpenInvoice={(id) => setScreen({ name: 'invoice-edit', invoiceId: id })}
         />
       )}
       {screen.name === 'admin' && (
@@ -252,6 +394,43 @@ export default function App() {
           onCreateAgent={createAgent}
           onUpdateAgent={updateAgent}
           onDeleteAgent={deleteAgent}
+        />
+      )}
+      {screen.name === 'invoices' && (
+        <InvoicesScreen
+          invoices={invoices}
+          bookings={bookings}
+          companies={companies}
+          onBack={() => setScreen({ name: 'home' })}
+          onNew={() => setScreen({ name: 'invoice-edit' })}
+          onOpen={(id) => setScreen({ name: 'invoice-edit', invoiceId: id })}
+        />
+      )}
+      {screen.name === 'invoice-edit' && (
+        <InvoiceEditScreen
+          initial={editingInvoice}
+          invoices={invoices}
+          bookings={bookings}
+          companies={companies}
+          agents={agents}
+          settings={settings}
+          bookingIndex={bookingInvoiceIndex}
+          preselectBookingId={
+            screen.name === 'invoice-edit' ? screen.preselectBookingId : undefined
+          }
+          onSave={saveInvoice}
+          onDelete={
+            editingInvoice && editingInvoice.status === 'draft'
+              ? deleteInvoice
+              : undefined
+          }
+          onVoid={
+            editingInvoice && editingInvoice.status !== 'draft'
+              ? voidInvoice
+              : undefined
+          }
+          onCancel={() => setScreen({ name: 'invoices' })}
+          onOpenPrint={(id) => setScreen({ name: 'invoice-print', invoiceId: id })}
         />
       )}
     </div>

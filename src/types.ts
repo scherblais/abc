@@ -18,6 +18,41 @@ export type Settings = {
   /** Optional Google Maps Platform key. When set, Geocoding API + Routes API
    *  are used (road distance). Otherwise we fall back to Nominatim + haversine. */
   googleApiKey?: string;
+  /** Business identity for invoices (snapshotted onto each invoice at issue). */
+  businessName?: string;
+  businessAddress?: string;
+  gstNumber?: string;
+  qstNumber?: string;
+  /** Days added to issuedAt to auto-compute dueAt. Default 30. */
+  defaultPaymentTermsDays?: number;
+};
+
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'void';
+
+export type Invoice = {
+  id: string;
+  number: string; // "2026-001"
+  companyId: string;
+  agentId?: string;
+  bookingIds: string[];
+  /** Snapshot at issue time so a deleted brokerage doesn't blank out the
+   *  historical record. */
+  billTo: { name: string; address?: string };
+  business: {
+    name: string;
+    address?: string;
+    gstNumber?: string;
+    qstNumber?: string;
+  };
+  /** Snapshot of the tax rates at issue time (0.05, 0.09975 today). */
+  gstRate: number;
+  qstRate: number;
+  issuedAt?: string;
+  dueAt?: string;
+  paidAt?: string;
+  status: InvoiceStatus;
+  notes?: string;
+  createdAt: string;
 };
 
 export type Company = {
@@ -84,3 +119,4 @@ export type DraftBooking = Omit<Booking, 'id' | 'createdAt' | 'source'>;
 export type DraftService = Omit<Service, 'id'>;
 export type DraftCompany = Omit<Company, 'id' | 'createdAt'>;
 export type DraftAgent = Omit<Agent, 'id' | 'createdAt'>;
+export type DraftInvoice = Omit<Invoice, 'id' | 'createdAt'>;

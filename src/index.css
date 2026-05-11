@@ -54,3 +54,27 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Print path: when an invoice opens its print view, the on-screen toolbar
+ * hides and the page renders as plain black-on-white letterhead so the
+ * browser's "Save as PDF" produces a clean export. */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  #root,
+  #print-root {
+    height: auto !important;
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    color: black !important;
+  }
+}
+

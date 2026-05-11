@@ -1,10 +1,18 @@
-import type { Agent, Booking, Company, Service, Settings } from '../types';
+import type {
+  Agent,
+  Booking,
+  Company,
+  Invoice,
+  Service,
+  Settings,
+} from '../types';
 
 const BOOKINGS_KEY = 'lensbook.bookings.v1';
 const SERVICES_KEY = 'lensbook.services.v1';
 const SETTINGS_KEY = 'lensbook.settings.v1';
 const COMPANIES_KEY = 'lensbook.companies.v1';
 const AGENTS_KEY = 'lensbook.agents.v1';
+const INVOICES_KEY = 'lensbook.invoices.v1';
 
 export const DEFAULT_SETTINGS: Settings = {
   startingAddress: 'Carignan, QC',
@@ -85,6 +93,21 @@ export const loadAgents = (): Agent[] => {
 
 export const saveAgents = (agents: Agent[]) => {
   localStorage.setItem(AGENTS_KEY, JSON.stringify(agents));
+};
+
+export const loadInvoices = (): Invoice[] => {
+  try {
+    const raw = localStorage.getItem(INVOICES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Invoice[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveInvoices = (invoices: Invoice[]) => {
+  localStorage.setItem(INVOICES_KEY, JSON.stringify(invoices));
 };
 
 export const newId = () =>

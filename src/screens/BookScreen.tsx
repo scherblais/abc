@@ -4,6 +4,7 @@ import type {
   Booking,
   Company,
   DraftBooking,
+  Invoice,
   Service,
   Settings,
 } from '../types';
@@ -24,6 +25,8 @@ type Props = {
   catalog: Service[];
   companies: Company[];
   agents: Agent[];
+  invoices: Invoice[];
+  bookingInvoiceIndex: Map<string, string>;
   settings: Settings;
   onSave: (draft: DraftBooking) => void;
   onDelete?: () => void;
@@ -31,6 +34,10 @@ type Props = {
   onManageCatalog: () => void;
   onCreateCompany: (name: string) => Company;
   onCreateAgent: (companyId: string, name: string) => Agent;
+  onAddBookingToInvoice: (invoiceId: string, bookingId: string) => void;
+  onRemoveBookingFromInvoice: (bookingId: string) => void;
+  onCreateInvoiceForBooking: (bookingId: string) => void;
+  onOpenInvoice: (invoiceId: string) => void;
 };
 
 type TravelState =
@@ -83,6 +90,8 @@ export function BookScreen({
   catalog,
   companies,
   agents,
+  invoices,
+  bookingInvoiceIndex,
   settings,
   onSave,
   onDelete,
@@ -90,7 +99,16 @@ export function BookScreen({
   onManageCatalog,
   onCreateCompany,
   onCreateAgent,
+  onAddBookingToInvoice,
+  onRemoveBookingFromInvoice,
+  onCreateInvoiceForBooking,
+  onOpenInvoice,
 }: Props) {
+  const currentInvoice = useMemo(() => {
+    if (!initial) return undefined;
+    const id = bookingInvoiceIndex.get(initial.id);
+    return id ? invoices.find((i) => i.id === id) : undefined;
+  }, [initial, invoices, bookingInvoiceIndex]);
   const [draft, setDraft] = useState<DraftBooking>(() =>
     initial ? draftFromBooking(initial) : emptyDraft(catalog),
   );
@@ -273,6 +291,22 @@ export function BookScreen({
       </header>
 
       <div className="flex-1 pb-32 pt-4">
+        {currentInvoice && currentInvoice.status !== 'draft' && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5">
+            <p className="text-[12.5px] leading-snug text-amber-900">
+              On invoice{' '}
+              <button
+                type="button"
+                onClick={() => onOpenInvoice(currentInvoice.id)}
+                className="font-semibold underline-offset-2 hover:underline"
+              >
+                {currentInvoice.number}
+              </button>{' '}
+              ({currentInvoice.status}). Editing this shoot will change that
+              invoice's totals.
+            </p>
+          </div>
+        )}
         <Field label="Address">
           <AddressAutocomplete
             value={draft.address}
@@ -425,6 +459,18 @@ export function BookScreen({
           </div>
         )}
 
+        {initial && (
+          <InvoiceSection
+            currentInvoice={currentInvoice}
+            invoices={invoices}
+            companyId={draft.companyId}
+            onAdd={(invId) => onAddBookingToInvoice(invId, initial.id)}
+            onCreateNew={() => onCreateInvoiceForBooking(initial.id)}
+            onOpen={(invId) => onOpenInvoice(invId)}
+            onRemove={() => onRemoveBookingFromInvoice(initial.id)}
+          />
+        )}
+
         {showExtras ? (
           <Field label="Property contact" hint="seller / tenant">
             <div className="space-y-2">
@@ -501,7 +547,18 @@ export function BookScreen({
         {initial && onDelete && (
           <button
             type="button"
-            onClick={onDelete}
+            onClick={() => {
+              if (currentInvoice) {
+                if (
+                  !confirm(
+                    `Delete this shoot? It will also be removed from invoice ${currentInvoice.number}.`,
+                  )
+                ) {
+                  return;
+                }
+              }
+              onDelete();
+            }}
             className="tap mt-6 w-full rounded-lg border border-neutral-200 bg-white py-2.5 text-[14px] font-medium text-neutral-700 hover:border-neutral-300 hover:text-neutral-900"
           >
             Delete shoot
@@ -580,4 +637,143 @@ function formatMoney(n: number): string {
     currency: 'USD',
     maximumFractionDigits: 2,
   }).format(n);
+}
+
+function InvoiceSection({
+  currentInvoice,
+  invoices,
+  companyId,
+  onAdd,
+  onCreateNew,
+  onOpen,
+  onRemove,
+}: {
+  currentInvoice?: Invoice;
+  invoices: Invoice[];
+  companyId?: string;
+  onAdd: (invoiceId: string) => void;
+  onCreateNew: () => void;
+  onOpen: (invoiceId: string) => void;
+  onRemove: () => void;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const draftInvoicesForCompany = useMemo(() => {
+    if (!companyId) return [];
+    return invoices
+      .filter((i) => i.companyId === companyId && i.status === 'draft')
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }, [invoices, companyId]);
+
+  if (currentInvoice) {
+    return (
+      <Field label="Invoice">
+        <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5">
+          <span className="flex-1 truncate text-[14.5px] text-neutral-900">
+            On invoice{' '}
+            <span className="font-semibold">{currentInvoice.number}</span>
+            <span className="ml-1.5 text-[12px] text-neutral-500">
+              ({currentInvoice.status})
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() => onOpen(currentInvoice.id)}
+            className="tap rounded-md px-2 py-1 text-[12px] text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
+          >
+            Open
+          </button>
+          {currentInvoice.status === 'draft' && (
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm(`Remove this shoot from invoice ${currentInvoice.number}?`)) {
+                  onRemove();
+                }
+              }}
+              className="tap rounded-md px-2 py-1 text-[12px] text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+      </Field>
+    );
+  }
+
+  if (!companyId) {
+    return (
+      <Field label="Invoice">
+        <p className="rounded-lg border border-dashed border-neutral-200 bg-neutral-50/50 px-3.5 py-2.5 text-[12.5px] text-neutral-500">
+          Pick a brokerage above to invoice this shoot.
+        </p>
+      </Field>
+    );
+  }
+
+  // No invoice yet — show "Add to invoice" button which expands to a picker.
+  return (
+    <Field label="Invoice">
+      {!pickerOpen ? (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="tap flex w-full items-center justify-between rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5 text-left hover:border-neutral-300"
+        >
+          <span className="text-[14px] text-neutral-700">Not on an invoice</span>
+          <span className="text-[12.5px] font-medium text-neutral-900">
+            Add to invoice ›
+          </span>
+        </button>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+          {draftInvoicesForCompany.length === 0 ? (
+            <p className="px-3.5 py-2.5 text-[12.5px] text-neutral-500">
+              No draft invoices for this brokerage yet.
+            </p>
+          ) : (
+            <ul className="divide-y divide-neutral-100">
+              {draftInvoicesForCompany.map((inv) => (
+                <li key={inv.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onAdd(inv.id);
+                      setPickerOpen(false);
+                    }}
+                    className="tap flex w-full items-center justify-between px-3.5 py-2.5 text-left hover:bg-neutral-50"
+                  >
+                    <span className="text-[14px] text-neutral-900">
+                      {inv.number}
+                    </span>
+                    <span className="text-[12px] text-neutral-500">
+                      {inv.bookingIds.length}{' '}
+                      {inv.bookingIds.length === 1 ? 'shoot' : 'shoots'}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <button
+            type="button"
+            onClick={onCreateNew}
+            className="tap flex w-full items-center justify-between border-t border-neutral-100 bg-neutral-50/50 px-3.5 py-2.5 text-left hover:bg-neutral-100"
+          >
+            <span className="text-[14px] font-medium text-neutral-900">
+              + New invoice
+            </span>
+            <span className="text-[12px] text-neutral-500">starts in draft</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(false)}
+            className="tap w-full border-t border-neutral-100 px-3.5 py-2 text-[12px] text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </Field>
+  );
 }
