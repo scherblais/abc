@@ -189,7 +189,7 @@ function CompanyDetail({
   };
 
   return (
-    <div className="border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 px-4 py-3">
+    <div className="border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/30 px-4 py-3">
       <label className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
         Brokerage name
       </label>
