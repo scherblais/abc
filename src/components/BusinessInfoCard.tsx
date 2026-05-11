@@ -9,8 +9,6 @@ type Props = {
 export function BusinessInfoCard({ settings, onChange }: Props) {
   const [name, setName] = useState(settings.businessName ?? '');
   const [address, setAddress] = useState(settings.businessAddress ?? '');
-  const [gst, setGst] = useState(settings.gstNumber ?? '');
-  const [qst, setQst] = useState(settings.qstNumber ?? '');
   const [terms, setTerms] = useState(settings.defaultPaymentTermsDays ?? 30);
 
   // Debounce write-back to localStorage so each keystroke doesn't ping save.
@@ -20,8 +18,6 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         ...settings,
         businessName: name.trim() || undefined,
         businessAddress: address.trim() || undefined,
-        gstNumber: gst.trim() || undefined,
-        qstNumber: qst.trim() || undefined,
         defaultPaymentTermsDays: Number.isFinite(terms)
           ? Math.max(0, terms)
           : 30,
@@ -29,7 +25,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, address, gst, qst, terms]);
+  }, [name, address, terms]);
 
   return (
     <section className="card mb-6 p-4">
@@ -62,31 +58,6 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         className="input mt-1 resize-none"
       />
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <label>
-          <span className="block text-[11.5px] font-medium text-neutral-500">
-            GST #
-          </span>
-          <input
-            value={gst}
-            onChange={(e) => setGst(e.target.value)}
-            placeholder="123456789 RT0001"
-            className="input mt-1"
-          />
-        </label>
-        <label>
-          <span className="block text-[11.5px] font-medium text-neutral-500">
-            QST #
-          </span>
-          <input
-            value={qst}
-            onChange={(e) => setQst(e.target.value)}
-            placeholder="1234567890 TQ0001"
-            className="input mt-1"
-          />
-        </label>
-      </div>
-
       <label className="mt-3 block text-[11.5px] font-medium text-neutral-500">
         Default payment terms (days)
       </label>
@@ -101,8 +72,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
       />
 
       <p className="mt-2 text-[11.5px] leading-snug text-neutral-500">
-        Tax lines on invoices use GST 5% and QST 9.975% when the respective
-        numbers above are filled in; cleared numbers = 0% tax.
+        Invoices automatically add GST (5%) and QST (9.975%).
       </p>
     </section>
   );
