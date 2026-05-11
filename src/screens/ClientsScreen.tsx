@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import type { Agent, Company } from '../types';
+import { useEffect, useState } from 'react';
+import type { Agent, Company, Service } from '../types';
+import { currency } from '../lib/format';
 
 type Props = {
   companies: Company[];
   agents: Agent[];
+  catalog: Service[];
   onBack: () => void;
   onCreateCompany: (name: string) => Company;
   onUpdateCompany: (id: string, patch: Partial<Company>) => void;
@@ -18,6 +20,7 @@ const INPUT = 'input-compact';
 export function ClientsScreen({
   companies,
   agents,
+  catalog,
   onBack,
   onCreateCompany,
   onUpdateCompany,
@@ -139,6 +142,7 @@ export function ClientsScreen({
                     <CompanyDetail
                       company={c}
                       agents={companyAgents}
+                      catalog={catalog}
                       onUpdateCompany={onUpdateCompany}
                       onDeleteCompany={onDeleteCompany}
                       onCreateAgent={onCreateAgent}
@@ -159,6 +163,7 @@ export function ClientsScreen({
 function CompanyDetail({
   company,
   agents,
+  catalog,
   onUpdateCompany,
   onDeleteCompany,
   onCreateAgent,
@@ -167,6 +172,7 @@ function CompanyDetail({
 }: {
   company: Company;
   agents: Agent[];
+  catalog: Service[];
   onUpdateCompany: (id: string, patch: Partial<Company>) => void;
   onDeleteCompany: (id: string) => void;
   onCreateAgent: (companyId: string, name: string) => Agent;
@@ -244,6 +250,40 @@ function CompanyDetail({
         </div>
       </div>
 
+      {catalog.length > 0 && (
+        <div className="mt-5">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            Pricing
+          </p>
+          <p className="mb-2 px-0.5 text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
+            Per-service rates negotiated with {company.name}. Leave blank to
+            charge the catalog price.
+          </p>
+          <ul className="space-y-1.5">
+            {catalog.map((s) => (
+              <PricingRow
+                key={s.id}
+                service={s}
+                override={company.pricing?.[s.id]}
+                onChange={(value) => {
+                  const nextPricing = { ...(company.pricing ?? {}) };
+                  if (value === undefined) {
+                    delete nextPricing[s.id];
+                  } else {
+                    nextPricing[s.id] = value;
+                  }
+                  onUpdateCompany(company.id, {
+                    pricing: Object.keys(nextPricing).length
+                      ? nextPricing
+                      : undefined,
+                  });
+                }}
+              />
+            ))}
+          </ul>
+        </div>
+      )}
+
       <button
         type="button"
         onClick={() => {
@@ -262,6 +302,72 @@ function CompanyDetail({
         Delete brokerage
       </button>
     </div>
+  );
+}
+
+function PricingRow({
+  service,
+  override,
+  onChange,
+}: {
+  service: Service;
+  override: number | undefined;
+  onChange: (value: number | undefined) => void;
+}) {
+  // Keep the visible value in local state so users can clear the field
+  // without it snapping back as soon as parse fails. Commit on blur.
+  const [draft, setDraft] = useState<string>(
+    override !== undefined ? String(override) : '',
+  );
+
+  useEffect(() => {
+    setDraft(override !== undefined ? String(override) : '');
+  }, [override]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      if (override !== undefined) onChange(undefined);
+      return;
+    }
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      // invalid → revert to whatever is committed upstream
+      setDraft(override !== undefined ? String(override) : '');
+      return;
+    }
+    if (parsed === override) return;
+    onChange(parsed);
+  };
+
+  return (
+    <li className="flex items-center gap-2">
+      <span className="min-w-0 flex-1 truncate text-[13px] text-neutral-800 dark:text-neutral-200">
+        {service.name}
+      </span>
+      <span className="shrink-0 text-[11.5px] tabular-nums text-neutral-400 dark:text-neutral-500">
+        {currency(service.price)}
+      </span>
+      <div className="relative w-24 shrink-0">
+        <span className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-[12.5px] text-neutral-400 dark:text-neutral-500">
+          $
+        </span>
+        <input
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step={1}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          }}
+          placeholder="—"
+          className="input-compact pl-5 text-right tabular-nums"
+        />
+      </div>
+    </li>
   );
 }
 

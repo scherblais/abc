@@ -66,6 +66,10 @@ export type Company = {
   id: string;
   name: string;
   notes?: string;
+  /** Per-service price overrides, keyed by Service.id. When a service has an
+   *  entry here, this number replaces the catalog price for any booking
+   *  attached to this brokerage. Agents at this brokerage inherit it. */
+  pricing?: Record<string, number>;
   createdAt: string; // ISO
 };
 

@@ -467,6 +467,7 @@ function AppShell({
         <ClientsScreen
           companies={companies}
           agents={agents}
+          catalog={services}
           onBack={() => setScreen({ name: 'admin' })}
           onCreateCompany={createCompany}
           onUpdateCompany={updateCompany}

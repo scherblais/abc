@@ -8,7 +8,7 @@ import type {
   Service,
   Settings,
 } from '../types';
-import { sumServices } from '../lib/catalog';
+import { catalogFor, sumServices } from '../lib/catalog';
 import { suggestedNextSlot } from '../lib/datetime';
 import { currency, formatDayLabel, formatDuration, formatTime } from '../lib/format';
 import { distanceKm, geocode, travelFee } from '../lib/geocode';
@@ -124,6 +124,13 @@ export function BookScreen({
     () => hasOccupant || Boolean(initial?.notes) || Boolean(initial?.client?.name),
   );
   const [overrideTotals, setOverrideTotals] = useState(false);
+
+  // When a brokerage is selected, swap in their per-service price overrides
+  // so the catalog tiles + the booking total reflect the negotiated rate.
+  const effectiveCatalog = useMemo(() => {
+    const company = companies.find((c) => c.id === draft.companyId);
+    return catalogFor(catalog, company);
+  }, [catalog, companies, draft.companyId]);
 
   const scheduled = useMemo(() => new Date(draft.scheduledAt), [draft.scheduledAt]);
   const total = draft.price + (draft.travelFee ?? 0);
@@ -254,12 +261,26 @@ export function BookScreen({
       const has = p.services.includes(id);
       const next = has ? p.services.filter((s) => s !== id) : [...p.services, id];
       if (!overrideTotals) {
-        const { durationMin, price } = sumServices(next, catalog);
+        const { durationMin, price } = sumServices(next, effectiveCatalog);
         return { ...p, services: next, durationMin, price };
       }
       return { ...p, services: next };
     });
   };
+
+  // When the brokerage changes mid-booking, re-evaluate the total against
+  // the new brokerage's price overrides (unless the user has manually
+  // overridden totals). Catalog stays the same; only effective prices shift.
+  useEffect(() => {
+    if (overrideTotals) return;
+    setDraft((p) => {
+      if (p.services.length === 0) return p;
+      const { durationMin, price } = sumServices(p.services, effectiveCatalog);
+      if (p.price === price && p.durationMin === durationMin) return p;
+      return { ...p, price, durationMin };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.companyId, effectiveCatalog, overrideTotals]);
 
   return (
     <div className="flex h-full min-h-full flex-col">
@@ -370,7 +391,7 @@ export function BookScreen({
             </div>
           ) : (
             <ServiceGrid
-              services={catalog}
+              services={effectiveCatalog}
               selectedIds={draft.services}
               onToggle={toggleService}
             />
