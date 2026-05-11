@@ -35,7 +35,7 @@ import {
   saveServices,
   saveSettings,
 } from './lib/storage';
-import { DEFAULT_CATALOG } from './lib/catalog';
+import { DEFAULT_CATALOG, catalogFor, sumServices } from './lib/catalog';
 import { geocode } from './lib/geocode';
 import { googleGeocode } from './lib/google';
 import { GOOGLE_API_KEY } from './config';
@@ -277,6 +277,35 @@ function AppShell({
 
   const updateCompany = (id: string, patch: Partial<Company>) => {
     setCompanies((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+    // When a brokerage's pricing changes, recompute every booking attached
+    // to that brokerage that's still in flight (no invoice yet, or only on
+    // a draft invoice). Bookings on sent / paid / void invoices stay locked
+    // at whatever was billed.
+    if ('pricing' in patch) {
+      const synthetic: Company = {
+        id,
+        name: '',
+        createdAt: '',
+        pricing: patch.pricing,
+      };
+      const newCatalog = catalogFor(services, synthetic);
+      setBookings((prev) => {
+        let changed = false;
+        const next = prev.map((b) => {
+          if (b.companyId !== id) return b;
+          const invId = bookingInvoiceIndex.get(b.id);
+          if (invId) {
+            const inv = invoices.find((i) => i.id === invId);
+            if (inv && inv.status !== 'draft') return b;
+          }
+          const { price, durationMin } = sumServices(b.services, newCatalog);
+          if (b.price === price && b.durationMin === durationMin) return b;
+          changed = true;
+          return { ...b, price, durationMin };
+        });
+        return changed ? next : prev;
+      });
+    }
   };
 
   const deleteCompany = (id: string) => {
