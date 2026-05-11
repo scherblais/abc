@@ -1,7 +1,14 @@
-import type { Booking, Service } from '../types';
+import type { Booking, Service, Settings } from '../types';
 
 const BOOKINGS_KEY = 'lensbook.bookings.v1';
 const SERVICES_KEY = 'lensbook.services.v1';
+const SETTINGS_KEY = 'lensbook.settings.v1';
+
+export const DEFAULT_SETTINGS: Settings = {
+  startingAddress: 'Carignan, QC',
+  freeRadiusKm: 25,
+  perKmRate: 0.65,
+};
 
 export const loadBookings = (): Booking[] => {
   try {
@@ -31,6 +38,21 @@ export const loadServices = (): Service[] | null => {
 
 export const saveServices = (services: Service[]) => {
   localStorage.setItem(SERVICES_KEY, JSON.stringify(services));
+};
+
+export const loadSettings = (): Settings => {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return DEFAULT_SETTINGS;
+    const parsed = JSON.parse(raw) as Partial<Settings>;
+    return { ...DEFAULT_SETTINGS, ...parsed };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+};
+
+export const saveSettings = (settings: Settings) => {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 };
 
 export const newId = () =>

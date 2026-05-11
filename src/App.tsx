@@ -4,15 +4,18 @@ import { BookScreen } from './screens/BookScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { ServiceEditScreen } from './screens/ServiceEditScreen';
 import { RevenueScreen } from './screens/RevenueScreen';
-import type { Booking, DraftBooking, DraftService, Service } from './types';
+import type { Booking, DraftBooking, DraftService, Service, Settings } from './types';
 import {
   loadBookings,
   loadServices,
+  loadSettings,
   newId,
   saveBookings,
   saveServices,
+  saveSettings,
 } from './lib/storage';
 import { DEFAULT_CATALOG } from './lib/catalog';
+import { geocode } from './lib/geocode';
 
 type Screen =
   | { name: 'home' }
@@ -27,6 +30,7 @@ export default function App() {
     const stored = loadServices();
     return stored ?? DEFAULT_CATALOG;
   });
+  const [settings, setSettings] = useState<Settings>(() => loadSettings());
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
 
   useEffect(() => {
@@ -36,6 +40,31 @@ export default function App() {
   useEffect(() => {
     saveServices(services);
   }, [services]);
+
+  useEffect(() => {
+    saveSettings(settings);
+  }, [settings]);
+
+  // Resolve the starting address on first launch so travel works immediately,
+  // before the user ever opens Settings.
+  useEffect(() => {
+    if (settings.startingAddress && !settings.startingCoords) {
+      let cancelled = false;
+      (async () => {
+        const result = await geocode(settings.startingAddress);
+        if (!cancelled && result) {
+          setSettings((prev) => ({
+            ...prev,
+            startingCoords: { lat: result.lat, lon: result.lon },
+          }));
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const editingBooking =
     screen.name === 'book' && screen.editingId
@@ -107,6 +136,7 @@ export default function App() {
         <BookScreen
           initial={editingBooking}
           catalog={services}
+          settings={settings}
           onSave={handleSaveBooking}
           onDelete={editingBooking ? handleDeleteBooking : undefined}
           onCancel={() => setScreen({ name: 'home' })}
@@ -116,6 +146,8 @@ export default function App() {
       {screen.name === 'admin' && (
         <AdminScreen
           services={services}
+          settings={settings}
+          onSaveSettings={setSettings}
           onBack={() => setScreen({ name: 'home' })}
           onAdd={() => setScreen({ name: 'service-edit' })}
           onEdit={(s) => setScreen({ name: 'service-edit', serviceId: s.id })}

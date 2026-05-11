@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Booking, DraftBooking, Service } from '../types';
+import type { Booking, DraftBooking, Service, Settings } from '../types';
 import { sumServices } from '../lib/catalog';
 import { suggestedNextSlot } from '../lib/datetime';
 import { currency, formatDayLabel, formatDuration, formatTime } from '../lib/format';
+import { distanceKm, geocode, travelFee } from '../lib/geocode';
 import { DatePickerRow } from '../components/DatePickerRow';
 import { TimePickerRow } from '../components/TimePickerRow';
 import { ServiceGrid } from '../components/ServiceGrid';
@@ -11,11 +12,19 @@ import { Field } from '../components/Field';
 type Props = {
   initial?: Booking;
   catalog: Service[];
+  settings: Settings;
   onSave: (draft: DraftBooking) => void;
   onDelete?: () => void;
   onCancel: () => void;
   onManageCatalog: () => void;
 };
+
+type TravelState =
+  | { kind: 'idle' }
+  | { kind: 'looking' }
+  | { kind: 'no_origin' }
+  | { kind: 'not_found' }
+  | { kind: 'resolved'; km: number; fee: number; coords: { lat: number; lon: number } };
 
 const draftFromBooking = (b: Booking): DraftBooking => ({
   address: b.address,
@@ -23,6 +32,9 @@ const draftFromBooking = (b: Booking): DraftBooking => ({
   durationMin: b.durationMin,
   services: [...b.services],
   price: b.price,
+  travelKm: b.travelKm,
+  travelFee: b.travelFee,
+  coords: b.coords,
   client: { ...b.client },
   notes: b.notes,
 });
@@ -46,6 +58,7 @@ const INPUT =
 export function BookScreen({
   initial,
   catalog,
+  settings,
   onSave,
   onDelete,
   onCancel,
@@ -58,6 +71,7 @@ export function BookScreen({
   const [overrideTotals, setOverrideTotals] = useState(false);
 
   const scheduled = useMemo(() => new Date(draft.scheduledAt), [draft.scheduledAt]);
+  const total = draft.price + (draft.travelFee ?? 0);
   const canSave = draft.address.trim().length > 1 && draft.services.length > 0;
 
   const addressRef = useRef<HTMLInputElement>(null);
@@ -67,6 +81,60 @@ export function BookScreen({
       return () => clearTimeout(t);
     }
   }, [initial]);
+
+  // Geocode the booking address, debounced. Re-runs when address or
+  // starting coords / rates change so totals stay accurate while editing.
+  const [travel, setTravel] = useState<TravelState>(() => {
+    if (initial?.coords && typeof initial.travelKm === 'number') {
+      return {
+        kind: 'resolved',
+        km: initial.travelKm,
+        fee: initial.travelFee ?? 0,
+        coords: initial.coords,
+      };
+    }
+    return { kind: 'idle' };
+  });
+  const debounceRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const trimmed = draft.address.trim();
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    if (trimmed.length < 4) {
+      setTravel({ kind: 'idle' });
+      setDraft((p) =>
+        p.travelKm === undefined && p.travelFee === undefined && p.coords === undefined
+          ? p
+          : { ...p, travelKm: undefined, travelFee: undefined, coords: undefined },
+      );
+      return;
+    }
+    if (!settings.startingCoords) {
+      setTravel({ kind: 'no_origin' });
+      return;
+    }
+    setTravel({ kind: 'looking' });
+    debounceRef.current = window.setTimeout(async () => {
+      const result = await geocode(trimmed);
+      if (!result) {
+        setTravel({ kind: 'not_found' });
+        return;
+      }
+      const km = distanceKm(settings.startingCoords!, result);
+      const fee = travelFee(km, settings);
+      setTravel({ kind: 'resolved', km, fee, coords: { lat: result.lat, lon: result.lon } });
+      setDraft((p) => ({
+        ...p,
+        travelKm: km,
+        travelFee: fee,
+        coords: { lat: result.lat, lon: result.lon },
+      }));
+    }, 700);
+
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [draft.address, settings.startingCoords, settings.freeRadiusKm, settings.perKmRate, settings]);
 
   const setScheduled = (d: Date) =>
     setDraft((p) => ({ ...p, scheduledAt: d.toISOString() }));
@@ -122,6 +190,7 @@ export function BookScreen({
             autoCapitalize="words"
             className={INPUT}
           />
+          <TravelLine state={travel} settings={settings} />
         </Field>
 
         <Field label="Day" hint={formatDayLabel(scheduled)}>
@@ -218,6 +287,31 @@ export function BookScreen({
           )}
         </Field>
 
+        {(draft.travelFee ?? 0) > 0 && (
+          <div className="mb-5 rounded-lg border border-neutral-200 bg-white p-3">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-[13px] text-neutral-600">Services</span>
+              <span className="text-[13.5px] font-medium tabular-nums text-neutral-900">
+                {currency(draft.price)}
+              </span>
+            </div>
+            <div className="mt-1 flex items-baseline justify-between gap-2">
+              <span className="text-[13px] text-neutral-600">
+                Travel · {(draft.travelKm ?? 0).toFixed(1)} km
+              </span>
+              <span className="text-[13.5px] font-medium tabular-nums text-neutral-900">
+                {currency(draft.travelFee ?? 0)}
+              </span>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between gap-2 border-t border-neutral-100 pt-2">
+              <span className="text-[13px] font-medium text-neutral-900">Total</span>
+              <span className="text-[15px] font-semibold tabular-nums text-neutral-900">
+                {currency(total)}
+              </span>
+            </div>
+          </div>
+        )}
+
         {showClient ? (
           <Field label="Client" hint="optional">
             <div className="space-y-2">
@@ -298,10 +392,48 @@ export function BookScreen({
             ].join(' ')}
           >
             <span>{initial ? 'Save changes' : 'Book this shoot'}</span>
-            <span className="tabular-nums">{currency(draft.price)}</span>
+            <span className="tabular-nums">{currency(total)}</span>
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+function TravelLine({ state, settings }: { state: TravelState; settings: Settings }) {
+  if (state.kind === 'idle') return null;
+  let text = '';
+  let muted = true;
+  if (state.kind === 'looking') text = 'Locating address…';
+  else if (state.kind === 'no_origin') text = 'Set a starting location in Settings to bill travel.';
+  else if (state.kind === 'not_found') {
+    text = "Couldn't locate that address — travel fee won't apply.";
+    muted = false;
+  } else {
+    const km = state.km.toFixed(1);
+    if (state.fee > 0) {
+      text = `${km} km from ${settings.startingAddress} · +${formatMoney(state.fee)} travel`;
+      muted = false;
+    } else {
+      text = `${km} km from ${settings.startingAddress} · within free radius`;
+    }
+  }
+  return (
+    <p
+      className={`mt-1.5 line-clamp-2 px-0.5 text-[11.5px] leading-snug ${
+        muted ? 'text-neutral-500' : 'text-neutral-700'
+      }`}
+      aria-live="polite"
+    >
+      {text}
+    </p>
+  );
+}
+
+function formatMoney(n: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  }).format(n);
 }

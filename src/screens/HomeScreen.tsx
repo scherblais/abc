@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Booking, Service } from '../types';
 import { startOfDay } from '../lib/datetime';
 import { currency, formatDayLabel, formatTime } from '../lib/format';
+import { bookingTotal } from '../lib/bookings';
 
 type Props = {
   bookings: Booking[];
@@ -55,7 +56,7 @@ export function HomeScreen({
       const d = new Date(b.scheduledAt);
       return d.getFullYear() === year && d.getMonth() === month;
     });
-    const total = inThisMonth.reduce((sum, b) => sum + b.price, 0);
+    const total = inThisMonth.reduce((sum, b) => sum + bookingTotal(b), 0);
     const label = now.toLocaleDateString('en-US', { month: 'long' });
     return { total, count: inThisMonth.length, label };
   }, [bookings, now]);
@@ -204,7 +205,7 @@ function BookingRow({
         </div>
         <div className="flex shrink-0 flex-col items-end justify-between pt-0.5">
           <span className="text-[14px] font-semibold tabular-nums text-neutral-900">
-            {currency(b.price)}
+            {currency(bookingTotal(b))}
           </span>
           <span className="text-neutral-300" aria-hidden>
             ›

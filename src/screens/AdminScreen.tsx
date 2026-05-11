@@ -1,14 +1,24 @@
-import type { Service } from '../types';
+import type { Service, Settings } from '../types';
 import { currency, formatDuration } from '../lib/format';
+import { StartingLocationCard } from '../components/StartingLocationCard';
 
 type Props = {
   services: Service[];
+  settings: Settings;
+  onSaveSettings: (s: Settings) => void;
   onBack: () => void;
   onAdd: () => void;
   onEdit: (s: Service) => void;
 };
 
-export function AdminScreen({ services, onBack, onAdd, onEdit }: Props) {
+export function AdminScreen({
+  services,
+  settings,
+  onSaveSettings,
+  onBack,
+  onAdd,
+  onEdit,
+}: Props) {
   return (
     <div className="flex h-full min-h-full flex-col">
       <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 bg-white/85 px-4 py-3 backdrop-blur-md">
@@ -19,20 +29,25 @@ export function AdminScreen({ services, onBack, onAdd, onEdit }: Props) {
         >
           ‹ Back
         </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900">Catalog</h1>
-        <button
-          type="button"
-          onClick={onAdd}
-          className="tap rounded-md bg-neutral-900 px-3 py-1.5 text-[14px] font-medium text-white hover:bg-black"
-        >
-          + Add
-        </button>
+        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900">Settings</h1>
+        <span className="w-12" aria-hidden />
       </header>
 
       <main className="flex-1 pb-12 pt-4">
-        <p className="mb-3 px-0.5 text-[13px] leading-snug text-neutral-500">
-          These services show up on the booking screen. Tap one to edit, or remove it from
-          your catalog.
+        <StartingLocationCard settings={settings} onChange={onSaveSettings} />
+
+        <div className="mb-2 flex items-end justify-between gap-2 px-0.5">
+          <h2 className="text-[14px] font-semibold text-neutral-900">Catalog</h2>
+          <button
+            type="button"
+            onClick={onAdd}
+            className="tap rounded-md bg-neutral-900 px-3 py-1.5 text-[13px] font-medium text-white hover:bg-black"
+          >
+            + Add service
+          </button>
+        </div>
+        <p className="mb-3 px-0.5 text-[12.5px] leading-snug text-neutral-500">
+          Services that appear on the booking screen. Tap one to edit or remove it.
         </p>
 
         {services.length === 0 ? (

@@ -1,4 +1,5 @@
 import type { Booking } from '../types';
+import { bookingTotal } from './bookings';
 
 export type MonthRevenue = {
   year: number;
@@ -24,7 +25,7 @@ export const groupByMonth = (bookings: Booking[], now: Date): MonthRevenue[] => 
     const d = new Date(b.scheduledAt);
     const k = monthKey(d);
     const g = groups.get(k) ?? { year: d.getFullYear(), month: d.getMonth(), total: 0, count: 0 };
-    g.total += b.price;
+    g.total += bookingTotal(b);
     g.count += 1;
     groups.set(k, g);
   }
