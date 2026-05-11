@@ -2,6 +2,12 @@ import type { LatLon } from '../types';
 
 export type GoogleGeocodeResult = LatLon & { formattedAddress: string };
 export type GoogleRouteResult = { meters: number };
+export type PlaceSuggestion = {
+  placeId: string;
+  text: string;
+  mainText: string;
+  secondaryText?: string;
+};
 export type GoogleResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: string };
@@ -149,4 +155,70 @@ export const googleRoadDistance = async (
   cache[cacheKey] = result;
   writeCache(DISTANCE_CACHE_KEY, cache);
   return { ok: true, value: result };
+};
+
+/**
+ * Address autocomplete via Places API (New). Optionally biased toward a
+ * location (e.g. the starting address) so nearby matches rank higher.
+ */
+export const googlePlacesAutocomplete = async (
+  input: string,
+  apiKey: string,
+  bias?: LatLon,
+): Promise<GoogleResult<PlaceSuggestion[]>> => {
+  if (!apiKey) return { ok: false, error: 'Missing API key' };
+  if (input.trim().length < 3) return { ok: false, error: 'Input too short' };
+
+  const body: Record<string, unknown> = { input };
+  if (bias) {
+    body.locationBias = {
+      circle: {
+        center: { latitude: bias.lat, longitude: bias.lon },
+        radius: 50000,
+      },
+    };
+  }
+
+  let res: Response;
+  try {
+    res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Network error';
+    console.error('[google] places autocomplete network error:', e);
+    return { ok: false, error: `Network: ${msg}` };
+  }
+
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    return { ok: false, error: `HTTP ${res.status} (non-JSON response)` };
+  }
+
+  if (!res.ok || data?.error) {
+    const msg = data?.error?.message || `HTTP ${res.status}`;
+    console.error('[google] places autocomplete failed:', msg, data);
+    return { ok: false, error: msg };
+  }
+
+  const suggestions: PlaceSuggestion[] = (data.suggestions ?? [])
+    .map((s: any) => s.placePrediction)
+    .filter(Boolean)
+    .map((p: any) => ({
+      placeId: p.placeId,
+      text: p.text?.text ?? '',
+      mainText: p.structuredFormat?.mainText?.text ?? p.text?.text ?? '',
+      secondaryText: p.structuredFormat?.secondaryText?.text,
+    }))
+    .filter((s: PlaceSuggestion) => s.placeId && s.text)
+    .slice(0, 6);
+
+  return { ok: true, value: suggestions };
 };

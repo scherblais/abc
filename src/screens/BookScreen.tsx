@@ -9,6 +9,7 @@ import { DatePickerRow } from '../components/DatePickerRow';
 import { TimePickerRow } from '../components/TimePickerRow';
 import { ServiceGrid } from '../components/ServiceGrid';
 import { Field } from '../components/Field';
+import { AddressAutocomplete } from '../components/AddressAutocomplete';
 
 type Props = {
   initial?: Booking;
@@ -81,14 +82,6 @@ export function BookScreen({
   const scheduled = useMemo(() => new Date(draft.scheduledAt), [draft.scheduledAt]);
   const total = draft.price + (draft.travelFee ?? 0);
   const canSave = draft.address.trim().length > 1 && draft.services.length > 0;
-
-  const addressRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (!initial) {
-      const t = setTimeout(() => addressRef.current?.focus(), 80);
-      return () => clearTimeout(t);
-    }
-  }, [initial]);
 
   // Geocode the booking address, debounced. Re-runs when address or
   // starting coords / rates change so totals stay accurate while editing.
@@ -253,14 +246,14 @@ export function BookScreen({
 
       <div className="flex-1 pb-32 pt-4">
         <Field label="Address">
-          <input
-            ref={addressRef}
+          <AddressAutocomplete
             value={draft.address}
-            onChange={(e) => setDraft((p) => ({ ...p, address: e.target.value }))}
-            placeholder="123 Main St, San Francisco"
-            autoComplete="street-address"
-            autoCapitalize="words"
-            className={INPUT}
+            onChange={(v) => setDraft((p) => ({ ...p, address: v }))}
+            apiKey={settings.googleApiKey}
+            bias={settings.startingCoords}
+            placeholder="123 Main St, Montréal"
+            inputClassName={INPUT}
+            autoFocus={!initial}
           />
           <TravelLine state={travel} settings={settings} />
         </Field>
