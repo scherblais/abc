@@ -9,6 +9,8 @@ type Props = {
 export function BusinessInfoCard({ settings, onChange }: Props) {
   const [name, setName] = useState(settings.businessName ?? '');
   const [address, setAddress] = useState(settings.businessAddress ?? '');
+  const [phone, setPhone] = useState(settings.businessPhone ?? '');
+  const [email, setEmail] = useState(settings.businessEmail ?? '');
   const [terms, setTerms] = useState(settings.defaultPaymentTermsDays ?? 30);
 
   // Debounce write-back to localStorage so each keystroke doesn't ping save.
@@ -18,6 +20,8 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         ...settings,
         businessName: name.trim() || undefined,
         businessAddress: address.trim() || undefined,
+        businessPhone: phone.trim() || undefined,
+        businessEmail: email.trim() || undefined,
         defaultPaymentTermsDays: Number.isFinite(terms)
           ? Math.max(0, terms)
           : 30,
@@ -25,7 +29,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, address, terms]);
+  }, [name, address, phone, email, terms]);
 
   return (
     <section className="card mb-6 p-4">
@@ -57,6 +61,36 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         placeholder="Mailing address shown on invoices"
         className="input mt-1 resize-none"
       />
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <label>
+          <span className="block text-[11.5px] font-medium text-neutral-500">
+            Phone
+          </span>
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            type="tel"
+            autoComplete="tel"
+            placeholder="(514) 555-0123"
+            className="input mt-1"
+          />
+        </label>
+        <label>
+          <span className="block text-[11.5px] font-medium text-neutral-500">
+            Email
+          </span>
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            autoComplete="email"
+            autoCapitalize="off"
+            placeholder="hello@yourstudio.ca"
+            className="input mt-1"
+          />
+        </label>
+      </div>
 
       <label className="mt-3 block text-[11.5px] font-medium text-neutral-500">
         Default payment terms (days)

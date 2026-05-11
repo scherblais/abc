@@ -59,6 +59,13 @@ export function InvoicePrintScreen({ invoice, bookings, services, onBack }: Prop
                 {invoice.business.address}
               </p>
             )}
+            {(invoice.business.phone || invoice.business.email) && (
+              <p className="mt-1 text-[12px] text-neutral-600">
+                {invoice.business.phone}
+                {invoice.business.phone && invoice.business.email ? ' · ' : ''}
+                {invoice.business.email}
+              </p>
+            )}
             <div className="mt-2 space-y-0.5 text-[11.5px] text-neutral-600">
               {invoice.business.gstNumber && (
                 <p>GST # {invoice.business.gstNumber}</p>

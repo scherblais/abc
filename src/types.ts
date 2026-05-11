@@ -21,6 +21,8 @@ export type Settings = {
   /** Business identity for invoices (snapshotted onto each invoice at issue). */
   businessName?: string;
   businessAddress?: string;
+  businessPhone?: string;
+  businessEmail?: string;
   gstNumber?: string;
   qstNumber?: string;
   /** Days added to issuedAt to auto-compute dueAt. Default 30. */
@@ -41,6 +43,8 @@ export type Invoice = {
   business: {
     name: string;
     address?: string;
+    phone?: string;
+    email?: string;
     gstNumber?: string;
     qstNumber?: string;
   };

@@ -263,6 +263,8 @@ export default function App() {
       business: {
         name: settings.businessName ?? '',
         address: settings.businessAddress,
+        phone: settings.businessPhone,
+        email: settings.businessEmail,
         gstNumber: settings.gstNumber,
         qstNumber: settings.qstNumber,
       },
