@@ -60,7 +60,9 @@ export function useDataList<T extends { id: string }>(
       prevRef.current = next;
       setItems(next);
       if (uid) {
-        void applyListDiff(uid, name, prev, next);
+        applyListDiff(uid, name, prev, next).catch((err) => {
+          console.error(`[sync] write to users/${uid}/${name} failed:`, err);
+        });
       }
     },
     [uid, name],
@@ -104,7 +106,11 @@ export function useDataDoc<T>(
       valueRef.current = next;
       setValue(next);
       if (uid) {
-        void setDoc(doc(getFirebaseDb(), fullPath(uid, path)), next as object);
+        setDoc(doc(getFirebaseDb(), fullPath(uid, path)), next as object).catch(
+          (err) => {
+            console.error(`[sync] write to ${fullPath(uid, path)} failed:`, err);
+          },
+        );
       }
     },
     [uid, path],
