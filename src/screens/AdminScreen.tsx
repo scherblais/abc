@@ -9,6 +9,9 @@ type Props = {
   onBack: () => void;
   onAdd: () => void;
   onEdit: (s: Service) => void;
+  onOpenClients: () => void;
+  companiesCount: number;
+  agentsCount: number;
 };
 
 export function AdminScreen({
@@ -18,7 +21,17 @@ export function AdminScreen({
   onBack,
   onAdd,
   onEdit,
+  onOpenClients,
+  companiesCount,
+  agentsCount,
 }: Props) {
+  const clientsSummary =
+    companiesCount === 0
+      ? 'No brokerages or agents yet'
+      : `${companiesCount} ${companiesCount === 1 ? 'brokerage' : 'brokerages'} · ${agentsCount} ${
+          agentsCount === 1 ? 'agent' : 'agents'
+        }`;
+
   return (
     <div className="flex h-full min-h-full flex-col">
       <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 bg-white/85 px-4 py-3 backdrop-blur-md">
@@ -35,6 +48,20 @@ export function AdminScreen({
 
       <main className="flex-1 pb-12 pt-4">
         <StartingLocationCard settings={settings} onChange={onSaveSettings} />
+
+        <button
+          type="button"
+          onClick={onOpenClients}
+          className="card tap mb-6 flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50"
+        >
+          <div className="min-w-0 flex-1">
+            <p className="text-[14px] font-semibold text-neutral-900">Clients</p>
+            <p className="mt-0.5 text-[12.5px] text-neutral-500">{clientsSummary}</p>
+          </div>
+          <span className="text-neutral-300" aria-hidden>
+            ›
+          </span>
+        </button>
 
         <div className="mb-2 flex items-end justify-between gap-2 px-0.5">
           <h2 className="text-[14px] font-semibold text-neutral-900">Catalog</h2>

@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Booking, DraftBooking, Service, Settings } from '../types';
+import type {
+  Agent,
+  Booking,
+  Company,
+  DraftBooking,
+  Service,
+  Settings,
+} from '../types';
 import { sumServices } from '../lib/catalog';
 import { suggestedNextSlot } from '../lib/datetime';
 import { currency, formatDayLabel, formatDuration, formatTime } from '../lib/format';
@@ -10,15 +17,20 @@ import { TimePickerRow } from '../components/TimePickerRow';
 import { ServiceGrid } from '../components/ServiceGrid';
 import { Field } from '../components/Field';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
+import { ClientPicker } from '../components/ClientPicker';
 
 type Props = {
   initial?: Booking;
   catalog: Service[];
+  companies: Company[];
+  agents: Agent[];
   settings: Settings;
   onSave: (draft: DraftBooking) => void;
   onDelete?: () => void;
   onCancel: () => void;
   onManageCatalog: () => void;
+  onCreateCompany: (name: string) => Company;
+  onCreateAgent: (companyId: string, name: string) => Agent;
 };
 
 type TravelState =
@@ -44,7 +56,10 @@ const draftFromBooking = (b: Booking): DraftBooking => ({
   travelKm: b.travelKm,
   travelFee: b.travelFee,
   coords: b.coords,
-  client: { ...b.client },
+  companyId: b.companyId,
+  agentId: b.agentId,
+  occupant: b.occupant ? { ...b.occupant } : undefined,
+  client: b.client ? { ...b.client } : undefined,
   notes: b.notes,
 });
 
@@ -56,7 +71,6 @@ const emptyDraft = (catalog: Service[]): DraftBooking => {
     durationMin: first?.durationMin ?? 60,
     services: first ? [first.id] : [],
     price: first?.price ?? 0,
-    client: {},
     notes: '',
   };
 };
@@ -67,16 +81,30 @@ const INPUT =
 export function BookScreen({
   initial,
   catalog,
+  companies,
+  agents,
   settings,
   onSave,
   onDelete,
   onCancel,
   onManageCatalog,
+  onCreateCompany,
+  onCreateAgent,
 }: Props) {
   const [draft, setDraft] = useState<DraftBooking>(() =>
     initial ? draftFromBooking(initial) : emptyDraft(catalog),
   );
-  const [showClient, setShowClient] = useState(() => Boolean(initial?.client?.name));
+  const hasOccupant =
+    !!initial?.occupant &&
+    Boolean(
+      initial.occupant.name ||
+        initial.occupant.phone ||
+        initial.occupant.email ||
+        initial.occupant.accessNotes,
+    );
+  const [showExtras, setShowExtras] = useState(
+    () => hasOccupant || Boolean(initial?.notes) || Boolean(initial?.client?.name),
+  );
   const [overrideTotals, setOverrideTotals] = useState(false);
 
   const scheduled = useMemo(() => new Date(draft.scheduledAt), [draft.scheduledAt]);
@@ -258,6 +286,26 @@ export function BookScreen({
           <TravelLine state={travel} settings={settings} />
         </Field>
 
+        <Field label="Client">
+          <ClientPicker
+            companies={companies}
+            agents={agents}
+            companyId={draft.companyId}
+            agentId={draft.agentId}
+            onChange={(companyId, agentId) =>
+              setDraft((p) => ({ ...p, companyId, agentId }))
+            }
+            onCreateCompany={onCreateCompany}
+            onCreateAgent={onCreateAgent}
+          />
+          {!draft.companyId && draft.client?.name && (
+            <p className="mt-1.5 px-0.5 text-[11.5px] leading-snug text-neutral-500">
+              Previously: {draft.client.name}
+              {draft.client.brokerage ? ` · ${draft.client.brokerage}` : ''}
+            </p>
+          )}
+        </Field>
+
         <Field label="Day" hint={formatDayLabel(scheduled)}>
           <DatePickerRow value={scheduled} onChange={setScheduled} />
         </Field>
@@ -377,13 +425,16 @@ export function BookScreen({
           </div>
         )}
 
-        {showClient ? (
-          <Field label="Client" hint="optional">
+        {showExtras ? (
+          <Field label="Property contact" hint="seller / tenant">
             <div className="space-y-2">
               <input
-                value={draft.client.name ?? ''}
+                value={draft.occupant?.name ?? ''}
                 onChange={(e) =>
-                  setDraft((p) => ({ ...p, client: { ...p.client, name: e.target.value } }))
+                  setDraft((p) => ({
+                    ...p,
+                    occupant: { ...p.occupant, name: e.target.value },
+                  }))
                 }
                 placeholder="Name"
                 autoComplete="name"
@@ -392,9 +443,12 @@ export function BookScreen({
               />
               <div className="grid grid-cols-2 gap-2">
                 <input
-                  value={draft.client.phone ?? ''}
+                  value={draft.occupant?.phone ?? ''}
                   onChange={(e) =>
-                    setDraft((p) => ({ ...p, client: { ...p.client, phone: e.target.value } }))
+                    setDraft((p) => ({
+                      ...p,
+                      occupant: { ...p.occupant, phone: e.target.value },
+                    }))
                   }
                   placeholder="Phone"
                   type="tel"
@@ -402,22 +456,34 @@ export function BookScreen({
                   className={INPUT}
                 />
                 <input
-                  value={draft.client.brokerage ?? ''}
+                  value={draft.occupant?.email ?? ''}
                   onChange={(e) =>
                     setDraft((p) => ({
                       ...p,
-                      client: { ...p.client, brokerage: e.target.value },
+                      occupant: { ...p.occupant, email: e.target.value },
                     }))
                   }
-                  placeholder="Brokerage"
-                  autoCapitalize="words"
+                  placeholder="Email"
+                  type="email"
+                  autoComplete="email"
                   className={INPUT}
                 />
               </div>
               <input
+                value={draft.occupant?.accessNotes ?? ''}
+                onChange={(e) =>
+                  setDraft((p) => ({
+                    ...p,
+                    occupant: { ...p.occupant, accessNotes: e.target.value },
+                  }))
+                }
+                placeholder="Access (gate code, lockbox, key location)"
+                className={INPUT}
+              />
+              <input
                 value={draft.notes ?? ''}
                 onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))}
-                placeholder="Notes (gate code, lockbox, owner home...)"
+                placeholder="Notes for this shoot"
                 className={INPUT}
               />
             </div>
@@ -425,10 +491,10 @@ export function BookScreen({
         ) : (
           <button
             type="button"
-            onClick={() => setShowClient(true)}
+            onClick={() => setShowExtras(true)}
             className="tap mb-4 mt-1 inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-[13px] text-neutral-700 hover:border-neutral-300"
           >
-            <span aria-hidden>+</span> Add client / notes
+            <span aria-hidden>+</span> Add property contact / notes
           </button>
         )}
 

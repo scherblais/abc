@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { Booking, Service } from '../types';
+import type { Agent, Booking, Company, Service } from '../types';
 import { startOfDay } from '../lib/datetime';
 import { currency, formatDayLabel, formatTime } from '../lib/format';
 import { bookingTotal } from '../lib/bookings';
@@ -7,6 +7,8 @@ import { bookingTotal } from '../lib/bookings';
 type Props = {
   bookings: Booking[];
   catalog: Service[];
+  companies: Company[];
+  agents: Agent[];
   onAdd: () => void;
   onOpen: (b: Booking) => void;
   onOpenAdmin: () => void;
@@ -31,6 +33,8 @@ const groupByDay = (items: Booking[]) => {
 export function HomeScreen({
   bookings,
   catalog,
+  companies,
+  agents,
   onAdd,
   onOpen,
   onOpenAdmin,
@@ -65,6 +69,27 @@ export function HomeScreen({
     const byId = new Map(catalog.map((s) => [s.id, s.name]));
     return (id: string) => byId.get(id);
   }, [catalog]);
+
+  const clientLineFor = useMemo(() => {
+    const companyById = new Map(companies.map((c) => [c.id, c]));
+    const agentById = new Map(agents.map((a) => [a.id, a]));
+    return (b: Booking): string | null => {
+      const agent = b.agentId ? agentById.get(b.agentId) : undefined;
+      const company = b.companyId ? companyById.get(b.companyId) : undefined;
+      if (agent && company) return `${agent.name} · ${company.name}`;
+      if (agent) return agent.name;
+      if (company) return company.name;
+      // Fall back to legacy embedded client info on pre-migration bookings.
+      if (b.client?.name) {
+        return b.client.brokerage
+          ? `${b.client.name} · ${b.client.brokerage}`
+          : b.client.name;
+      }
+      // Booking with companyId/agentId pointing at deleted records.
+      if (b.companyId || b.agentId) return '(deleted client)';
+      return null;
+    };
+  }, [companies, agents]);
 
   return (
     <div className="flex h-full min-h-full flex-col">
@@ -124,6 +149,7 @@ export function HomeScreen({
                       key={b.id}
                       b={b}
                       labelFor={labelFor}
+                      clientLine={clientLineFor(b)}
                       onClick={() => onOpen(b)}
                     />
                   ))}
@@ -155,10 +181,12 @@ export function HomeScreen({
 function BookingRow({
   b,
   labelFor,
+  clientLine,
   onClick,
 }: {
   b: Booking;
   labelFor: (id: string) => string | undefined;
+  clientLine: string | null;
   onClick: () => void;
 }) {
   const start = new Date(b.scheduledAt);
@@ -184,8 +212,7 @@ function BookingRow({
             {b.address || 'No address'}
           </p>
           <p className="truncate text-[12.5px] text-neutral-500">
-            {b.client.name ? b.client.name : 'No client name'}
-            {b.client.brokerage ? ` · ${b.client.brokerage}` : ''}
+            {clientLine ?? 'No client'}
           </p>
           {labels.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">

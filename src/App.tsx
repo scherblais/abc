@@ -4,13 +4,26 @@ import { BookScreen } from './screens/BookScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { ServiceEditScreen } from './screens/ServiceEditScreen';
 import { RevenueScreen } from './screens/RevenueScreen';
-import type { Booking, DraftBooking, DraftService, Service, Settings } from './types';
+import { ClientsScreen } from './screens/ClientsScreen';
+import type {
+  Agent,
+  Booking,
+  Company,
+  DraftBooking,
+  DraftService,
+  Service,
+  Settings,
+} from './types';
 import {
+  loadAgents,
   loadBookings,
+  loadCompanies,
   loadServices,
   loadSettings,
   newId,
+  saveAgents,
   saveBookings,
+  saveCompanies,
   saveServices,
   saveSettings,
 } from './lib/storage';
@@ -23,6 +36,7 @@ type Screen =
   | { name: 'book'; editingId?: string }
   | { name: 'admin' }
   | { name: 'service-edit'; serviceId?: string }
+  | { name: 'clients' }
   | { name: 'revenue' };
 
 export default function App() {
@@ -31,6 +45,8 @@ export default function App() {
     const stored = loadServices();
     return stored ?? DEFAULT_CATALOG;
   });
+  const [companies, setCompanies] = useState<Company[]>(() => loadCompanies());
+  const [agents, setAgents] = useState<Agent[]>(() => loadAgents());
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
 
@@ -41,6 +57,14 @@ export default function App() {
   useEffect(() => {
     saveServices(services);
   }, [services]);
+
+  useEffect(() => {
+    saveCompanies(companies);
+  }, [companies]);
+
+  useEffect(() => {
+    saveAgents(agents);
+  }, [agents]);
 
   useEffect(() => {
     saveSettings(settings);
@@ -123,12 +147,55 @@ export default function App() {
     setScreen({ name: 'admin' });
   };
 
+  const createCompany = (name: string): Company => {
+    const next: Company = {
+      id: newId(),
+      name: name.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    setCompanies((prev) => [...prev, next]);
+    return next;
+  };
+
+  const updateCompany = (id: string, patch: Partial<Company>) => {
+    setCompanies((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  };
+
+  const deleteCompany = (id: string) => {
+    setCompanies((prev) => prev.filter((c) => c.id !== id));
+    // Cascade: drop agents under this company. Bookings keep companyId/agentId
+    // as orphaned IDs — the UI resolves them as "(deleted)" which is fine for
+    // historical records.
+    setAgents((prev) => prev.filter((a) => a.companyId !== id));
+  };
+
+  const createAgent = (companyId: string, name: string): Agent => {
+    const next: Agent = {
+      id: newId(),
+      companyId,
+      name: name.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    setAgents((prev) => [...prev, next]);
+    return next;
+  };
+
+  const updateAgent = (id: string, patch: Partial<Agent>) => {
+    setAgents((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  };
+
+  const deleteAgent = (id: string) => {
+    setAgents((prev) => prev.filter((a) => a.id !== id));
+  };
+
   return (
     <div className="mx-auto flex min-h-full w-full max-w-[480px] flex-col px-4">
       {screen.name === 'home' && (
         <HomeScreen
           bookings={bookings}
           catalog={services}
+          companies={companies}
+          agents={agents}
           onAdd={() => setScreen({ name: 'book' })}
           onOpen={(b) => setScreen({ name: 'book', editingId: b.id })}
           onOpenAdmin={() => setScreen({ name: 'admin' })}
@@ -142,11 +209,15 @@ export default function App() {
         <BookScreen
           initial={editingBooking}
           catalog={services}
+          companies={companies}
+          agents={agents}
           settings={settings}
           onSave={handleSaveBooking}
           onDelete={editingBooking ? handleDeleteBooking : undefined}
           onCancel={() => setScreen({ name: 'home' })}
           onManageCatalog={() => setScreen({ name: 'admin' })}
+          onCreateCompany={createCompany}
+          onCreateAgent={createAgent}
         />
       )}
       {screen.name === 'admin' && (
@@ -157,6 +228,9 @@ export default function App() {
           onBack={() => setScreen({ name: 'home' })}
           onAdd={() => setScreen({ name: 'service-edit' })}
           onEdit={(s) => setScreen({ name: 'service-edit', serviceId: s.id })}
+          onOpenClients={() => setScreen({ name: 'clients' })}
+          companiesCount={companies.length}
+          agentsCount={agents.length}
         />
       )}
       {screen.name === 'service-edit' && (
@@ -165,6 +239,19 @@ export default function App() {
           onSave={handleSaveService}
           onDelete={editingService ? handleDeleteService : undefined}
           onCancel={() => setScreen({ name: 'admin' })}
+        />
+      )}
+      {screen.name === 'clients' && (
+        <ClientsScreen
+          companies={companies}
+          agents={agents}
+          onBack={() => setScreen({ name: 'admin' })}
+          onCreateCompany={createCompany}
+          onUpdateCompany={updateCompany}
+          onDeleteCompany={deleteCompany}
+          onCreateAgent={createAgent}
+          onUpdateAgent={updateAgent}
+          onDeleteAgent={deleteAgent}
         />
       )}
     </div>

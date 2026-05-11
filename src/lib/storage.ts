@@ -1,8 +1,10 @@
-import type { Booking, Service, Settings } from '../types';
+import type { Agent, Booking, Company, Service, Settings } from '../types';
 
 const BOOKINGS_KEY = 'lensbook.bookings.v1';
 const SERVICES_KEY = 'lensbook.services.v1';
 const SETTINGS_KEY = 'lensbook.settings.v1';
+const COMPANIES_KEY = 'lensbook.companies.v1';
+const AGENTS_KEY = 'lensbook.agents.v1';
 
 export const DEFAULT_SETTINGS: Settings = {
   startingAddress: 'Carignan, QC',
@@ -53,6 +55,36 @@ export const loadSettings = (): Settings => {
 
 export const saveSettings = (settings: Settings) => {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+};
+
+export const loadCompanies = (): Company[] => {
+  try {
+    const raw = localStorage.getItem(COMPANIES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Company[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveCompanies = (companies: Company[]) => {
+  localStorage.setItem(COMPANIES_KEY, JSON.stringify(companies));
+};
+
+export const loadAgents = (): Agent[] => {
+  try {
+    const raw = localStorage.getItem(AGENTS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Agent[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveAgents = (agents: Agent[]) => {
+  localStorage.setItem(AGENTS_KEY, JSON.stringify(agents));
 };
 
 export const newId = () =>
