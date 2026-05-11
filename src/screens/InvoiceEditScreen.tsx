@@ -330,12 +330,25 @@ export function InvoiceEditScreen({
                         className={[
                           'grid h-4 w-4 shrink-0 place-items-center rounded border',
                           selected
-                            ? 'border-white bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100'
-                            : 'border-neutral-300 dark:border-neutral-700',
+                            ? 'border-neutral-900 bg-neutral-900 text-white dark:border-neutral-900 dark:bg-neutral-900 dark:text-neutral-100'
+                            : 'border-neutral-300 dark:border-neutral-600',
                         ].join(' ')}
                         aria-hidden
                       >
-                        {selected ? '✓' : ''}
+                        {selected && (
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 10 10"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M2 5.2L4.2 7.4L8 3" />
+                          </svg>
+                        )}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13.5px] font-medium">
