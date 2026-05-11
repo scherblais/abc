@@ -10,4 +10,4 @@
  * it up. Leave it empty to fall back to OpenStreetMap geocoding + straight-
  * line distance.
  */
-export const GOOGLE_API_KEY = '';
+export const GOOGLE_API_KEY = 'AIzaSyBHVKXumR6FYTx8rCwFO1N5IAR0TsWw5F0';
