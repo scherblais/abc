@@ -90,6 +90,24 @@ export default function App() {
     saveSettings(settings);
   }, [settings]);
 
+  // One-shot migration: invoices created before tax was made automatic have
+  // gstRate/qstRate snapshotted as 0. Bring them up to current rates so they
+  // actually charge tax. New invoices already snapshot the correct rates.
+  useEffect(() => {
+    setInvoices((prev) => {
+      let changed = false;
+      const next = prev.map((inv) => {
+        if (inv.gstRate === 0 && inv.qstRate === 0) {
+          changed = true;
+          return { ...inv, gstRate: GST_RATE, qstRate: QST_RATE };
+        }
+        return inv;
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (settings.startingAddress && !settings.startingCoords) {
       let cancelled = false;
