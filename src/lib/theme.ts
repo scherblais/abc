@@ -56,24 +56,17 @@ export function applyTheme(mode: ThemeMode) {
   root.style.colorScheme = resolved;
 
   // Drive the mobile browser's chrome / status bar with the resolved theme.
-  // Keying off the user's app choice (not OS prefers-color-scheme) means the
-  // bar follows the toggle in Settings, not the OS.
+  // Safari only reliably picks up theme-color changes when the meta element
+  // is REPLACED, not when content is mutated in place — so blow them all
+  // away and add a fresh one each time.
   const color = resolved === 'dark' ? BG_DARK : BG_LIGHT;
-  const metas = document.head.querySelectorAll('meta[name="theme-color"]');
-  if (metas.length === 0) {
-    const meta = document.createElement('meta');
-    meta.setAttribute('name', 'theme-color');
-    meta.setAttribute('content', color);
-    document.head.appendChild(meta);
-  } else {
-    metas.forEach((m, i) => {
-      // Strip any prefers-color-scheme media queries — they'd override our
-      // app-driven choice when the OS preference doesn't match.
-      m.removeAttribute('media');
-      if (i === 0) m.setAttribute('content', color);
-      else m.parentNode?.removeChild(m);
-    });
-  }
+  document.head
+    .querySelectorAll('meta[name="theme-color"]')
+    .forEach((m) => m.parentNode?.removeChild(m));
+  const meta = document.createElement('meta');
+  meta.setAttribute('name', 'theme-color');
+  meta.setAttribute('content', color);
+  document.head.appendChild(meta);
 }
 
 /**
