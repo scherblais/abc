@@ -257,7 +257,7 @@ function CompanyDetail({
             onDeleteCompany(company.id);
           }
         }}
-        className="tap mt-4 w-full rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white dark:text-neutral-900"
+        className="btn-destructive mt-5 rounded-md py-2 text-[13px]"
       >
         Delete brokerage
       </button>

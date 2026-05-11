@@ -72,6 +72,12 @@
   .pill-status {
     @apply inline-flex items-center rounded-md border px-1.5 py-0.5 text-[11px] font-medium;
   }
+  /* Destructive action button (Delete / Void / Remove). Red-tinted to signal
+   * intent without being a loud filled primary, and roomy enough to avoid
+   * mis-taps next to a save action. */
+  .btn-destructive {
+    @apply tap w-full rounded-lg border border-red-200 bg-white py-2.5 text-[14px] font-medium text-red-700 hover:border-red-300 hover:bg-red-50 dark:border-red-900/60 dark:bg-neutral-900 dark:text-red-400 dark:hover:border-red-800 dark:hover:bg-red-950/40;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {

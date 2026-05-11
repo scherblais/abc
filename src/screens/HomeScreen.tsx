@@ -239,7 +239,7 @@ export function HomeScreen({
                   <button
                     type="button"
                     onClick={onOpenRevenue}
-                    className="tap mt-2 w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2 text-[12.5px] text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white dark:text-neutral-900"
+                    className="tap mt-2 w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2 text-[12.5px] text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white"
                   >
                     {past.length - pastVisible.length} older shoots · view in Revenue ›
                   </button>

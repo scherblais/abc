@@ -472,7 +472,7 @@ export function InvoiceEditScreen({
                 onDelete();
               }
             }}
-            className="tap w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2.5 text-[14px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white dark:text-neutral-900"
+            className="btn-destructive"
           >
             Delete draft
           </button>
@@ -489,7 +489,7 @@ export function InvoiceEditScreen({
                 onVoid();
               }
             }}
-            className="tap w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2.5 text-[14px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white dark:text-neutral-900"
+            className="btn-destructive"
           >
             Void invoice
           </button>
