@@ -565,7 +565,7 @@ export function BookScreen({
         )}
       </div>
 
-      <div className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-10 border-t border-neutral-200/80 dark:border-neutral-800 bg-white/90 backdrop-blur-md">
+      <div className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-10 border-t border-neutral-200/80 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md">
         <div className="mx-auto max-w-[480px] px-4 py-3">
           <button
             type="button"
