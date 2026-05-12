@@ -34,17 +34,23 @@ export function StartingLocationCard({ settings, onChange }: Props) {
       : { kind: 'idle' },
   );
 
-  // Sync local form state when the settings prop changes externally —
-  // e.g. Firestore loads the saved settings after the first paint, or
-  // another device updates the same field. Without this, the local state
-  // stays at whatever was initialized at mount and silently overwrites
-  // the cloud value via the debounced write below.
-  const syncing = useRef(false);
+  // Always-fresh ref to settings so async commits never use a stale copy.
+  const settingsRef = useRef(settings);
   useEffect(() => {
-    syncing.current = true;
-    setAddress((prev) => (prev === settings.startingAddress ? prev : settings.startingAddress));
-    setFreeKm((prev) => (prev === settings.freeRadiusKm ? prev : settings.freeRadiusKm));
-    setRate((prev) => (prev === settings.perKmRate ? prev : settings.perKmRate));
+    settingsRef.current = settings;
+  }, [settings]);
+
+  // Editing flag: true while the user has changed a field but not yet
+  // committed. Prevents the sync useEffect below from clobbering in-progress
+  // typing when Firestore delivers the cloud value mid-edit.
+  const editingRef = useRef(false);
+
+  // Hydrate local form state from settings whenever the user isn't editing.
+  useEffect(() => {
+    if (editingRef.current) return;
+    setAddress(settings.startingAddress);
+    setFreeKm(settings.freeRadiusKm);
+    setRate(settings.perKmRate);
     if (settings.startingCoords && settings.startingAddress) {
       setStatus({
         kind: 'located',
@@ -54,10 +60,6 @@ export function StartingLocationCard({ settings, onChange }: Props) {
         provider: GOOGLE_API_KEY ? 'google' : 'osm',
       });
     }
-    const r = requestAnimationFrame(() => {
-      syncing.current = false;
-    });
-    return () => cancelAnimationFrame(r);
   }, [
     settings.startingAddress,
     settings.startingCoords?.lat,
@@ -66,28 +68,18 @@ export function StartingLocationCard({ settings, onChange }: Props) {
     settings.perKmRate,
   ]);
 
-  // Resolve the starting address (debounced) whenever the address changes.
+  // Resolve the starting address (debounced) whenever the user edits it.
+  // Geocoding runs only when address changed AND it differs from what's
+  // already saved with coords — prevents redundant lookups on every
+  // settings round-trip.
   const debounceRef = useRef<number | null>(null);
   useEffect(() => {
-    if (syncing.current) return;
+    if (!editingRef.current) return;
     const trimmedAddress = address.trim();
     const trimmedKey = GOOGLE_API_KEY.trim();
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (trimmedAddress.length < 3) {
       setStatus({ kind: 'idle' });
-      return;
-    }
-    // If the address hasn't actually changed vs what's already in settings
-    // (and we already have coords), don't re-geocode. Prevents bouncing
-    // back into the geocode + write path when settings syncs in from Firestore.
-    if (trimmedAddress === settings.startingAddress && settings.startingCoords) {
-      setStatus({
-        kind: 'located',
-        lat: settings.startingCoords.lat,
-        lon: settings.startingCoords.lon,
-        displayName: settings.startingAddress,
-        provider: trimmedKey ? 'google' : 'osm',
-      });
       return;
     }
     setStatus({ kind: 'looking' });
@@ -104,15 +96,17 @@ export function StartingLocationCard({ settings, onChange }: Props) {
         if (r) resolved = { lat: r.lat, lon: r.lon, formattedAddress: r.displayName };
       }
 
+      const base = settingsRef.current;
       if (!resolved) {
         setStatus({ kind: 'not_found', reason });
         onChange({
-          ...settings,
+          ...base,
           startingAddress: trimmedAddress,
           startingCoords: undefined,
           freeRadiusKm: freeKm,
           perKmRate: rate,
         });
+        editingRef.current = false;
         return;
       }
       setStatus({
@@ -123,12 +117,13 @@ export function StartingLocationCard({ settings, onChange }: Props) {
         provider: trimmedKey ? 'google' : 'osm',
       });
       onChange({
-        ...settings,
+        ...base,
         startingAddress: trimmedAddress,
         startingCoords: { lat: resolved.lat, lon: resolved.lon },
         freeRadiusKm: freeKm,
         perKmRate: rate,
       });
+      editingRef.current = false;
     }, 600);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -136,12 +131,33 @@ export function StartingLocationCard({ settings, onChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
 
+  // Commit freeKm + rate changes once the user pauses for 300ms.
   useEffect(() => {
-    if (syncing.current) return;
-    if (freeKm === settings.freeRadiusKm && rate === settings.perKmRate) return;
-    onChange({ ...settings, freeRadiusKm: freeKm, perKmRate: rate });
+    if (!editingRef.current) return;
+    if (
+      freeKm === settings.freeRadiusKm &&
+      rate === settings.perKmRate
+    ) {
+      return;
+    }
+    const t = setTimeout(() => {
+      onChange({
+        ...settingsRef.current,
+        freeRadiusKm: freeKm,
+        perKmRate: rate,
+      });
+      editingRef.current = false;
+    }, 300);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [freeKm, rate]);
+
+  const edit =
+    <T,>(setter: (v: T) => void) =>
+    (v: T) => {
+      editingRef.current = true;
+      setter(v);
+    };
 
   return (
     <section className="card mb-6 p-5">
@@ -152,7 +168,7 @@ export function StartingLocationCard({ settings, onChange }: Props) {
 
       <input
         value={address}
-        onChange={(e) => setAddress(e.target.value)}
+        onChange={(e) => edit(setAddress)(e.target.value)}
         placeholder="Carignan, QC"
         autoCapitalize="words"
         autoComplete="off"
@@ -169,7 +185,7 @@ export function StartingLocationCard({ settings, onChange }: Props) {
             min={0}
             step={1}
             value={freeKm}
-            onChange={(e) => setFreeKm(Math.max(0, Number(e.target.value) || 0))}
+            onChange={(e) => edit(setFreeKm)(Math.max(0, Number(e.target.value) || 0))}
             className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
           />
         </label>
@@ -181,7 +197,7 @@ export function StartingLocationCard({ settings, onChange }: Props) {
             min={0}
             step={0.05}
             value={rate}
-            onChange={(e) => setRate(Math.max(0, Number(e.target.value) || 0))}
+            onChange={(e) => edit(setRate)(Math.max(0, Number(e.target.value) || 0))}
             className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
           />
         </label>

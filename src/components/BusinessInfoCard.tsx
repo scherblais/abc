@@ -13,28 +13,30 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
   const [email, setEmail] = useState(settings.businessEmail ?? '');
   const [terms, setTerms] = useState(settings.defaultPaymentTermsDays ?? 30);
 
-  // Keep local form state in sync with externally-driven settings changes —
-  // e.g. when Firestore loads the saved values on initial mount (which arrives
-  // AFTER React's first paint), or when another device updates the same field.
-  // We diff each prop value against the current local state to avoid stomping
-  // on text the user is actively typing.
-  const syncing = useRef(false);
+  // Track the latest settings prop in a ref so the debounced commit always
+  // uses the most recent value (including the Firestore-loaded payload),
+  // not whatever happened to be captured when the user first started typing.
+  const settingsRef = useRef(settings);
   useEffect(() => {
-    syncing.current = true;
-    setName((prev) => (prev === (settings.businessName ?? '') ? prev : settings.businessName ?? ''));
-    setAddress((prev) => (prev === (settings.businessAddress ?? '') ? prev : settings.businessAddress ?? ''));
-    setPhone((prev) => (prev === (settings.businessPhone ?? '') ? prev : settings.businessPhone ?? ''));
-    setEmail((prev) => (prev === (settings.businessEmail ?? '') ? prev : settings.businessEmail ?? ''));
-    setTerms((prev) =>
-      prev === (settings.defaultPaymentTermsDays ?? 30)
-        ? prev
-        : settings.defaultPaymentTermsDays ?? 30,
-    );
-    // After this commit, allow user-typing-driven writes again.
-    const r = requestAnimationFrame(() => {
-      syncing.current = false;
-    });
-    return () => cancelAnimationFrame(r);
+    settingsRef.current = settings;
+  }, [settings]);
+
+  // While the user is actively editing, we DO NOT mirror prop changes into
+  // local state — doing so would wipe their in-progress typing the instant
+  // Firestore's subscription delivers the saved values. Cleared after the
+  // commit timer fires.
+  const editingRef = useRef(false);
+
+  // Pull fresh values from the settings prop into the form fields whenever
+  // the user is NOT mid-edit. This is the path that hydrates the form once
+  // Firestore loads (and the path that picks up changes from other devices).
+  useEffect(() => {
+    if (editingRef.current) return;
+    setName(settings.businessName ?? '');
+    setAddress(settings.businessAddress ?? '');
+    setPhone(settings.businessPhone ?? '');
+    setEmail(settings.businessEmail ?? '');
+    setTerms(settings.defaultPaymentTermsDays ?? 30);
   }, [
     settings.businessName,
     settings.businessAddress,
@@ -43,40 +45,40 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
     settings.defaultPaymentTermsDays,
   ]);
 
+  // Debounced commit. Only runs after the user actually edited something
+  // (editingRef.current === true), uses settingsRef.current so it can never
+  // clobber fields it didn't intend to touch.
   useEffect(() => {
-    // Skip write while we're echoing an external prop change back into local
-    // state — that round-trip would otherwise overwrite a fresh cloud value.
-    if (syncing.current) return;
-    const trimmedName = name.trim() || undefined;
-    const trimmedAddress = address.trim() || undefined;
-    const trimmedPhone = phone.trim() || undefined;
-    const trimmedEmail = email.trim() || undefined;
-    const safeTerms = Number.isFinite(terms) ? Math.max(0, terms) : 30;
-
-    // No-op writes are wasteful and (in the round-trip-edge case) can race.
-    if (
-      trimmedName === settings.businessName &&
-      trimmedAddress === settings.businessAddress &&
-      trimmedPhone === settings.businessPhone &&
-      trimmedEmail === settings.businessEmail &&
-      safeTerms === (settings.defaultPaymentTermsDays ?? 30)
-    ) {
-      return;
-    }
-
+    if (!editingRef.current) return;
     const t = setTimeout(() => {
+      const current = settingsRef.current;
+      const trimmedName = name.trim() || undefined;
+      const trimmedAddress = address.trim() || undefined;
+      const trimmedPhone = phone.trim() || undefined;
+      const trimmedEmail = email.trim() || undefined;
+      const safeTerms = Number.isFinite(terms) ? Math.max(0, terms) : 30;
       onChange({
-        ...settings,
+        ...current,
         businessName: trimmedName,
         businessAddress: trimmedAddress,
         businessPhone: trimmedPhone,
         businessEmail: trimmedEmail,
         defaultPaymentTermsDays: safeTerms,
       });
-    }, 300);
+      editingRef.current = false;
+    }, 400);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, address, phone, email, terms]);
+  }, [name, address, phone, email, terms, onChange]);
+
+  // Wrap every setter so a real user edit marks the form as dirty. Programmatic
+  // updates from the sync effect above don't go through these wrappers, so
+  // editingRef stays false in that path.
+  const edit =
+    <T,>(setter: (v: T) => void) =>
+    (v: T) => {
+      editingRef.current = true;
+      setter(v);
+    };
 
   return (
     <section className="card mb-6 p-5">
@@ -92,7 +94,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
       </label>
       <input
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={(e) => edit(setName)(e.target.value)}
         placeholder="Your studio / DBA"
         autoCapitalize="words"
         className="input mt-1.5"
@@ -103,7 +105,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
       </label>
       <textarea
         value={address}
-        onChange={(e) => setAddress(e.target.value)}
+        onChange={(e) => edit(setAddress)(e.target.value)}
         rows={2}
         placeholder="Mailing address shown on invoices"
         className="input mt-1.5 resize-none"
@@ -116,7 +118,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
           </span>
           <input
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => edit(setPhone)(e.target.value)}
             type="tel"
             autoComplete="tel"
             placeholder="(514) 555-0123"
@@ -129,7 +131,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
           </span>
           <input
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => edit(setEmail)(e.target.value)}
             type="email"
             autoComplete="email"
             autoCapitalize="off"
@@ -148,7 +150,7 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         min={0}
         step={1}
         value={terms}
-        onChange={(e) => setTerms(Number(e.target.value) || 0)}
+        onChange={(e) => edit(setTerms)(Number(e.target.value) || 0)}
         className="input mt-1.5"
       />
 
