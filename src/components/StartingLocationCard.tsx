@@ -34,14 +34,60 @@ export function StartingLocationCard({ settings, onChange }: Props) {
       : { kind: 'idle' },
   );
 
+  // Sync local form state when the settings prop changes externally —
+  // e.g. Firestore loads the saved settings after the first paint, or
+  // another device updates the same field. Without this, the local state
+  // stays at whatever was initialized at mount and silently overwrites
+  // the cloud value via the debounced write below.
+  const syncing = useRef(false);
+  useEffect(() => {
+    syncing.current = true;
+    setAddress((prev) => (prev === settings.startingAddress ? prev : settings.startingAddress));
+    setFreeKm((prev) => (prev === settings.freeRadiusKm ? prev : settings.freeRadiusKm));
+    setRate((prev) => (prev === settings.perKmRate ? prev : settings.perKmRate));
+    if (settings.startingCoords && settings.startingAddress) {
+      setStatus({
+        kind: 'located',
+        lat: settings.startingCoords.lat,
+        lon: settings.startingCoords.lon,
+        displayName: settings.startingAddress,
+        provider: GOOGLE_API_KEY ? 'google' : 'osm',
+      });
+    }
+    const r = requestAnimationFrame(() => {
+      syncing.current = false;
+    });
+    return () => cancelAnimationFrame(r);
+  }, [
+    settings.startingAddress,
+    settings.startingCoords?.lat,
+    settings.startingCoords?.lon,
+    settings.freeRadiusKm,
+    settings.perKmRate,
+  ]);
+
   // Resolve the starting address (debounced) whenever the address changes.
   const debounceRef = useRef<number | null>(null);
   useEffect(() => {
+    if (syncing.current) return;
     const trimmedAddress = address.trim();
     const trimmedKey = GOOGLE_API_KEY.trim();
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (trimmedAddress.length < 3) {
       setStatus({ kind: 'idle' });
+      return;
+    }
+    // If the address hasn't actually changed vs what's already in settings
+    // (and we already have coords), don't re-geocode. Prevents bouncing
+    // back into the geocode + write path when settings syncs in from Firestore.
+    if (trimmedAddress === settings.startingAddress && settings.startingCoords) {
+      setStatus({
+        kind: 'located',
+        lat: settings.startingCoords.lat,
+        lon: settings.startingCoords.lon,
+        displayName: settings.startingAddress,
+        provider: trimmedKey ? 'google' : 'osm',
+      });
       return;
     }
     setStatus({ kind: 'looking' });
@@ -91,6 +137,7 @@ export function StartingLocationCard({ settings, onChange }: Props) {
   }, [address]);
 
   useEffect(() => {
+    if (syncing.current) return;
     if (freeKm === settings.freeRadiusKm && rate === settings.perKmRate) return;
     onChange({ ...settings, freeRadiusKm: freeKm, perKmRate: rate });
     // eslint-disable-next-line react-hooks/exhaustive-deps
