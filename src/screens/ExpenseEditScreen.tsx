@@ -1,10 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DraftExpense, Expense, ExpenseCategory } from '../types';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Field } from '../components/Field';
 import { NumberField } from '../components/NumberField';
 import { RecordSyncLabel } from '../components/RecordSyncLabel';
-import { CATEGORY_LABEL, CATEGORY_ORDER, defaultQcTaxes } from '../lib/expenses';
+import {
+  CATEGORY_LABEL,
+  CATEGORY_ORDER,
+  expenseTotal,
+  splitFromTotal,
+  type TaxMode,
+} from '../lib/expenses';
+import { currencyExact } from '../lib/format';
 import { recordPath } from '../lib/sync-status';
 import { useUid } from '../lib/uid-context';
 
@@ -35,6 +42,23 @@ const fromExpense = (e: Expense): DraftExpense => ({
   notes: e.notes,
 });
 
+const TAX_MODES: { value: TaxMode; label: string; hint: string }[] = [
+  { value: 'qc', label: 'QC (5% + 9.975%)', hint: 'GST + QST' },
+  { value: 'gst', label: 'GST only (5%)', hint: 'out-of-province' },
+  { value: 'none', label: 'No tax', hint: 'exempt' },
+];
+
+/** Infer the tax mode from an existing expense's stored breakdown so the
+ *  form re-opens in the same state the user saved it in. */
+function inferMode(e: Expense | undefined): TaxMode {
+  if (!e) return 'qc';
+  const gst = e.gst ?? 0;
+  const qst = e.qst ?? 0;
+  if (gst === 0 && qst === 0) return 'none';
+  if (qst === 0) return 'gst';
+  return 'qc';
+}
+
 export function ExpenseEditScreen({
   initial,
   onSave,
@@ -45,6 +69,13 @@ export function ExpenseEditScreen({
   const [draft, setDraft] = useState<DraftExpense>(() =>
     initial ? fromExpense(initial) : emptyDraft(),
   );
+  const [mode, setMode] = useState<TaxMode>(() => inferMode(initial));
+  // The user types the *total* (after-tax). The pre-tax + tax breakdown is
+  // derived from this + the current mode and re-applied to the draft on
+  // every change.
+  const [total, setTotal] = useState<number>(() =>
+    initial ? expenseTotal(initial.amount, initial.gst, initial.qst) : 0,
+  );
   const descRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -54,8 +85,21 @@ export function ExpenseEditScreen({
     }
   }, [initial]);
 
+  // Recompute the breakdown into draft whenever total or mode changes.
+  useEffect(() => {
+    const split = splitFromTotal(total, mode);
+    setDraft((p) => ({
+      ...p,
+      amount: split.amount,
+      gst: split.gst,
+      qst: split.qst,
+    }));
+  }, [total, mode]);
+
+  const split = useMemo(() => splitFromTotal(total, mode), [total, mode]);
+
   const canSave =
-    draft.description.trim().length > 0 && draft.amount >= 0 && draft.date.length > 0;
+    draft.description.trim().length > 0 && total > 0 && draft.date.length > 0;
 
   const save = () => {
     if (!canSave) return;
@@ -64,14 +108,10 @@ export function ExpenseEditScreen({
       description: draft.description.trim(),
       vendor: draft.vendor?.trim() || undefined,
       notes: draft.notes?.trim() || undefined,
-      gst: draft.gst && draft.gst > 0 ? draft.gst : undefined,
-      qst: draft.qst && draft.qst > 0 ? draft.qst : undefined,
+      gst: split.gst > 0 ? split.gst : undefined,
+      qst: split.qst > 0 ? split.qst : undefined,
+      amount: split.amount,
     });
-  };
-
-  const autoTaxes = () => {
-    const t = defaultQcTaxes(draft.amount);
-    setDraft((p) => ({ ...p, gst: t.gst, qst: t.qst }));
   };
 
   return (
@@ -139,7 +179,7 @@ export function ExpenseEditScreen({
           </label>
           <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
             <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-              Amount (pre-tax)
+              Total paid
             </span>
             <div className="relative">
               <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center text-[15px] text-neutral-400 dark:text-neutral-500">
@@ -149,12 +189,52 @@ export function ExpenseEditScreen({
                 decimal
                 min={0}
                 step={1}
-                value={draft.amount}
-                onChange={(n) => setDraft((p) => ({ ...p, amount: n }))}
+                value={total}
+                onChange={setTotal}
                 className="mt-0.5 w-full bg-transparent pl-3.5 text-[15px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
               />
             </div>
           </label>
+        </div>
+
+        <div className="mb-5">
+          <p className="mb-1.5 px-0.5 text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
+            Tax on this receipt
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {TAX_MODES.map((m) => {
+              const selected = mode === m.value;
+              return (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => setMode(m.value)}
+                  className={[
+                    'tap rounded-lg border px-2 py-2 text-left',
+                    selected
+                      ? 'border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900'
+                      : 'border-neutral-200 bg-white text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600',
+                  ].join(' ')}
+                  aria-pressed={selected}
+                >
+                  <span className="block text-[12.5px] font-medium leading-tight">
+                    {m.label}
+                  </span>
+                  <span
+                    className={[
+                      'block text-[11px] leading-tight',
+                      selected
+                        ? 'text-white/70 dark:text-neutral-900/70'
+                        : 'text-neutral-500 dark:text-neutral-400',
+                    ].join(' ')}
+                  >
+                    {m.hint}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <Breakdown split={split} mode={mode} />
         </div>
 
         <Field label="Category">
@@ -175,53 +255,6 @@ export function ExpenseEditScreen({
             ))}
           </select>
         </Field>
-
-        <div className="mb-5">
-          <div className="mb-1.5 flex items-baseline justify-between gap-2 px-0.5">
-            <label className="text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
-              Sales taxes paid (ITC / ITR)
-            </label>
-            <button
-              type="button"
-              onClick={autoTaxes}
-              className="tap text-[11.5px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-            >
-              Fill QC default
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
-              <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-                GST paid
-              </span>
-              <NumberField
-                decimal
-                min={0}
-                step={0.01}
-                value={draft.gst ?? 0}
-                onChange={(n) => setDraft((p) => ({ ...p, gst: n }))}
-                className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
-              />
-            </label>
-            <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
-              <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-                QST paid
-              </span>
-              <NumberField
-                decimal
-                min={0}
-                step={0.01}
-                value={draft.qst ?? 0}
-                onChange={(n) => setDraft((p) => ({ ...p, qst: n }))}
-                className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
-              />
-            </label>
-          </div>
-          <p className="mt-1.5 px-0.5 text-[11.5px] leading-snug text-neutral-500 dark:text-neutral-400">
-            Track GST / QST you paid to claim them back as Input Tax
-            Credits / Input Tax Refunds.
-          </p>
-        </div>
 
         <Field label="Vendor" hint="optional">
           <input
@@ -254,6 +287,66 @@ export function ExpenseEditScreen({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+function Breakdown({
+  split,
+  mode,
+}: {
+  split: { amount: number; gst: number; qst: number };
+  mode: TaxMode;
+}) {
+  if (split.amount === 0 && split.gst === 0 && split.qst === 0) {
+    return (
+      <p className="mt-2 px-0.5 text-[11.5px] leading-snug text-neutral-500 dark:text-neutral-400">
+        Enter the total you paid above. The app will split it into pre-tax +
+        taxes.
+      </p>
+    );
+  }
+  return (
+    <dl className="mt-2 grid grid-cols-3 gap-2 rounded-lg border border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/30 px-3 py-2 text-[12px]">
+      <Cell label="Pre-tax" value={currencyExact(split.amount)} />
+      <Cell
+        label="GST"
+        value={mode === 'none' ? '—' : currencyExact(split.gst)}
+        muted={mode === 'none'}
+      />
+      <Cell
+        label="QST"
+        value={mode === 'qc' ? currencyExact(split.qst) : '—'}
+        muted={mode !== 'qc'}
+      />
+    </dl>
+  );
+}
+
+function Cell({
+  label,
+  value,
+  muted,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
+  return (
+    <div>
+      <dt className="text-[10.5px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+        {label}
+      </dt>
+      <dd
+        className={[
+          'mt-0.5 text-[13px] font-semibold tabular-nums',
+          muted
+            ? 'text-neutral-400 dark:text-neutral-500'
+            : 'text-neutral-900 dark:text-neutral-100',
+        ].join(' ')}
+      >
+        {value}
+      </dd>
     </div>
   );
 }

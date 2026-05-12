@@ -119,6 +119,46 @@ export function defaultQcTaxes(preTax: number): { gst: number; qst: number } {
   };
 }
 
+export type TaxMode = 'qc' | 'gst' | 'none';
+
+/**
+ * Reverse-derive pre-tax amount + GST + QST from a tax-inclusive receipt
+ * total. Used by the expense entry form: the user types what they paid,
+ * the app extracts the parts.
+ *
+ * - 'qc'   → total includes 5% GST + 9.975% QST (most QC receipts).
+ * - 'gst'  → total includes 5% GST only (out-of-province purchases).
+ * - 'none' → total IS pre-tax (exempt items, insurance, etc.).
+ */
+export function splitFromTotal(
+  total: number,
+  mode: TaxMode,
+): { amount: number; gst: number; qst: number } {
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  if (!Number.isFinite(total) || total <= 0) {
+    return { amount: 0, gst: 0, qst: 0 };
+  }
+  if (mode === 'none') {
+    return { amount: r2(total), gst: 0, qst: 0 };
+  }
+  if (mode === 'gst') {
+    const amount = total / 1.05;
+    return { amount: r2(amount), gst: r2(total - amount), qst: 0 };
+  }
+  // QC: 5% GST + 9.975% QST on pre-tax (de-compounded).
+  const amount = total / (1 + 0.05 + 0.09975);
+  return {
+    amount: r2(amount),
+    gst: r2(amount * 0.05),
+    qst: r2(amount * 0.09975),
+  };
+}
+
+/** Total = pre-tax + gst + qst (what was on the receipt). */
+export function expenseTotal(amount: number, gst = 0, qst = 0): number {
+  return Math.round((amount + gst + qst) * 100) / 100;
+}
+
 /** CSV export of expenses for a year — one row per expense. */
 export function expensesCsv(year: number, expenses: Expense[]): string {
   const rows: string[] = [

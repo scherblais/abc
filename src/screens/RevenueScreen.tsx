@@ -195,8 +195,10 @@ function YearSection({
   onOpenExpenses: () => void;
 }) {
   const years = mergeYears(stats.yearsAvailable, expenseStats.yearsAvailable, year);
-  const net = stats.revenue - expenseStats.amount;
-  const netTax = stats.gst - expenseStats.gst + (stats.qst - expenseStats.qst);
+  const netIncome = stats.revenue - expenseStats.amount;
+  const netGst = stats.gst - expenseStats.gst;
+  const netQst = stats.qst - expenseStats.qst;
+  const empty = stats.shoots === 0 && expenseStats.count === 0;
 
   return (
     <section className="card mb-6 p-5">
@@ -207,9 +209,6 @@ function YearSection({
           </p>
           <div className="mt-0.5 flex items-baseline gap-2">
             <YearPicker year={year} years={years} onChange={onYearChange} />
-            <span className="text-[12.5px] text-neutral-500 dark:text-neutral-400">
-              · {stats.shoots} shoot{stats.shoots === 1 ? '' : 's'}
-            </span>
           </div>
         </div>
         <button
@@ -222,36 +221,78 @@ function YearSection({
         </button>
       </div>
 
-      {stats.shoots === 0 ? (
+      {empty ? (
         <p className="text-[13px] text-neutral-500 dark:text-neutral-400">
-          No shoots in {year}.
+          Nothing logged for {year} yet.
         </p>
       ) : (
-        <>
-          <dl className="grid grid-cols-2 gap-3">
-            <Stat label="Revenue (pre-tax)" value={currencyExact(stats.revenue)} />
-            <Stat label="GST collected" value={currencyExact(stats.gst)} />
-            <Stat label="QST collected" value={currencyExact(stats.qst)} />
-            <Stat label="Billed total" value={currencyExact(stats.total)} hint={`${currencyExact(stats.paid)} paid`} />
-          </dl>
-
-          <div className="mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-3">
-            <p className="text-[11.5px] leading-snug text-neutral-500 dark:text-neutral-400">
-              {currencyExact(stats.outstanding)} on sent (unpaid) invoices ·{' '}
-              {currencyExact(stats.notInvoiced)} not yet invoiced ·{' '}
-              {stats.km.toFixed(1)} km billed
+        <div className="space-y-5">
+          {/* ----------------- You charged ----------------- */}
+          <SubSection
+            label="You charged"
+            sub={`${stats.shoots} shoot${stats.shoots === 1 ? '' : 's'}`}
+          >
+            <Row label="Services + travel" value={currencyExact(stats.revenue)} />
+            <Row label="GST collected (5%)" value={currencyExact(stats.gst)} muted={stats.gst === 0} />
+            <Row label="QST collected (9.975%)" value={currencyExact(stats.qst)} muted={stats.qst === 0} />
+            <Row label="Billed total" value={currencyExact(stats.total)} strong />
+            <p className="mt-1.5 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">
+              {currencyExact(stats.paid)} paid · {currencyExact(stats.outstanding)} sent &amp; outstanding ·{' '}
+              {currencyExact(stats.notInvoiced)} not yet on an invoice
             </p>
-            <p className="mt-1 text-[11px] leading-snug text-neutral-400 dark:text-neutral-500">
-              Tax amounts come from invoices that have left draft; shoots still
-              on draft or no invoice don't contribute to GST / QST totals.
-            </p>
-          </div>
+          </SubSection>
 
-          {stats.byBrokerage.length > 0 && (
-            <div className="mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-3">
-              <p className="mb-2 text-[11.5px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-                By brokerage
+          {/* ----------------- You spent ----------------- */}
+          <SubSection
+            label="You spent"
+            sub={`${expenseStats.count} expense${expenseStats.count === 1 ? '' : 's'}`}
+            action={{ label: 'Manage ›', onClick: onOpenExpenses }}
+          >
+            {expenseStats.count === 0 ? (
+              <p className="text-[12.5px] text-neutral-500 dark:text-neutral-400">
+                No expenses yet for {year}.
               </p>
+            ) : (
+              <>
+                <Row label="Pre-tax expenses" value={currencyExact(expenseStats.amount)} />
+                <Row label="GST paid (ITC)" value={currencyExact(expenseStats.gst)} muted={expenseStats.gst === 0} />
+                <Row label="QST paid (ITR)" value={currencyExact(expenseStats.qst)} muted={expenseStats.qst === 0} />
+                <Row label="Total paid out" value={currencyExact(expenseStats.total)} strong />
+              </>
+            )}
+          </SubSection>
+
+          {/* ----------------- Tax filing ----------------- */}
+          <SubSection label="Tax filing" sub="Net for return">
+            <Row
+              label="Net income (revenue − expenses)"
+              value={currencyExact(netIncome)}
+              strong
+            />
+            <ObligationRow
+              label="GST"
+              authority="CRA"
+              collected={stats.gst}
+              paid={expenseStats.gst}
+              net={netGst}
+            />
+            <ObligationRow
+              label="QST"
+              authority="RQ"
+              collected={stats.qst}
+              paid={expenseStats.qst}
+              net={netQst}
+            />
+            <p className="mt-1.5 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">
+              Anchored on shoot date (revenue) and expense date. Tax counted
+              only on invoices that have left draft. Confirm with your
+              accountant before remitting.
+            </p>
+          </SubSection>
+
+          {/* ----------------- By brokerage ----------------- */}
+          {stats.byBrokerage.length > 0 && (
+            <SubSection label="By brokerage">
               <ul className="space-y-2">
                 {stats.byBrokerage.map((b) => (
                   <li
@@ -270,54 +311,139 @@ function YearSection({
                   </li>
                 ))}
               </ul>
-            </div>
+            </SubSection>
           )}
-
-          <div className="mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-3">
-            <div className="mb-2 flex items-baseline justify-between gap-2">
-              <p className="text-[11.5px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-                Expenses
-              </p>
-              <button
-                type="button"
-                onClick={onOpenExpenses}
-                className="tap text-[12px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-              >
-                Manage ›
-              </button>
-            </div>
-            {expenseStats.count === 0 ? (
-              <p className="text-[12.5px] text-neutral-500 dark:text-neutral-400">
-                No expenses logged for {year} yet.
-              </p>
-            ) : (
-              <dl className="grid grid-cols-2 gap-3">
-                <Stat
-                  label="Expenses (pre-tax)"
-                  value={currencyExact(expenseStats.amount)}
-                  hint={`${expenseStats.count} item${expenseStats.count === 1 ? '' : 's'}`}
-                />
-                <Stat
-                  label="Net (rev − exp)"
-                  value={currencyExact(net)}
-                  hint={`Net taxes ${currencyExact(netTax)}`}
-                />
-                <Stat
-                  label="GST paid (ITC)"
-                  value={currencyExact(expenseStats.gst)}
-                  hint={`Net GST ${currencyExact(stats.gst - expenseStats.gst)}`}
-                />
-                <Stat
-                  label="QST paid (ITR)"
-                  value={currencyExact(expenseStats.qst)}
-                  hint={`Net QST ${currencyExact(stats.qst - expenseStats.qst)}`}
-                />
-              </dl>
-            )}
-          </div>
-        </>
+        </div>
       )}
     </section>
+  );
+}
+
+function SubSection({
+  label,
+  sub,
+  action,
+  children,
+}: {
+  label: string;
+  sub?: string;
+  action?: { label: string; onClick: () => void };
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border-t border-neutral-100 dark:border-neutral-800 pt-3 first:border-t-0 first:pt-0">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <p className="text-[11.5px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          {label}
+          {sub && (
+            <span className="ml-1.5 text-[11px] normal-case text-neutral-400 dark:text-neutral-500">
+              {sub}
+            </span>
+          )}
+        </p>
+        {action && (
+          <button
+            type="button"
+            onClick={action.onClick}
+            className="tap text-[12px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+          >
+            {action.label}
+          </button>
+        )}
+      </div>
+      <div className="space-y-1.5">{children}</div>
+    </div>
+  );
+}
+
+function Row({
+  label,
+  value,
+  strong,
+  muted,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span
+        className={[
+          'text-[13px]',
+          strong
+            ? 'font-semibold text-neutral-900 dark:text-neutral-100'
+            : muted
+              ? 'text-neutral-500 dark:text-neutral-400'
+              : 'text-neutral-700 dark:text-neutral-300',
+        ].join(' ')}
+      >
+        {label}
+      </span>
+      <span
+        className={[
+          'shrink-0 text-[13px] tabular-nums',
+          strong
+            ? 'font-semibold text-neutral-900 dark:text-neutral-100'
+            : muted
+              ? 'text-neutral-500 dark:text-neutral-400'
+              : 'font-medium text-neutral-900 dark:text-neutral-100',
+        ].join(' ')}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * A "net tax owed" line that flips between "Pay" / "Refund" / "Even"
+ * based on the sign of (collected − paid).
+ */
+function ObligationRow({
+  label,
+  authority,
+  collected,
+  paid,
+  net,
+}: {
+  label: string;
+  authority: string;
+  collected: number;
+  paid: number;
+  net: number;
+}) {
+  const owe = Math.round(net * 100) / 100;
+  let verdict: string;
+  let tone: string;
+  if (owe > 0) {
+    verdict = `Pay ${authority}`;
+    tone = 'text-amber-700 dark:text-amber-300';
+  } else if (owe < 0) {
+    verdict = `Refund from ${authority}`;
+    tone = 'text-emerald-700 dark:text-emerald-300';
+  } else {
+    verdict = 'Even';
+    tone = 'text-neutral-500 dark:text-neutral-400';
+  }
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-[13px] font-medium text-neutral-900 dark:text-neutral-100">
+          {label}
+        </span>
+        <span className="shrink-0 text-[14px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+          {currencyExact(Math.abs(owe))}
+        </span>
+      </div>
+      <div className="mt-0.5 flex items-baseline justify-between gap-3 text-[11.5px] leading-snug">
+        <span className="text-neutral-500 dark:text-neutral-400">
+          Collected {currencyExact(collected)} − Paid {currencyExact(paid)}
+        </span>
+        <span className={`shrink-0 font-medium ${tone}`}>{verdict}</span>
+      </div>
+    </div>
   );
 }
 
@@ -351,28 +477,3 @@ function YearPicker({
   );
 }
 
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
-      <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-        {label}
-      </p>
-      <p className="mt-0.5 text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-        {value}
-      </p>
-      {hint && (
-        <p className="mt-0.5 text-[11px] text-neutral-500 dark:text-neutral-400">
-          {hint}
-        </p>
-      )}
-    </div>
-  );
-}
