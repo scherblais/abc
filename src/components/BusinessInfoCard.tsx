@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Settings } from '../types';
+import { NumberField } from './NumberField';
 import { RecordSyncLabel } from './RecordSyncLabel';
 import { settingsPath } from '../lib/sync-status';
 import { useUid } from '../lib/uid-context';
@@ -148,13 +149,11 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
       <label className="mt-4 block text-[12px] font-medium text-neutral-500 dark:text-neutral-400">
         Default payment terms (days)
       </label>
-      <input
-        type="number"
-        inputMode="numeric"
+      <NumberField
         min={0}
         step={1}
         value={terms}
-        onChange={(e) => edit(setTerms)(Number(e.target.value) || 0)}
+        onChange={edit(setTerms)}
         className="input mt-1.5"
       />
 

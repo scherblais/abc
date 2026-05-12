@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DraftService, Service } from '../types';
 import { Field } from '../components/Field';
+import { NumberField } from '../components/NumberField';
 import { ScreenHeader } from '../components/ScreenHeader';
 
 type Props = {
@@ -94,18 +95,11 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
             <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-[15px] text-neutral-400 dark:text-neutral-500">
               $
             </span>
-            <input
-              type="number"
-              inputMode="numeric"
+            <NumberField
               min={0}
               step={5}
               value={draft.price}
-              onChange={(e) =>
-                setDraft((p) => ({
-                  ...p,
-                  price: Math.max(0, Number(e.target.value) || 0),
-                }))
-              }
+              onChange={(n) => setDraft((p) => ({ ...p, price: n }))}
               className={INPUT + ' pl-7 tabular-nums'}
             />
           </div>

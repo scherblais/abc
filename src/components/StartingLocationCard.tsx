@@ -3,6 +3,7 @@ import type { Settings } from '../types';
 import { geocode } from '../lib/geocode';
 import { googleGeocode } from '../lib/google';
 import { GOOGLE_API_KEY } from '../config';
+import { NumberField } from './NumberField';
 import { RecordSyncLabel } from './RecordSyncLabel';
 import { settingsPath } from '../lib/sync-status';
 import { useUid } from '../lib/uid-context';
@@ -183,25 +184,22 @@ export function StartingLocationCard({ settings, onChange }: Props) {
       <div className="mt-4 grid grid-cols-2 gap-3">
         <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
           <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Free km</span>
-          <input
-            type="number"
-            inputMode="numeric"
+          <NumberField
             min={0}
             step={1}
             value={freeKm}
-            onChange={(e) => edit(setFreeKm)(Math.max(0, Number(e.target.value) || 0))}
+            onChange={edit(setFreeKm)}
             className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
           />
         </label>
         <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
           <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">$ per km</span>
-          <input
-            type="number"
-            inputMode="decimal"
+          <NumberField
+            decimal
             min={0}
             step={0.05}
             value={rate}
-            onChange={(e) => edit(setRate)(Math.max(0, Number(e.target.value) || 0))}
+            onChange={edit(setRate)}
             className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
           />
         </label>

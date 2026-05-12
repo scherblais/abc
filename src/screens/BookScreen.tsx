@@ -20,6 +20,7 @@ import { ServiceGrid } from '../components/ServiceGrid';
 import { Field } from '../components/Field';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
 import { ClientPicker } from '../components/ClientPicker';
+import { NumberField } from '../components/NumberField';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { RecordSyncLabel } from '../components/RecordSyncLabel';
 import { recordPath } from '../lib/sync-status';
@@ -436,18 +437,11 @@ export function BookScreen({
           {overrideTotals && (
             <label className="mt-4 block rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2">
               <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Price ($)</span>
-              <input
-                type="number"
-                inputMode="numeric"
+              <NumberField
                 min={0}
                 step={5}
                 value={draft.price}
-                onChange={(e) =>
-                  setDraft((p) => ({
-                    ...p,
-                    price: Math.max(0, Number(e.target.value) || 0),
-                  }))
-                }
+                onChange={(n) => setDraft((p) => ({ ...p, price: n }))}
                 className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
               />
             </label>
