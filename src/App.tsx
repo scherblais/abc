@@ -479,7 +479,13 @@ function AppShell({
         />
       )}
       {screen.name === 'revenue' && (
-        <RevenueScreen bookings={bookings} onBack={() => setScreen({ name: 'home' })} />
+        <RevenueScreen
+          bookings={bookings}
+          invoices={invoices}
+          companies={companies}
+          bookingInvoiceIndex={bookingInvoiceIndex}
+          onBack={() => setScreen({ name: 'home' })}
+        />
       )}
       {screen.name === 'book' && (
         <BookScreen
