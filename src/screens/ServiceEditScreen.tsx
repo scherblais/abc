@@ -11,14 +11,12 @@ type Props = {
 
 const empty = (): DraftService => ({
   name: '',
-  durationMin: 60,
   price: 295,
   description: '',
 });
 
 const fromService = (s: Service): DraftService => ({
   name: s.name,
-  durationMin: s.durationMin,
   price: s.price,
   description: s.description ?? '',
 });
@@ -38,13 +36,12 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
     }
   }, [initial]);
 
-  const canSave = draft.name.trim().length > 0 && draft.durationMin > 0 && draft.price >= 0;
+  const canSave = draft.name.trim().length > 0 && draft.price >= 0;
 
   const save = () =>
     canSave &&
     onSave({
       name: draft.name.trim(),
-      durationMin: draft.durationMin,
       price: draft.price,
       description: draft.description?.trim() || undefined,
     });
@@ -89,26 +86,11 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
           />
         </Field>
 
-        <div className="mb-5 grid grid-cols-2 gap-2">
-          <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
-            <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Duration (min)</span>
-            <input
-              type="number"
-              inputMode="numeric"
-              min={5}
-              step={5}
-              value={draft.durationMin}
-              onChange={(e) =>
-                setDraft((p) => ({
-                  ...p,
-                  durationMin: Math.max(0, Number(e.target.value) || 0),
-                }))
-              }
-              className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
-            />
-          </label>
-          <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5">
-            <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Price ($)</span>
+        <Field label="Price">
+          <div className="relative">
+            <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-[15px] text-neutral-400 dark:text-neutral-500">
+              $
+            </span>
             <input
               type="number"
               inputMode="numeric"
@@ -121,10 +103,10 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
                   price: Math.max(0, Number(e.target.value) || 0),
                 }))
               }
-              className="mt-0.5 w-full bg-transparent text-[16px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
+              className={INPUT + ' pl-7 tabular-nums'}
             />
-          </label>
-        </div>
+          </div>
+        </Field>
 
         <Field label="Description" hint="optional">
           <input

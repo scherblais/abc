@@ -298,10 +298,10 @@ function AppShell({
             const inv = invoices.find((i) => i.id === invId);
             if (inv && inv.status !== 'draft') return b;
           }
-          const { price, durationMin } = sumServices(b.services, newCatalog);
-          if (b.price === price && b.durationMin === durationMin) return b;
+          const { price } = sumServices(b.services, newCatalog);
+          if (b.price === price) return b;
           changed = true;
-          return { ...b, price, durationMin };
+          return { ...b, price };
         });
         return changed ? next : prev;
       });

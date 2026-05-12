@@ -1,5 +1,5 @@
 import type { Service, Settings } from '../types';
-import { currency, formatDuration } from '../lib/format';
+import { currency } from '../lib/format';
 import { StartingLocationCard } from '../components/StartingLocationCard';
 import { BusinessInfoCard } from '../components/BusinessInfoCard';
 import { ThemeToggleCard } from '../components/ThemeToggleCard';
@@ -139,7 +139,7 @@ export function AdminScreen({
                       {s.name}
                     </p>
                     <p className="text-[12.5px] text-neutral-500 dark:text-neutral-400">
-                      {formatDuration(s.durationMin)} · {currency(s.price)}
+                      {currency(s.price)}
                     </p>
                     {s.description && (
                       <p className="mt-0.5 line-clamp-1 text-[12px] text-neutral-400 dark:text-neutral-500">

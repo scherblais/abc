@@ -44,9 +44,3 @@ export const formatDayLabel = (d: Date, today: Date = new Date()) => {
   });
 };
 
-export const formatDuration = (min: number) => {
-  if (min < 60) return `${min}m`;
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
-};

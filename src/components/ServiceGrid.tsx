@@ -1,5 +1,5 @@
 import type { Service } from '../types';
-import { currency, formatDuration } from '../lib/format';
+import { currency } from '../lib/format';
 
 type Props = {
   services: Service[];
@@ -33,14 +33,11 @@ export function ServiceGrid({ services, selectedIds, onToggle }: Props) {
                 {currency(s.price)}
               </span>
             </div>
-            {s.description ? (
+            {s.description && (
               <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
                 {s.description}
               </p>
-            ) : (
-              <p className="mt-1 text-[12px] text-transparent">&nbsp;</p>
             )}
-            <p className="mt-1 text-[11.5px] text-neutral-400 dark:text-neutral-500">{formatDuration(s.durationMin)}</p>
           </button>
         );
       })}

@@ -10,7 +10,7 @@ import type {
 } from '../types';
 import { catalogFor, sumServices } from '../lib/catalog';
 import { suggestedNextSlot } from '../lib/datetime';
-import { currency, formatDayLabel, formatDuration, formatTime } from '../lib/format';
+import { currency, formatDayLabel, formatTime } from '../lib/format';
 import { distanceKm, geocode, travelFee } from '../lib/geocode';
 import { googleGeocode, googleRoadDistance } from '../lib/google';
 import { GOOGLE_API_KEY } from '../config';
@@ -58,7 +58,6 @@ type TravelState =
 const draftFromBooking = (b: Booking): DraftBooking => ({
   address: b.address,
   scheduledAt: b.scheduledAt,
-  durationMin: b.durationMin,
   services: [...b.services],
   price: b.price,
   travelKm: b.travelKm,
@@ -76,7 +75,6 @@ const emptyDraft = (catalog: Service[]): DraftBooking => {
   return {
     address: '',
     scheduledAt: suggestedNextSlot().toISOString(),
-    durationMin: first?.durationMin ?? 60,
     services: first ? [first.id] : [],
     price: first?.price ?? 0,
     notes: '',
@@ -261,8 +259,8 @@ export function BookScreen({
       const has = p.services.includes(id);
       const next = has ? p.services.filter((s) => s !== id) : [...p.services, id];
       if (!overrideTotals) {
-        const { durationMin, price } = sumServices(next, effectiveCatalog);
-        return { ...p, services: next, durationMin, price };
+        const { price } = sumServices(next, effectiveCatalog);
+        return { ...p, services: next, price };
       }
       return { ...p, services: next };
     });
@@ -275,9 +273,9 @@ export function BookScreen({
     if (overrideTotals) return;
     setDraft((p) => {
       if (p.services.length === 0) return p;
-      const { durationMin, price } = sumServices(p.services, effectiveCatalog);
-      if (p.price === price && p.durationMin === durationMin) return p;
-      return { ...p, price, durationMin };
+      const { price } = sumServices(p.services, effectiveCatalog);
+      if (p.price === price) return p;
+      return { ...p, price };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft.companyId, effectiveCatalog, overrideTotals]);
@@ -373,7 +371,7 @@ export function BookScreen({
           hint={
             draft.services.length === 0
               ? 'Pick at least one'
-              : `${formatDuration(draft.durationMin)} · ${currency(draft.price)}`
+              : currency(draft.price)
           }
         >
           {catalog.length === 0 ? (
@@ -402,7 +400,7 @@ export function BookScreen({
               onClick={() => setOverrideTotals((v) => !v)}
               className="tap text-[12.5px] font-medium text-neutral-700 dark:text-neutral-300 underline-offset-4 hover:underline"
             >
-              {overrideTotals ? 'Use catalog totals' : 'Override price / duration'}
+              {overrideTotals ? 'Use catalog price' : 'Override price'}
             </button>
             <button
               type="button"
@@ -413,44 +411,23 @@ export function BookScreen({
             </button>
           </div>
           {overrideTotals && (
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2">
-                <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
-                  Duration (min)
-                </span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={5}
-                  step={5}
-                  value={draft.durationMin}
-                  onChange={(e) =>
-                    setDraft((p) => ({
-                      ...p,
-                      durationMin: Math.max(0, Number(e.target.value) || 0),
-                    }))
-                  }
-                  className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                />
-              </label>
-              <label className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2">
-                <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Price ($)</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  step={5}
-                  value={draft.price}
-                  onChange={(e) =>
-                    setDraft((p) => ({
-                      ...p,
-                      price: Math.max(0, Number(e.target.value) || 0),
-                    }))
-                  }
-                  className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                />
-              </label>
-            </div>
+            <label className="mt-4 block rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2">
+              <span className="block text-[11px] font-medium text-neutral-500 dark:text-neutral-400">Price ($)</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={5}
+                value={draft.price}
+                onChange={(e) =>
+                  setDraft((p) => ({
+                    ...p,
+                    price: Math.max(0, Number(e.target.value) || 0),
+                  }))
+                }
+                className="mt-0.5 w-full bg-transparent text-[15px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 focus:outline-none"
+              />
+            </label>
           )}
         </Field>
 

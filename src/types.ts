@@ -1,7 +1,6 @@
 export type Service = {
   id: string;
   name: string;
-  durationMin: number;
   price: number;
   description?: string;
 };
@@ -96,7 +95,6 @@ export type Booking = {
   id: string;
   address: string;
   scheduledAt: string; // ISO
-  durationMin: number;
   /** Services price (does not include travel). */
   price: number;
   services: string[]; // service IDs (may include stale IDs after a service is removed)

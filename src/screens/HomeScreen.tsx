@@ -59,7 +59,7 @@ export function HomeScreen({
     () =>
       bookings
         .filter(
-          (b) => new Date(b.scheduledAt).getTime() + b.durationMin * 60000 >= now.getTime(),
+          (b) => new Date(b.scheduledAt).getTime() >= now.getTime(),
         )
         .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)),
     [bookings, now],
@@ -69,7 +69,7 @@ export function HomeScreen({
     () =>
       bookings
         .filter(
-          (b) => new Date(b.scheduledAt).getTime() + b.durationMin * 60000 < now.getTime(),
+          (b) => new Date(b.scheduledAt).getTime() < now.getTime(),
         )
         .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt)),
     [bookings, now],
@@ -78,18 +78,6 @@ export function HomeScreen({
   const groups = useMemo(() => groupByDay(upcoming), [upcoming]);
   const [pastOpen, setPastOpen] = useState(false);
   const pastVisible = pastOpen ? past.slice(0, 25) : [];
-
-  const monthStats = useMemo(() => {
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const inThisMonth = bookings.filter((b) => {
-      const d = new Date(b.scheduledAt);
-      return d.getFullYear() === year && d.getMonth() === month;
-    });
-    const total = inThisMonth.reduce((sum, b) => sum + bookingTotal(b), 0);
-    const label = now.toLocaleDateString('en-CA', { month: 'long' });
-    return { total, count: inThisMonth.length, label };
-  }, [bookings, now]);
 
   const labelFor = useMemo(() => {
     const byId = new Map(catalog.map((s) => [s.id, s.name]));
@@ -119,67 +107,52 @@ export function HomeScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 pb-3 pt-3 backdrop-blur-md">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-[20px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
-              Lensbook
-            </h1>
-            {monthStats.total > 0 ? (
-              <button
-                type="button"
-                onClick={onOpenRevenue}
-                className="tap mt-0.5 inline-flex items-baseline gap-1 text-[13px] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between gap-3 border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-2 backdrop-blur-md">
+        <span
+          className="text-[18px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100"
+          aria-label="Lensbook"
+        >
+          LM
+        </span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={onOpenRevenue}
+            aria-label="Revenue"
+            className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+          >
+            <RevenueIcon />
+          </button>
+          <button
+            type="button"
+            onClick={onOpenInvoices}
+            aria-label="Invoices"
+            className="tap relative grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+          >
+            <InvoiceIcon />
+            {outstanding.count > 0 && (
+              <span
+                aria-hidden
+                className="absolute -right-1 -top-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold text-white"
               >
-                <span className="font-medium text-neutral-900 dark:text-neutral-100 tabular-nums">
-                  {currency(monthStats.total)}
-                </span>
-                <span>in {monthStats.label}</span>
-                {upcoming.length > 0 && <span>· {upcoming.length} upcoming</span>}
-                <span className="text-neutral-400 dark:text-neutral-500" aria-hidden>
-                  ›
-                </span>
-              </button>
-            ) : upcoming.length > 0 ? (
-              <p className="mt-0.5 text-[13px] text-neutral-500 dark:text-neutral-400">
-                {upcoming.length} upcoming
-              </p>
-            ) : (
-              <p className="mt-0.5 text-[13px] text-neutral-500 dark:text-neutral-400">No shoots booked</p>
+                {outstanding.count}
+              </span>
             )}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={onOpenInvoices}
-              aria-label="Invoices"
-              className="tap relative grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
-            >
-              <InvoiceIcon />
-              {outstanding.count > 0 && (
-                <span
-                  aria-hidden
-                  className="absolute -right-1 -top-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold text-white"
-                >
-                  {outstanding.count}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={onOpenAdmin}
-              aria-label="Manage catalog"
-              className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
-            >
-              <SettingsIcon />
-            </button>
-          </div>
+          </button>
+          <button
+            type="button"
+            onClick={onOpenAdmin}
+            aria-label="Settings"
+            className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+          >
+            <SettingsIcon />
+          </button>
         </div>
       </header>
 
       <main className="flex-1 pb-28 pt-5">
         {upcoming.length === 0 && past.length === 0 ? (
-          <EmptyState onAdd={onAdd} />
+          <EmptyState />
         ) : (
           <>
             {upcoming.length > 0 && (
@@ -295,7 +268,6 @@ function BookingRow({
           <span className="text-[14.5px] font-semibold leading-tight tabular-nums text-neutral-900 dark:text-neutral-100">
             {formatTime(start)}
           </span>
-          <span className="text-[11.5px] text-neutral-400 dark:text-neutral-500">{b.durationMin}m</span>
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[14.5px] font-medium text-neutral-900 dark:text-neutral-100">
@@ -376,19 +348,25 @@ function PastBookingRow({
   );
 }
 
-function EmptyState({ onAdd }: { onAdd: () => void }) {
+function EmptyState() {
   return (
     <div className="mt-12 flex flex-col items-center justify-center px-6 text-center">
       <div className="mb-5 grid h-14 w-14 place-items-center rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path
             d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"
-            stroke="#0a0a0a"
+            className="stroke-neutral-900 dark:stroke-neutral-100"
             strokeWidth="1.6"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <circle cx="12" cy="13" r="3.5" stroke="#0a0a0a" strokeWidth="1.6" />
+          <circle
+            cx="12"
+            cy="13"
+            r="3.5"
+            className="stroke-neutral-900 dark:stroke-neutral-100"
+            strokeWidth="1.6"
+          />
         </svg>
       </div>
       <h2 className="text-[17px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
@@ -397,14 +375,18 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <p className="mt-1.5 max-w-[20rem] text-[13.5px] leading-snug text-neutral-500 dark:text-neutral-400">
         Tap the button below — address, day, time, services. Done in under 30 seconds.
       </p>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="tap mt-5 rounded-lg bg-neutral-900 dark:bg-neutral-100 px-4 py-2 text-[14px] font-medium text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200"
-      >
-        + New shoot
-      </button>
     </div>
+  );
+}
+
+function RevenueIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M4 20V8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M10 20V4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M16 20v-9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M3 20h18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
   );
 }
 
