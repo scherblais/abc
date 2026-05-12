@@ -382,6 +382,79 @@ export function BookScreen({
           )}
         </Field>
 
+        {showExtras ? (
+          <Field label="Property contact" hint="seller / tenant">
+            <div className="space-y-2">
+              <input
+                value={draft.occupant?.name ?? ''}
+                onChange={(e) =>
+                  setDraft((p) => ({
+                    ...p,
+                    occupant: { ...p.occupant, name: e.target.value },
+                  }))
+                }
+                placeholder="Name"
+                autoComplete="name"
+                autoCapitalize="words"
+                className={INPUT}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={draft.occupant?.phone ?? ''}
+                  onChange={(e) =>
+                    setDraft((p) => ({
+                      ...p,
+                      occupant: { ...p.occupant, phone: e.target.value },
+                    }))
+                  }
+                  placeholder="Phone"
+                  type="tel"
+                  autoComplete="tel"
+                  className={INPUT}
+                />
+                <input
+                  value={draft.occupant?.email ?? ''}
+                  onChange={(e) =>
+                    setDraft((p) => ({
+                      ...p,
+                      occupant: { ...p.occupant, email: e.target.value },
+                    }))
+                  }
+                  placeholder="Email"
+                  type="email"
+                  autoComplete="email"
+                  className={INPUT}
+                />
+              </div>
+              <input
+                value={draft.occupant?.accessNotes ?? ''}
+                onChange={(e) =>
+                  setDraft((p) => ({
+                    ...p,
+                    occupant: { ...p.occupant, accessNotes: e.target.value },
+                  }))
+                }
+                placeholder="Access (gate code, lockbox, key location)"
+                className={INPUT}
+              />
+              <input
+                value={draft.notes ?? ''}
+                onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))}
+                placeholder="Notes for this shoot"
+                className={INPUT}
+              />
+            </div>
+          </Field>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowExtras(true)}
+            className="tap mb-4 mt-1 inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-2.5 text-[13.5px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+          >
+            <span aria-hidden>+</span> Add property contact / notes
+          </button>
+        )}
+
         <Field label="Day" hint={formatDayLabel(scheduled)}>
           <DatePickerRow value={scheduled} onChange={setScheduled} />
         </Field>
@@ -483,79 +556,6 @@ export function BookScreen({
             onOpen={(invId) => onOpenInvoice(invId)}
             onRemove={() => onRemoveBookingFromInvoice(initial.id)}
           />
-        )}
-
-        {showExtras ? (
-          <Field label="Property contact" hint="seller / tenant">
-            <div className="space-y-2">
-              <input
-                value={draft.occupant?.name ?? ''}
-                onChange={(e) =>
-                  setDraft((p) => ({
-                    ...p,
-                    occupant: { ...p.occupant, name: e.target.value },
-                  }))
-                }
-                placeholder="Name"
-                autoComplete="name"
-                autoCapitalize="words"
-                className={INPUT}
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  value={draft.occupant?.phone ?? ''}
-                  onChange={(e) =>
-                    setDraft((p) => ({
-                      ...p,
-                      occupant: { ...p.occupant, phone: e.target.value },
-                    }))
-                  }
-                  placeholder="Phone"
-                  type="tel"
-                  autoComplete="tel"
-                  className={INPUT}
-                />
-                <input
-                  value={draft.occupant?.email ?? ''}
-                  onChange={(e) =>
-                    setDraft((p) => ({
-                      ...p,
-                      occupant: { ...p.occupant, email: e.target.value },
-                    }))
-                  }
-                  placeholder="Email"
-                  type="email"
-                  autoComplete="email"
-                  className={INPUT}
-                />
-              </div>
-              <input
-                value={draft.occupant?.accessNotes ?? ''}
-                onChange={(e) =>
-                  setDraft((p) => ({
-                    ...p,
-                    occupant: { ...p.occupant, accessNotes: e.target.value },
-                  }))
-                }
-                placeholder="Access (gate code, lockbox, key location)"
-                className={INPUT}
-              />
-              <input
-                value={draft.notes ?? ''}
-                onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))}
-                placeholder="Notes for this shoot"
-                className={INPUT}
-              />
-            </div>
-          </Field>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowExtras(true)}
-            className="tap mb-4 mt-1 inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-2.5 text-[13.5px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
-          >
-            <span aria-hidden>+</span> Add property contact / notes
-          </button>
         )}
 
         {initial && onDelete && (
