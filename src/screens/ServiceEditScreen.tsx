@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DraftService, Service } from '../types';
 import { Field } from '../components/Field';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 type Props = {
   initial?: Service;
@@ -48,31 +49,33 @@ export function ServiceEditScreen({ initial, onSave, onDelete, onCancel }: Props
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-3 backdrop-blur-md">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-        >
-          Cancel
-        </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
-          {initial ? 'Edit service' : 'New service'}
-        </h1>
-        <button
-          type="button"
-          onClick={save}
-          disabled={!canSave}
-          className={[
-            'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
-            canSave
-              ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
-              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
-          ].join(' ')}
-        >
-          Save
-        </button>
-      </header>
+      <ScreenHeader
+        left={
+          <button
+            type="button"
+            onClick={onCancel}
+            className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+          >
+            Cancel
+          </button>
+        }
+        title={initial ? 'Edit service' : 'New service'}
+        right={
+          <button
+            type="button"
+            onClick={save}
+            disabled={!canSave}
+            className={[
+              'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
+              canSave
+                ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
+            ].join(' ')}
+          >
+            Save
+          </button>
+        }
+      />
 
       <div className="flex-1 pb-12 pt-5">
         <Field label="Name">

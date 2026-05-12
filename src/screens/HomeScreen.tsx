@@ -5,6 +5,7 @@ import { normalizeServices } from '../lib/catalog';
 import { currency, formatDayLabel, formatTime } from '../lib/format';
 import { bookingTotal } from '../lib/bookings';
 import { invoiceSubtotal, invoiceTaxes } from '../lib/invoices';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 type Props = {
   bookings: Booking[];
@@ -108,48 +109,53 @@ export function HomeScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between gap-3 border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-2 backdrop-blur-md">
-        <span
-          className="text-[18px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100"
-          aria-label="Lensbook"
-        >
-          LM
-        </span>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <button
-            type="button"
-            onClick={onOpenRevenue}
-            aria-label="Revenue"
-            className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+      <ScreenHeader
+        dense
+        left={
+          <span
+            className="text-[18px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100"
+            aria-label="Lensbook"
           >
-            <RevenueIcon />
-          </button>
-          <button
-            type="button"
-            onClick={onOpenInvoices}
-            aria-label="Invoices"
-            className="tap relative grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
-          >
-            <InvoiceIcon />
-            {outstanding.count > 0 && (
-              <span
-                aria-hidden
-                className="absolute -right-1 -top-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold text-white"
-              >
-                {outstanding.count}
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={onOpenAdmin}
-            aria-label="Settings"
-            className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
-          >
-            <SettingsIcon />
-          </button>
-        </div>
-      </header>
+            LM
+          </span>
+        }
+        right={
+          <>
+            <button
+              type="button"
+              onClick={onOpenRevenue}
+              aria-label="Revenue"
+              className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+            >
+              <RevenueIcon />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenInvoices}
+              aria-label="Invoices"
+              className="tap relative grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+            >
+              <InvoiceIcon />
+              {outstanding.count > 0 && (
+                <span
+                  aria-hidden
+                  className="absolute -right-1 -top-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold text-white"
+                >
+                  {outstanding.count}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={onOpenAdmin}
+              aria-label="Settings"
+              className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+            >
+              <SettingsIcon />
+            </button>
+          </>
+        }
+      />
 
       <main className="flex-1 pb-28 pt-5">
         {upcoming.length === 0 && past.length === 0 ? (

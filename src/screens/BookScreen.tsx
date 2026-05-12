@@ -20,6 +20,10 @@ import { ServiceGrid } from '../components/ServiceGrid';
 import { Field } from '../components/Field';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
 import { ClientPicker } from '../components/ClientPicker';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { RecordSyncLabel } from '../components/RecordSyncLabel';
+import { recordPath } from '../lib/sync-status';
+import { useUid } from '../lib/uid-context';
 
 type Props = {
   initial?: Booking;
@@ -102,6 +106,7 @@ export function BookScreen({
   onCreateInvoiceForBooking,
   onOpenInvoice,
 }: Props) {
+  const bookingUid = useUid();
   const currentInvoice = useMemo(() => {
     if (!initial) return undefined;
     const id = bookingInvoiceIndex.get(initial.id);
@@ -293,31 +298,38 @@ export function BookScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-3 backdrop-blur-md">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-        >
-          Cancel
-        </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
-          {initial ? 'Edit shoot' : 'New shoot'}
-        </h1>
-        <button
-          type="button"
-          onClick={() => canSave && onSave(draft)}
-          disabled={!canSave}
-          className={[
-            'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
-            canSave
-              ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
-              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
-          ].join(' ')}
-        >
-          {initial ? 'Save' : 'Book'}
-        </button>
-      </header>
+      <ScreenHeader
+        left={
+          <button
+            type="button"
+            onClick={onCancel}
+            className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+          >
+            Cancel
+          </button>
+        }
+        title={initial ? 'Edit shoot' : 'New shoot'}
+        right={
+          <button
+            type="button"
+            onClick={() => canSave && onSave(draft)}
+            disabled={!canSave}
+            className={[
+              'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
+              canSave
+                ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
+            ].join(' ')}
+          >
+            {initial ? 'Save' : 'Book'}
+          </button>
+        }
+      />
+      {initial && bookingUid && (
+        <div className="-mx-4 flex justify-center border-b border-neutral-100 dark:border-neutral-800/70 bg-white/60 dark:bg-neutral-900/40 px-4 py-1.5">
+          <RecordSyncLabel path={recordPath(bookingUid, 'bookings', initial.id)} />
+        </div>
+      )}
 
       <div className="flex-1 pb-32 pt-5">
         {currentInvoice && currentInvoice.status !== 'draft' && (

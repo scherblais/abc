@@ -3,6 +3,9 @@ import type { Settings } from '../types';
 import { geocode } from '../lib/geocode';
 import { googleGeocode } from '../lib/google';
 import { GOOGLE_API_KEY } from '../config';
+import { RecordSyncLabel } from './RecordSyncLabel';
+import { settingsPath } from '../lib/sync-status';
+import { useUid } from '../lib/uid-context';
 
 type Props = {
   settings: Settings;
@@ -19,6 +22,7 @@ type Status =
 const INPUT = 'input';
 
 export function StartingLocationCard({ settings, onChange }: Props) {
+  const uid = useUid();
   const [address, setAddress] = useState(settings.startingAddress);
   const [freeKm, setFreeKm] = useState(settings.freeRadiusKm);
   const [rate, setRate] = useState(settings.perKmRate);
@@ -203,12 +207,15 @@ export function StartingLocationCard({ settings, onChange }: Props) {
         </label>
       </div>
 
-      <p className="mt-3 text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
-        Charged ${rate.toFixed(2)} per km beyond the first {freeKm} km.
-        {GOOGLE_API_KEY
-          ? ' Geocoded with Google Maps + road distance.'
-          : ' Geocoded with OpenStreetMap + straight-line distance.'}
-      </p>
+      <div className="mt-3 flex items-baseline justify-between gap-3">
+        <p className="text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
+          Charged ${rate.toFixed(2)} per km beyond the first {freeKm} km.
+          {GOOGLE_API_KEY
+            ? ' Geocoded with Google Maps + road distance.'
+            : ' Geocoded with OpenStreetMap + straight-line distance.'}
+        </p>
+        {uid && <RecordSyncLabel path={settingsPath(uid)} />}
+      </div>
     </section>
   );
 }

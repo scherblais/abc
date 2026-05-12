@@ -48,7 +48,10 @@ import {
 import { useAuth } from './lib/auth';
 import { useDataDoc, useDataList } from './lib/sync';
 import { migrateLocalToCloud } from './lib/migrate';
-import { signOut } from './lib/firebase';
+import { getFirebaseDb, signOut } from './lib/firebase';
+import { onSnapshotsInSync } from 'firebase/firestore';
+import { markWarm, setInSync, setOnline } from './lib/sync-status';
+import { UidProvider } from './lib/uid-context';
 
 type Screen =
   | { name: 'home' }
@@ -65,7 +68,12 @@ export default function App() {
   const auth = useAuth();
 
   // Firebase not configured: run as a local-only app, exactly as before.
-  if (auth.status === 'disabled') return <AppShell uid={null} />;
+  if (auth.status === 'disabled')
+    return (
+      <UidProvider uid={null}>
+        <AppShell uid={null} />
+      </UidProvider>
+    );
 
   // Resolving the persisted sign-in.
   if (auth.status === 'loading') return <LoadingScreen />;
@@ -90,7 +98,32 @@ function AuthenticatedApp({
     });
   }, [uid]);
 
-  return <AppShell uid={uid} accountEmail={email} />;
+  // Wire global sync-status signals exactly once per authenticated session.
+  // onSnapshotsInSync fires when every active listener is caught up; that
+  // event also tells us we've completed the warm-up after sign-in. The
+  // online / offline window events flip the indicator's red state.
+  useEffect(() => {
+    const unsub = onSnapshotsInSync(getFirebaseDb(), () => {
+      markWarm();
+      setInSync(true);
+    });
+    const onOnline = () => setOnline(true);
+    const onOffline = () => setOnline(false);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    setOnline(navigator.onLine !== false);
+    return () => {
+      unsub();
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
+
+  return (
+    <UidProvider uid={uid}>
+      <AppShell uid={uid} accountEmail={email} />
+    </UidProvider>
+  );
 }
 
 function LoadingScreen() {

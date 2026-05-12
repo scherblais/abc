@@ -21,6 +21,10 @@ import {
 } from '../lib/invoices';
 import { ClientPicker } from '../components/ClientPicker';
 import { INVOICE_STATUS_LABEL, StatusPill } from '../components/StatusPill';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { RecordSyncLabel } from '../components/RecordSyncLabel';
+import { recordPath } from '../lib/sync-status';
+import { useUid } from '../lib/uid-context';
 
 type Props = {
   initial?: Invoice;
@@ -93,6 +97,7 @@ export function InvoiceEditScreen({
   onCreateCompany,
   onCreateAgent,
 }: Props) {
+  const invoiceUid = useUid();
   const preselectCompanyId = preselectBookingId
     ? bookings.find((b) => b.id === preselectBookingId)?.companyId
     : undefined;
@@ -219,31 +224,38 @@ export function InvoiceEditScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-3 backdrop-blur-md">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-        >
-          Cancel
-        </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
-          {isNew ? 'New invoice' : draft.number}
-        </h1>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!canSave}
-          className={[
-            'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
-            canSave
-              ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
-              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
-          ].join(' ')}
-        >
-          Save
-        </button>
-      </header>
+      <ScreenHeader
+        left={
+          <button
+            type="button"
+            onClick={onCancel}
+            className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+          >
+            Cancel
+          </button>
+        }
+        title={isNew ? 'New invoice' : draft.number}
+        right={
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!canSave}
+            className={[
+              'tap rounded-md px-3 py-1.5 text-[14px] font-medium',
+              canSave
+                ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
+            ].join(' ')}
+          >
+            Save
+          </button>
+        }
+      />
+      {!isNew && invoiceUid && draft.status === 'draft' && (
+        <div className="-mx-4 flex justify-center border-b border-neutral-100 dark:border-neutral-800/70 bg-white/60 dark:bg-neutral-900/40 px-4 py-1.5">
+          <RecordSyncLabel path={recordPath(invoiceUid, 'invoices', draft.id)} />
+        </div>
+      )}
 
       <div className="flex-1 pb-12 pt-5">
         <section className="card mb-5 p-5">

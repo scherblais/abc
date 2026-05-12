@@ -10,6 +10,12 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { getFirebaseDb } from './firebase';
+import {
+  beginWrite,
+  endWrite,
+  failWrite,
+  markPending,
+} from './sync-status';
 
 /**
  * Hook with the same shape as React.useState<T[]>, but transparently backs
@@ -60,9 +66,11 @@ export function useDataList<T extends { id: string }>(
       prevRef.current = next;
       setItems(next);
       if (uid) {
-        applyListDiff(uid, name, prev, next).catch((err) => {
-          console.error(`[sync] write to users/${uid}/${name} failed:`, err);
-        });
+        // Mark each changed record as 'pending' immediately so the per-record
+        // label shows up even before the actual setDoc fires.
+        const paths = diffPaths(uid, name, prev, next);
+        for (const p of paths) markPending(p);
+        runListWrite(uid, name, prev, next);
       }
     },
     [uid, name],
@@ -106,12 +114,9 @@ export function useDataDoc<T>(
       valueRef.current = next;
       setValue(next);
       if (uid) {
-        setDoc(
-          doc(getFirebaseDb(), fullPath(uid, path)),
-          stripUndefined(next) as object,
-        ).catch((err) => {
-          console.error(`[sync] write to ${fullPath(uid, path)} failed:`, err);
-        });
+        const docPath = fullPath(uid, path);
+        markPending(docPath);
+        runDocWrite(docPath, next);
       }
     },
     [uid, path],
@@ -124,37 +129,98 @@ function fullPath(uid: string, sub: string) {
   return `users/${uid}/${sub}`;
 }
 
-async function applyListDiff<T extends { id: string }>(
+/**
+ * Compute which doc paths a list-diff write would touch. Used to pre-mark
+ * those records as 'pending' before the actual write fires.
+ */
+function diffPaths<T extends { id: string }>(
   uid: string,
   name: string,
   prev: T[],
   next: T[],
-): Promise<void> {
+): string[] {
+  const prevById = new Map(prev.map((p) => [p.id, p]));
+  const nextById = new Map(next.map((n) => [n.id, n]));
+  const out: string[] = [];
+  for (const [id, item] of nextById) {
+    const before = prevById.get(id);
+    if (!before || JSON.stringify(before) !== JSON.stringify(item)) {
+      out.push(`users/${uid}/${name}/${id}`);
+    }
+  }
+  for (const [id] of prevById) {
+    if (!nextById.has(id)) out.push(`users/${uid}/${name}/${id}`);
+  }
+  return out;
+}
+
+/**
+ * Commit a list-style diff to Firestore via a single batch.commit(), with
+ * per-record sync-status accounting. Marks each affected path saving →
+ * saved (or error). Stores a retry closure that re-runs the same operation
+ * with the same prev/next payload.
+ */
+function runListWrite<T extends { id: string }>(
+  uid: string,
+  name: string,
+  prev: T[],
+  next: T[],
+): void {
   const db = getFirebaseDb();
   const prevById = new Map(prev.map((p) => [p.id, p]));
   const nextById = new Map(next.map((n) => [n.id, n]));
   const batch = writeBatch(db);
-  let changes = 0;
+  const paths: string[] = [];
 
   for (const [id, item] of nextById) {
     const before = prevById.get(id);
-    // Cheap "did this change" check. JSON comparison is fine for our
-    // plain-object shapes and avoids a per-field deep-equal.
     if (!before || JSON.stringify(before) !== JSON.stringify(item)) {
-      batch.set(
-        doc(db, `users/${uid}/${name}`, id),
-        stripUndefined(item) as object,
-      );
-      changes++;
+      const path = `users/${uid}/${name}/${id}`;
+      batch.set(doc(db, path), stripUndefined(item) as object);
+      paths.push(path);
     }
   }
   for (const [id] of prevById) {
     if (!nextById.has(id)) {
-      batch.delete(doc(db, `users/${uid}/${name}`, id));
-      changes++;
+      const path = `users/${uid}/${name}/${id}`;
+      batch.delete(doc(db, path));
+      paths.push(path);
     }
   }
-  if (changes > 0) await batch.commit();
+  if (paths.length === 0) return;
+
+  const retry = () => runListWrite(uid, name, prev, next);
+  for (const p of paths) beginWrite(p, asyncRetry(retry));
+
+  batch
+    .commit()
+    .then(() => {
+      for (const p of paths) endWrite(p);
+    })
+    .catch((err) => {
+      for (const p of paths) failWrite(p, err);
+      console.error(`[sync] batch write to users/${uid}/${name} failed:`, err);
+    });
+}
+
+/** Single-doc write with begin/end/fail accounting. */
+function runDocWrite<T>(path: string, next: T): void {
+  const retry = () => runDocWrite(path, next);
+  beginWrite(path, asyncRetry(retry));
+  setDoc(doc(getFirebaseDb(), path), stripUndefined(next) as object)
+    .then(() => endWrite(path))
+    .catch((err) => {
+      failWrite(path, err);
+      console.error(`[sync] write to ${path} failed:`, err);
+    });
+}
+
+/** The retry closures stored in the status store are async by contract;
+ *  our run helpers are fire-and-forget so we adapt them here. */
+function asyncRetry(fn: () => void): () => Promise<void> {
+  return async () => {
+    fn();
+  };
 }
 
 /**

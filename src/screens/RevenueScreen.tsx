@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Booking } from '../types';
 import { groupByMonth } from '../lib/revenue';
 import { currency } from '../lib/format';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 type Props = {
   bookings: Booking[];
@@ -27,17 +28,18 @@ export function RevenueScreen({ bookings, onBack }: Props) {
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-3 backdrop-blur-md">
-        <button
-          type="button"
-          onClick={onBack}
-          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-        >
-          ‹ Back
-        </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">Revenue</h1>
-        <span className="w-12" aria-hidden />
-      </header>
+      <ScreenHeader
+        left={
+          <button
+            type="button"
+            onClick={onBack}
+            className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+          >
+            ‹ Back
+          </button>
+        }
+        title="Revenue"
+      />
 
       <main className="flex-1 pb-12 pt-5">
         {thisMonth && (

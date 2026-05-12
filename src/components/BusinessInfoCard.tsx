@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Settings } from '../types';
+import { RecordSyncLabel } from './RecordSyncLabel';
+import { settingsPath } from '../lib/sync-status';
+import { useUid } from '../lib/uid-context';
 
 type Props = {
   settings: Settings;
@@ -7,6 +10,7 @@ type Props = {
 };
 
 export function BusinessInfoCard({ settings, onChange }: Props) {
+  const uid = useUid();
   const [name, setName] = useState(settings.businessName ?? '');
   const [address, setAddress] = useState(settings.businessAddress ?? '');
   const [phone, setPhone] = useState(settings.businessPhone ?? '');
@@ -154,9 +158,12 @@ export function BusinessInfoCard({ settings, onChange }: Props) {
         className="input mt-1.5"
       />
 
-      <p className="mt-3 text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
-        Invoices automatically add GST (5%) and QST (9.975%).
-      </p>
+      <div className="mt-3 flex items-baseline justify-between gap-3">
+        <p className="text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
+          Invoices automatically add GST (5%) and QST (9.975%).
+        </p>
+        {uid && <RecordSyncLabel path={settingsPath(uid)} />}
+      </div>
     </section>
   );
 }

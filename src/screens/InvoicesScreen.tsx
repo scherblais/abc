@@ -3,6 +3,7 @@ import type { Booking, Company, Invoice, InvoiceStatus } from '../types';
 import { currencyExact, formatInvoiceDate } from '../lib/format';
 import { invoiceSubtotal, invoiceTaxes } from '../lib/invoices';
 import { INVOICE_STATUS_LABEL, StatusPill } from '../components/StatusPill';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 type Props = {
   invoices: Invoice[];
@@ -51,25 +52,27 @@ export function InvoicesScreen({
 
   return (
     <div className="flex h-full min-h-full flex-col">
-      <header className="safe-top sticky top-0 z-10 -mx-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-neutral-800 bg-white/85 dark:bg-neutral-900/85 px-4 py-3 backdrop-blur-md">
-        <button
-          type="button"
-          onClick={onBack}
-          className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-        >
-          ‹ Back
-        </button>
-        <h1 className="text-[15px] font-semibold tracking-tightish text-neutral-900 dark:text-neutral-100">
-          Invoices
-        </h1>
-        <button
-          type="button"
-          onClick={onNew}
-          className="tap rounded-md bg-neutral-900 dark:bg-neutral-100 px-3 py-1.5 text-[13px] font-medium text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200"
-        >
-          + New
-        </button>
-      </header>
+      <ScreenHeader
+        left={
+          <button
+            type="button"
+            onClick={onBack}
+            className="tap -ml-1 rounded-md px-2 py-1.5 text-[14px] text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+          >
+            ‹ Back
+          </button>
+        }
+        title="Invoices"
+        right={
+          <button
+            type="button"
+            onClick={onNew}
+            className="tap rounded-md bg-neutral-900 dark:bg-neutral-100 px-3 py-1.5 text-[13px] font-medium text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200"
+          >
+            + New
+          </button>
+        }
+      />
 
       <main className="flex-1 pb-12 pt-5">
         {invoices.length === 0 ? (
