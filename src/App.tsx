@@ -8,13 +8,17 @@ import { ClientsScreen } from './screens/ClientsScreen';
 import { InvoicesScreen } from './screens/InvoicesScreen';
 import { InvoiceEditScreen } from './screens/InvoiceEditScreen';
 import { InvoicePrintScreen } from './screens/InvoicePrintScreen';
+import { ExpensesScreen } from './screens/ExpensesScreen';
+import { ExpenseEditScreen } from './screens/ExpenseEditScreen';
 import { SignInScreen } from './screens/SignInScreen';
 import type {
   Agent,
   Booking,
   Company,
   DraftBooking,
+  DraftExpense,
   DraftService,
+  Expense,
   Invoice,
   Service,
   Settings,
@@ -24,6 +28,7 @@ import {
   loadAgents,
   loadBookings,
   loadCompanies,
+  loadExpenses,
   loadInvoices,
   loadServices,
   loadSettings,
@@ -31,6 +36,7 @@ import {
   saveAgents,
   saveBookings,
   saveCompanies,
+  saveExpenses,
   saveInvoices,
   saveServices,
   saveSettings,
@@ -62,7 +68,9 @@ type Screen =
   | { name: 'revenue' }
   | { name: 'invoices' }
   | { name: 'invoice-edit'; invoiceId?: string; preselectBookingId?: string }
-  | { name: 'invoice-print'; invoiceId: string };
+  | { name: 'invoice-print'; invoiceId: string }
+  | { name: 'expenses' }
+  | { name: 'expense-edit'; expenseId?: string };
 
 export default function App() {
   const auth = useAuth();
@@ -173,6 +181,12 @@ function AppShell({
     loadInvoices,
     saveInvoices,
   );
+  const [expenses, setExpenses] = useDataList<Expense>(
+    uid,
+    'expenses',
+    loadExpenses,
+    saveExpenses,
+  );
   const [settings, setSettings] = useDataDoc<Settings>(
     uid,
     'meta/settings',
@@ -247,6 +261,11 @@ function AppShell({
   const printInvoice =
     screen.name === 'invoice-print'
       ? invoices.find((i) => i.id === screen.invoiceId)
+      : undefined;
+
+  const editingExpense =
+    screen.name === 'expense-edit' && screen.expenseId
+      ? expenses.find((e) => e.id === screen.expenseId)
       : undefined;
 
   const handleSaveBooking = (draft: DraftBooking) => {
@@ -447,6 +466,32 @@ function AppShell({
     setScreen({ name: 'invoices' });
   };
 
+  // --- Expenses ---
+
+  const saveExpense = (draft: DraftExpense) => {
+    if (editingExpense) {
+      setExpenses((prev) =>
+        prev.map((e) =>
+          e.id === editingExpense.id ? { ...editingExpense, ...draft } : e,
+        ),
+      );
+    } else {
+      const next: Expense = {
+        ...draft,
+        id: newId(),
+        createdAt: new Date().toISOString(),
+      };
+      setExpenses((prev) => [...prev, next]);
+    }
+    setScreen({ name: 'expenses' });
+  };
+
+  const deleteExpense = () => {
+    if (!editingExpense) return;
+    setExpenses((prev) => prev.filter((e) => e.id !== editingExpense.id));
+    setScreen({ name: 'expenses' });
+  };
+
   // Print route renders outside the mobile-width wrapper so the invoice can
   // span the full page when printed to PDF.
   if (screen.name === 'invoice-print' && printInvoice) {
@@ -476,6 +521,7 @@ function AppShell({
           onOpenAdmin={() => setScreen({ name: 'admin' })}
           onOpenRevenue={() => setScreen({ name: 'revenue' })}
           onOpenInvoices={() => setScreen({ name: 'invoices' })}
+          onOpenExpenses={() => setScreen({ name: 'expenses' })}
         />
       )}
       {screen.name === 'revenue' && (
@@ -483,8 +529,10 @@ function AppShell({
           bookings={bookings}
           invoices={invoices}
           companies={companies}
+          expenses={expenses}
           bookingInvoiceIndex={bookingInvoiceIndex}
           onBack={() => setScreen({ name: 'home' })}
+          onOpenExpenses={() => setScreen({ name: 'expenses' })}
         />
       )}
       {screen.name === 'book' && (
@@ -582,6 +630,22 @@ function AppShell({
           onOpenPrint={(id) => setScreen({ name: 'invoice-print', invoiceId: id })}
           onCreateCompany={createCompany}
           onCreateAgent={createAgent}
+        />
+      )}
+      {screen.name === 'expenses' && (
+        <ExpensesScreen
+          expenses={expenses}
+          onBack={() => setScreen({ name: 'home' })}
+          onAdd={() => setScreen({ name: 'expense-edit' })}
+          onEdit={(e) => setScreen({ name: 'expense-edit', expenseId: e.id })}
+        />
+      )}
+      {screen.name === 'expense-edit' && (
+        <ExpenseEditScreen
+          initial={editingExpense}
+          onSave={saveExpense}
+          onDelete={editingExpense ? deleteExpense : undefined}
+          onCancel={() => setScreen({ name: 'expenses' })}
         />
       )}
     </div>

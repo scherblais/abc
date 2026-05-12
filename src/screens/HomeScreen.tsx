@@ -18,6 +18,7 @@ type Props = {
   onOpenAdmin: () => void;
   onOpenRevenue: () => void;
   onOpenInvoices: () => void;
+  onOpenExpenses: () => void;
 };
 
 const groupByDay = (items: Booking[]) => {
@@ -46,6 +47,7 @@ export function HomeScreen({
   onOpenAdmin,
   onOpenRevenue,
   onOpenInvoices,
+  onOpenExpenses,
 }: Props) {
   const outstanding = useMemo(() => {
     const sent = invoices.filter((i) => i.status === 'sent');
@@ -128,6 +130,14 @@ export function HomeScreen({
               className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
             >
               <RevenueIcon />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenExpenses}
+              aria-label="Expenses"
+              className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+            >
+              <ExpensesIcon />
             </button>
             <button
               type="button"
@@ -399,6 +409,23 @@ function RevenueIcon() {
       <path d="M10 20V4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       <path d="M16 20v-9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       <path d="M3 20h18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ExpensesIcon() {
+  // Receipt outline
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M9 8h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M9 12h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M9 16h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }

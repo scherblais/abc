@@ -2,6 +2,7 @@ import type {
   Agent,
   Booking,
   Company,
+  Expense,
   Invoice,
   Service,
   Settings,
@@ -13,6 +14,7 @@ const SETTINGS_KEY = 'lensbook.settings.v1';
 const COMPANIES_KEY = 'lensbook.companies.v1';
 const AGENTS_KEY = 'lensbook.agents.v1';
 const INVOICES_KEY = 'lensbook.invoices.v1';
+const EXPENSES_KEY = 'lensbook.expenses.v1';
 
 export const DEFAULT_SETTINGS: Settings = {
   startingAddress: 'Carignan, QC',
@@ -108,6 +110,21 @@ export const loadInvoices = (): Invoice[] => {
 
 export const saveInvoices = (invoices: Invoice[]) => {
   localStorage.setItem(INVOICES_KEY, JSON.stringify(invoices));
+};
+
+export const loadExpenses = (): Expense[] => {
+  try {
+    const raw = localStorage.getItem(EXPENSES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Expense[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveExpenses = (expenses: Expense[]) => {
+  localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
 };
 
 export const newId = () =>

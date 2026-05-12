@@ -130,6 +130,42 @@ export type Booking = {
 export type DraftBooking = Omit<Booking, 'id' | 'createdAt' | 'source'>;
 
 export type DraftService = Omit<Service, 'id'>;
+
+/** Business expense categories. Fixed list mirrors common CRA / RQ
+ *  T2125 / TP-80 line items so the year-end view can roll up by category
+ *  without per-user customisation. */
+export type ExpenseCategory =
+  | 'gear'
+  | 'software'
+  | 'vehicle'
+  | 'phone'
+  | 'marketing'
+  | 'insurance'
+  | 'memberships'
+  | 'education'
+  | 'office'
+  | 'fees'
+  | 'travel'
+  | 'meals'
+  | 'other';
+
+export type Expense = {
+  id: string;
+  date: string; // ISO date (YYYY-MM-DD anchor)
+  /** Pre-tax amount in CAD. */
+  amount: number;
+  /** GST paid on this expense (recoverable as Input Tax Credit). */
+  gst?: number;
+  /** QST paid on this expense (recoverable as Input Tax Refund). */
+  qst?: number;
+  category: ExpenseCategory;
+  description: string;
+  vendor?: string;
+  notes?: string;
+  createdAt: string; // ISO
+};
+
+export type DraftExpense = Omit<Expense, 'id' | 'createdAt'>;
 export type DraftCompany = Omit<Company, 'id' | 'createdAt'>;
 export type DraftAgent = Omit<Agent, 'id' | 'createdAt'>;
 export type DraftInvoice = Omit<Invoice, 'id' | 'createdAt'>;

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import type { Booking, Company, Invoice } from '../types';
+import type { Booking, Company, Expense, Invoice } from '../types';
 import { computeYearStats, groupByMonth, yearCsv } from '../lib/revenue';
+import { computeExpenseYear } from '../lib/expenses';
 import { currency, currencyExact } from '../lib/format';
 import { ScreenHeader } from '../components/ScreenHeader';
 
@@ -8,16 +9,20 @@ type Props = {
   bookings: Booking[];
   invoices: Invoice[];
   companies: Company[];
+  expenses: Expense[];
   bookingInvoiceIndex: Map<string, string>;
   onBack: () => void;
+  onOpenExpenses: () => void;
 };
 
 export function RevenueScreen({
   bookings,
   invoices,
   companies,
+  expenses,
   bookingInvoiceIndex,
   onBack,
+  onOpenExpenses,
 }: Props) {
   const now = useMemo(() => new Date(), []);
   const months = useMemo(() => groupByMonth(bookings, now), [bookings, now]);
@@ -40,6 +45,10 @@ export function RevenueScreen({
     () =>
       computeYearStats(year, bookings, invoices, companies, bookingInvoiceIndex),
     [year, bookings, invoices, companies, bookingInvoiceIndex],
+  );
+  const expenseStats = useMemo(
+    () => computeExpenseYear(year, expenses),
+    [year, expenses],
   );
 
   const downloadCsv = () => {
@@ -107,9 +116,11 @@ export function RevenueScreen({
 
         <YearSection
           stats={yearStats}
+          expenseStats={expenseStats}
           year={year}
           onYearChange={setYear}
           onExportCsv={downloadCsv}
+          onOpenExpenses={onOpenExpenses}
         />
 
         <p className="mb-2.5 px-0.5 text-[12.5px] font-medium text-neutral-500 dark:text-neutral-400">By month</p>
@@ -170,18 +181,22 @@ export function RevenueScreen({
 
 function YearSection({
   stats,
+  expenseStats,
   year,
   onYearChange,
   onExportCsv,
+  onOpenExpenses,
 }: {
   stats: ReturnType<typeof computeYearStats>;
+  expenseStats: ReturnType<typeof computeExpenseYear>;
   year: number;
   onYearChange: (y: number) => void;
   onExportCsv: () => void;
+  onOpenExpenses: () => void;
 }) {
-  const years = stats.yearsAvailable.length > 0
-    ? stats.yearsAvailable
-    : [year];
+  const years = mergeYears(stats.yearsAvailable, expenseStats.yearsAvailable, year);
+  const net = stats.revenue - expenseStats.amount;
+  const netTax = stats.gst - expenseStats.gst + (stats.qst - expenseStats.qst);
 
   return (
     <section className="card mb-6 p-5">
@@ -257,10 +272,59 @@ function YearSection({
               </ul>
             </div>
           )}
+
+          <div className="mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-3">
+            <div className="mb-2 flex items-baseline justify-between gap-2">
+              <p className="text-[11.5px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                Expenses
+              </p>
+              <button
+                type="button"
+                onClick={onOpenExpenses}
+                className="tap text-[12px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+              >
+                Manage ›
+              </button>
+            </div>
+            {expenseStats.count === 0 ? (
+              <p className="text-[12.5px] text-neutral-500 dark:text-neutral-400">
+                No expenses logged for {year} yet.
+              </p>
+            ) : (
+              <dl className="grid grid-cols-2 gap-3">
+                <Stat
+                  label="Expenses (pre-tax)"
+                  value={currencyExact(expenseStats.amount)}
+                  hint={`${expenseStats.count} item${expenseStats.count === 1 ? '' : 's'}`}
+                />
+                <Stat
+                  label="Net (rev − exp)"
+                  value={currencyExact(net)}
+                  hint={`Net taxes ${currencyExact(netTax)}`}
+                />
+                <Stat
+                  label="GST paid (ITC)"
+                  value={currencyExact(expenseStats.gst)}
+                  hint={`Net GST ${currencyExact(stats.gst - expenseStats.gst)}`}
+                />
+                <Stat
+                  label="QST paid (ITR)"
+                  value={currencyExact(expenseStats.qst)}
+                  hint={`Net QST ${currencyExact(stats.qst - expenseStats.qst)}`}
+                />
+              </dl>
+            )}
+          </div>
         </>
       )}
     </section>
   );
+}
+
+function mergeYears(a: number[], b: number[], fallback: number): number[] {
+  const set = new Set<number>([...a, ...b]);
+  if (set.size === 0) set.add(fallback);
+  return [...set].sort((x, y) => y - x);
 }
 
 function YearPicker({
