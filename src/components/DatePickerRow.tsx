@@ -36,7 +36,7 @@ export function DatePickerRow({ value, onChange }: Props) {
                 onChange(next);
               }}
               className={[
-                'tap flex min-w-[64px] shrink-0 flex-col items-center rounded-lg border px-3 py-2.5',
+                'tap flex min-w-[68px] shrink-0 flex-col items-center rounded-lg border px-3 py-3',
                 selected
                   ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
                   : 'border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600',

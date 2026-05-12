@@ -8,7 +8,7 @@ type Props = {
 };
 
 export function Chip({ selected, onClick, children, size = 'md' }: Props) {
-  const padding = size === 'sm' ? 'px-2.5 py-1.5 text-[12.5px]' : 'px-3 py-2 text-[13.5px]';
+  const padding = size === 'sm' ? 'px-3 py-2 text-[13px]' : 'px-3.5 py-2.5 text-[13.5px]';
   return (
     <button
       type="button"

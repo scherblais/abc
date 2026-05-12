@@ -546,7 +546,7 @@ export function BookScreen({
           <button
             type="button"
             onClick={() => setShowExtras(true)}
-            className="tap mb-4 mt-1 inline-flex items-center gap-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-1.5 text-[13px] text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+            className="tap mb-4 mt-1 inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-2.5 text-[13.5px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
           >
             <span aria-hidden>+</span> Add property contact / notes
           </button>
