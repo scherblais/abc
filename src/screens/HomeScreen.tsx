@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Agent, Booking, Company, Invoice, Service } from '../types';
 import { startOfDay } from '../lib/datetime';
+import { normalizeServices } from '../lib/catalog';
 import { currency, formatDayLabel, formatTime } from '../lib/format';
 import { bookingTotal } from '../lib/bookings';
 import { invoiceSubtotal, invoiceTaxes } from '../lib/invoices';
@@ -253,8 +254,12 @@ function BookingRow({
   onClick: () => void;
 }) {
   const start = new Date(b.scheduledAt);
-  const labels = b.services
-    .map((id) => labelFor(id))
+  const labels = normalizeServices(b.services)
+    .map(({ id, qty }) => {
+      const name = labelFor(id);
+      if (!name) return undefined;
+      return qty > 1 ? `${name} × ${qty}` : name;
+    })
     .filter((s): s is string => Boolean(s));
 
   return (
@@ -321,7 +326,9 @@ function PastBookingRow({
     month: 'short',
     day: 'numeric',
   });
-  const firstService = b.services.map(labelFor).find(Boolean);
+  const firstService = normalizeServices(b.services)
+    .map(({ id }) => labelFor(id))
+    .find(Boolean);
   return (
     <li>
       <button

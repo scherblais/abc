@@ -1,5 +1,6 @@
 import type { Booking, Invoice, Service } from '../types';
 import { bookingTotal } from './bookings';
+import { normalizeServices } from './catalog';
 
 export const GST_RATE = 0.05;
 /** QST is computed independently of GST in Quebec (de-compounded since 2013). */
@@ -80,8 +81,12 @@ export const invoiceLines = (
   for (const id of invoice.bookingIds) {
     const b = bookingById.get(id);
     if (!b) continue;
-    const labels = b.services
-      .map((sid) => serviceById.get(sid)?.name)
+    const labels = normalizeServices(b.services)
+      .map(({ id, qty }) => {
+        const name = serviceById.get(id)?.name;
+        if (!name) return undefined;
+        return qty > 1 ? `${name} × ${qty}` : name;
+      })
       .filter((s): s is string => Boolean(s));
     lines.push({
       bookingId: b.id,

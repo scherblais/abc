@@ -91,13 +91,17 @@ export type Occupant = {
   accessNotes?: string;
 };
 
+/** A line item on a booking. Strings are accepted for backward compatibility
+ *  with legacy data (treated as qty 1); new writes always use the object form. */
+export type BookingServiceEntry = string | { id: string; qty: number };
+
 export type Booking = {
   id: string;
   address: string;
   scheduledAt: string; // ISO
   /** Services price (does not include travel). */
   price: number;
-  services: string[]; // service IDs (may include stale IDs after a service is removed)
+  services: BookingServiceEntry[]; // service IDs (may include stale IDs after a service is removed)
   /** One-way distance from starting location at booking time, km. */
   travelKm?: number;
   /** Travel fee charged on this booking. */

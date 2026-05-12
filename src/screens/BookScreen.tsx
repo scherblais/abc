@@ -8,7 +8,7 @@ import type {
   Service,
   Settings,
 } from '../types';
-import { catalogFor, sumServices } from '../lib/catalog';
+import { catalogFor, normalizeServices, sumServices } from '../lib/catalog';
 import { suggestedNextSlot } from '../lib/datetime';
 import { currency, formatDayLabel, formatTime } from '../lib/format';
 import { distanceKm, geocode, travelFee } from '../lib/geocode';
@@ -75,7 +75,7 @@ const emptyDraft = (catalog: Service[]): DraftBooking => {
   return {
     address: '',
     scheduledAt: suggestedNextSlot().toISOString(),
-    services: first ? [first.id] : [],
+    services: first ? [{ id: first.id, qty: 1 }] : [],
     price: first?.price ?? 0,
     notes: '',
   };
@@ -254,10 +254,21 @@ export function BookScreen({
   const setScheduled = (d: Date) =>
     setDraft((p) => ({ ...p, scheduledAt: d.toISOString() }));
 
-  const toggleService = (id: string) => {
+  const setServiceQty = (id: string, qty: number) => {
     setDraft((p) => {
-      const has = p.services.includes(id);
-      const next = has ? p.services.filter((s) => s !== id) : [...p.services, id];
+      // Reconstruct as a normalized {id, qty} list, then rewrite the entry
+      // for `id`. qty === 0 removes the entry. Order is preserved for the
+      // existing entries; new entries append.
+      const current = normalizeServices(p.services);
+      const idx = current.findIndex((e) => e.id === id);
+      let next: Array<{ id: string; qty: number }>;
+      if (qty <= 0) {
+        next = current.filter((e) => e.id !== id);
+      } else if (idx >= 0) {
+        next = current.map((e) => (e.id === id ? { id, qty } : e));
+      } else {
+        next = [...current, { id, qty }];
+      }
       if (!overrideTotals) {
         const { price } = sumServices(next, effectiveCatalog);
         return { ...p, services: next, price };
@@ -390,8 +401,8 @@ export function BookScreen({
           ) : (
             <ServiceGrid
               services={effectiveCatalog}
-              selectedIds={draft.services}
-              onToggle={toggleService}
+              selected={normalizeServices(draft.services)}
+              onChange={setServiceQty}
             />
           )}
           <div className="mt-3 flex items-center justify-between">

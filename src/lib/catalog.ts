@@ -1,4 +1,22 @@
-import type { Company, Service } from '../types';
+import type { BookingServiceEntry, Company, Service } from '../types';
+
+/** Normalize a booking's services array (which may contain bare-string
+ *  legacy entries) into the canonical { id, qty }[] shape. Drops zero/negative
+ *  quantities. */
+export const normalizeServices = (
+  entries: BookingServiceEntry[],
+): Array<{ id: string; qty: number }> => {
+  const out: Array<{ id: string; qty: number }> = [];
+  for (const e of entries) {
+    if (typeof e === 'string') {
+      out.push({ id: e, qty: 1 });
+    } else if (e && typeof e === 'object' && typeof e.id === 'string') {
+      const qty = Math.max(0, Math.floor(Number(e.qty) || 0));
+      if (qty > 0) out.push({ id: e.id, qty });
+    }
+  }
+  return out;
+};
 
 export const DEFAULT_CATALOG: Service[] = [
   {
@@ -79,15 +97,18 @@ export const catalogFor = (catalog: Service[], company?: Company): Service[] => 
   });
 };
 
-export const sumServices = (ids: string[], catalog: Service[]) => {
+export const sumServices = (
+  entries: BookingServiceEntry[],
+  catalog: Service[],
+) => {
   const byId = new Map(catalog.map((s) => [s.id, s]));
   let price = 0;
-  const matched: Service[] = [];
-  for (const id of ids) {
+  const matched: Array<{ service: Service; qty: number }> = [];
+  for (const { id, qty } of normalizeServices(entries)) {
     const s = byId.get(id);
     if (s) {
-      price += s.price;
-      matched.push(s);
+      price += s.price * qty;
+      matched.push({ service: s, qty });
     }
   }
   return { price, matched };
