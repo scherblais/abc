@@ -2,19 +2,16 @@ import { setTime } from '../lib/datetime';
 import { formatTime } from '../lib/format';
 import { Chip } from './Chip';
 
-const PRESETS: { hour: number; minute: number; label?: string }[] = [
-  { hour: 8, minute: 0 },
-  { hour: 9, minute: 0 },
-  { hour: 10, minute: 0 },
-  { hour: 11, minute: 0 },
-  { hour: 12, minute: 0 },
-  { hour: 13, minute: 0 },
-  { hour: 14, minute: 0 },
-  { hour: 15, minute: 0 },
-  { hour: 16, minute: 0 },
-  { hour: 17, minute: 0, label: 'Golden' },
-  { hour: 18, minute: 0, label: 'Twilight' },
-];
+const PRESETS: { hour: number; minute: number; label?: string }[] = (() => {
+  const out: { hour: number; minute: number; label?: string }[] = [];
+  for (let h = 8; h <= 18; h++) {
+    const label =
+      h === 17 ? 'Golden' : h === 18 ? 'Twilight' : undefined;
+    out.push({ hour: h, minute: 0, label });
+    if (h < 18) out.push({ hour: h, minute: 30 });
+  }
+  return out;
+})();
 
 type Props = {
   value: Date;
