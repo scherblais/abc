@@ -92,7 +92,7 @@ export function RevenueScreen({
         title="Revenue"
       />
 
-      <main className="flex-1 pb-12 pt-5">
+      <main className="flex-1 pb-24 pt-5">
         {thisMonth && (
           <section className="card mb-6 p-5">
             <p className="text-[12px] font-medium text-neutral-500 dark:text-neutral-400">{thisMonth.label}</p>

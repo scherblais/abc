@@ -60,7 +60,7 @@ export function ClientsScreen({
         title="Clients"
       />
 
-      <main className="flex-1 pb-12 pt-5">
+      <main className="flex-1 pb-24 pt-5">
         <p className="mb-3 px-0.5 text-[12.5px] leading-snug text-neutral-500 dark:text-neutral-400">
           Brokerages and their agents. Pick a client from these when booking a
           shoot.

@@ -11,6 +11,7 @@ import { InvoicePrintScreen } from './screens/InvoicePrintScreen';
 import { ExpensesScreen } from './screens/ExpensesScreen';
 import { ExpenseEditScreen } from './screens/ExpenseEditScreen';
 import { SignInScreen } from './screens/SignInScreen';
+import { BottomTabs, type TabId } from './components/BottomTabs';
 import type {
   Agent,
   Booking,
@@ -293,6 +294,11 @@ function AppShell({
     [invoices],
   );
 
+  const unpaidInvoiceCount = useMemo(
+    () => invoices.filter((i) => i.status === 'sent').length,
+    [invoices],
+  );
+
   const editingBooking =
     screen.name === 'book' && screen.editingId
       ? bookings.find((b) => b.id === screen.editingId)
@@ -565,13 +571,9 @@ function AppShell({
           catalog={services}
           companies={companies}
           agents={agents}
-          invoices={invoices}
           onAdd={() => setScreen({ name: 'book' })}
           onOpen={(b) => setScreen({ name: 'book', editingId: b.id })}
-          onOpenAdmin={() => setScreen({ name: 'admin' })}
           onOpenRevenue={() => setScreen({ name: 'revenue' })}
-          onOpenInvoices={() => setScreen({ name: 'invoices' })}
-          onOpenExpenses={() => setScreen({ name: 'expenses' })}
         />
       )}
       {screen.name === 'revenue' && (
@@ -698,8 +700,42 @@ function AppShell({
           onCancel={() => setScreen({ name: 'expenses' })}
         />
       )}
+      <BottomTabs
+        active={activeTabFor(screen)}
+        unpaidInvoices={unpaidInvoiceCount}
+        onChange={(tab) => setScreen({ name: tab })}
+      />
     </div>
   );
+}
+
+/**
+ * Map the discriminated screen union onto a tab id. View screens light up
+ * their tab; edit-form screens (book, service-edit, invoice-edit,
+ * expense-edit) return null so the bottom tab bar hides — the form's
+ * Save / Cancel in the header are the only nav while editing.
+ * invoice-print is its own full-bleed route with no tabs either.
+ */
+function activeTabFor(screen: Screen): TabId | null {
+  switch (screen.name) {
+    case 'home':
+      return 'home';
+    case 'revenue':
+      return 'revenue';
+    case 'expenses':
+      return 'expenses';
+    case 'invoices':
+      return 'invoices';
+    case 'admin':
+    case 'clients':
+      return 'admin';
+    case 'book':
+    case 'service-edit':
+    case 'invoice-edit':
+    case 'expense-edit':
+    case 'invoice-print':
+      return null;
+  }
 }
 
 // Re-export so other modules that imported it from this file still work.

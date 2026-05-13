@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
-import type { Agent, Booking, Company, Invoice, Service } from '../types';
+import type { Agent, Booking, Company, Service } from '../types';
 import { startOfDay } from '../lib/datetime';
 import { normalizeServices } from '../lib/catalog';
 import { currency, formatDayLabel, formatTime } from '../lib/format';
 import { bookingTotal } from '../lib/bookings';
-import { invoiceSubtotal, invoiceTaxes } from '../lib/invoices';
 import { ScreenHeader } from '../components/ScreenHeader';
 
 type Props = {
@@ -12,13 +11,9 @@ type Props = {
   catalog: Service[];
   companies: Company[];
   agents: Agent[];
-  invoices: Invoice[];
   onAdd: () => void;
   onOpen: (b: Booking) => void;
-  onOpenAdmin: () => void;
   onOpenRevenue: () => void;
-  onOpenInvoices: () => void;
-  onOpenExpenses: () => void;
 };
 
 const groupByDay = (items: Booking[]) => {
@@ -41,23 +36,10 @@ export function HomeScreen({
   catalog,
   companies,
   agents,
-  invoices,
   onAdd,
   onOpen,
-  onOpenAdmin,
   onOpenRevenue,
-  onOpenInvoices,
-  onOpenExpenses,
 }: Props) {
-  const outstanding = useMemo(() => {
-    const sent = invoices.filter((i) => i.status === 'sent');
-    let total = 0;
-    for (const inv of sent) {
-      const sub = invoiceSubtotal(inv, bookings);
-      total += invoiceTaxes(sub, inv.gstRate, inv.qstRate).total;
-    }
-    return { count: sent.length, total };
-  }, [invoices, bookings]);
   const now = useMemo(() => new Date(), []);
   const upcoming = useMemo(
     () =>
@@ -121,53 +103,9 @@ export function HomeScreen({
             LM
           </span>
         }
-        right={
-          <>
-            <button
-              type="button"
-              onClick={onOpenRevenue}
-              aria-label="Revenue"
-              className="tap grid h-11 w-11 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
-            >
-              <RevenueIcon />
-            </button>
-            <button
-              type="button"
-              onClick={onOpenExpenses}
-              aria-label="Expenses"
-              className="tap grid h-11 w-11 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
-            >
-              <ExpensesIcon />
-            </button>
-            <button
-              type="button"
-              onClick={onOpenInvoices}
-              aria-label="Invoices"
-              className="tap relative grid h-11 w-11 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
-            >
-              <InvoiceIcon />
-              {outstanding.count > 0 && (
-                <span
-                  aria-hidden
-                  className="absolute -right-1 -top-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold text-white"
-                >
-                  {outstanding.count}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={onOpenAdmin}
-              aria-label="Settings"
-              className="tap grid h-11 w-11 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
-            >
-              <SettingsIcon />
-            </button>
-          </>
-        }
       />
 
-      <main className="flex-1 pb-28 pt-5">
+      <main className="flex-1 pb-40 pt-5">
         {upcoming.length === 0 && past.length === 0 ? (
           <EmptyState />
         ) : (
@@ -240,8 +178,11 @@ export function HomeScreen({
         )}
       </main>
 
-      <div className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-10">
-        <div className="mx-auto max-w-[480px] px-4 pb-4">
+      <div
+        className="pointer-events-none fixed inset-x-0 z-10"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
+      >
+        <div className="mx-auto max-w-[480px] px-4 pb-2">
           <button
             type="button"
             onClick={onAdd}
@@ -402,63 +343,3 @@ function EmptyState() {
   );
 }
 
-function RevenueIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M4 20V8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M10 20V4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M16 20v-9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M3 20h18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ExpensesIcon() {
-  // Receipt outline
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <path d="M9 8h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M9 12h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M9 16h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function InvoiceIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <path d="M14 3v5h5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M9 13h7M9 17h7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SettingsIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-      />
-      <path
-        d="m19.4 13.6.1-1.6-.1-1.6 2-1.5-2-3.4-2.3.9a7 7 0 0 0-2.7-1.6L13.9 2h-3.8l-.5 2.8a7 7 0 0 0-2.7 1.6l-2.3-.9-2 3.4 2 1.5-.1 1.6.1 1.6-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2.7 1.6L10.1 22h3.8l.5-2.8a7 7 0 0 0 2.7-1.6l2.3.9 2-3.4-2-1.5Z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}

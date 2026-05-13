@@ -75,7 +75,7 @@ export function ExpensesScreen({ expenses, onBack, onAdd, onEdit }: Props) {
         }
       />
 
-      <main className="flex-1 pb-12 pt-5">
+      <main className="flex-1 pb-24 pt-5">
         <section className="card mb-6 p-5">
           <div className="mb-4 flex items-baseline justify-between gap-3">
             <div>
