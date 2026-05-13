@@ -62,7 +62,12 @@ export function HomeScreen({
     [bookings, now],
   );
 
-  const groups = useMemo(() => groupByDay(upcoming), [upcoming]);
+  // The very next upcoming booking gets its own hero card; drop it from
+  // the day-grouped list below so the user doesn't see it twice.
+  const groups = useMemo(
+    () => groupByDay(upcoming.slice(1)),
+    [upcoming],
+  );
   const [pastOpen, setPastOpen] = useState(false);
   const pastVisible = pastOpen ? past.slice(0, 25) : [];
 
@@ -120,7 +125,7 @@ export function HomeScreen({
                 onOpen={() => onOpen(upcoming[0])}
               />
             )}
-            {upcoming.length > 0 && (
+            {groups.length > 0 && (
               <div className="space-y-6">
                 {groups.map((g) => (
                   <section key={g.date.toISOString()}>
