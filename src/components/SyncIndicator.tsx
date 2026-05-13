@@ -56,7 +56,7 @@ export function SyncIndicator() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={`Sync status: ${label}`}
-        className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-600"
+        className="tap grid h-11 w-11 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-600"
       >
         <span
           aria-hidden

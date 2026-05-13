@@ -127,7 +127,7 @@ export function HomeScreen({
               type="button"
               onClick={onOpenRevenue}
               aria-label="Revenue"
-              className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+              className="tap grid h-11 w-11 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
             >
               <RevenueIcon />
             </button>
@@ -135,7 +135,7 @@ export function HomeScreen({
               type="button"
               onClick={onOpenExpenses}
               aria-label="Expenses"
-              className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+              className="tap grid h-11 w-11 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
             >
               <ExpensesIcon />
             </button>
@@ -143,7 +143,7 @@ export function HomeScreen({
               type="button"
               onClick={onOpenInvoices}
               aria-label="Invoices"
-              className="tap relative grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+              className="tap relative grid h-11 w-11 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
             >
               <InvoiceIcon />
               {outstanding.count > 0 && (
@@ -159,7 +159,7 @@ export function HomeScreen({
               type="button"
               onClick={onOpenAdmin}
               aria-label="Settings"
-              className="tap grid h-9 w-9 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
+              className="tap grid h-11 w-11 place-items-center rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600"
             >
               <SettingsIcon />
             </button>
@@ -404,7 +404,7 @@ function EmptyState() {
 
 function RevenueIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path d="M4 20V8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       <path d="M10 20V4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       <path d="M16 20v-9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -416,7 +416,7 @@ function RevenueIcon() {
 function ExpensesIcon() {
   // Receipt outline
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3Z"
         stroke="currentColor"
@@ -432,7 +432,7 @@ function ExpensesIcon() {
 
 function InvoiceIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
         stroke="currentColor"
@@ -447,7 +447,7 @@ function InvoiceIcon() {
 
 function SettingsIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
         stroke="currentColor"
