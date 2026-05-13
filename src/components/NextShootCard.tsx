@@ -188,11 +188,16 @@ function DirectionsIcon() {
  * iOS hands `maps.apple.com` off to Apple Maps; everywhere else gets the
  * Google Maps universal URL.
  *
- * Prefer the address STRING over our stored coords — the coords came from
- * an earlier Google / OSM geocode that can drift a building or two off,
- * whereas the address text the user actually typed gets re-geocoded by
- * Apple Maps / Google Maps directly against their own (more accurate for
- * navigation) databases. Coords are a fallback only when no address.
+ * COORDS WIN over the address string. QC street names without their
+ * Est / Ouest qualifier (e.g. "Saint-Joseph") send Apple/Google Maps to
+ * the wrong half of the city. Our stored coords were locked in at booking
+ * time by Google Geocoding (or OSM as a fallback) using the full address
+ * the autocomplete suggested, so they unambiguously point at the right
+ * building. The plain address text is the fallback only when no coords.
+ *
+ * We also pass the address as `q=` (Apple) or via reverse-geocoding label
+ * (Google) so the destination card in the maps app shows a human-readable
+ * name instead of just lat/lon.
  */
 function directionsUrl(
   address: string,
@@ -203,17 +208,22 @@ function directionsUrl(
     /iPhone|iPad|iPod/.test(navigator.userAgent);
   const trimmed = address?.trim();
 
+  if (coords) {
+    if (isIos) {
+      // daddr= pins the destination at our coords; q= sets the visible
+      // destination name in the Apple Maps card.
+      const label = trimmed
+        ? `&q=${encodeURIComponent(trimmed)}`
+        : '';
+      return `https://maps.apple.com/?daddr=${coords.lat},${coords.lon}${label}`;
+    }
+    return `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lon}`;
+  }
   if (trimmed) {
     if (isIos) {
       return `https://maps.apple.com/?daddr=${encodeURIComponent(trimmed)}`;
     }
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(trimmed)}`;
-  }
-  if (coords) {
-    if (isIos) {
-      return `https://maps.apple.com/?daddr=${coords.lat},${coords.lon}`;
-    }
-    return `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lon}`;
   }
   return isIos ? 'https://maps.apple.com/' : 'https://www.google.com/maps';
 }
