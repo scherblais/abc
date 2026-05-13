@@ -72,6 +72,56 @@ type Screen =
   | { name: 'expenses' }
   | { name: 'expense-edit'; expenseId?: string };
 
+/** Tab-scoped screen persistence. Survives F5 / pull-to-refresh; resets
+ *  when the tab is closed. Validates that the persisted shape still
+ *  matches the union before restoring, so a stale localStorage entry
+ *  can't crash the app. */
+const SCREEN_KEY = 'lensbook.screen.v1';
+
+const SCREEN_NAMES = new Set([
+  'home',
+  'book',
+  'admin',
+  'service-edit',
+  'clients',
+  'revenue',
+  'invoices',
+  'invoice-edit',
+  'invoice-print',
+  'expenses',
+  'expense-edit',
+]);
+
+function loadScreen(): Screen {
+  try {
+    const raw = sessionStorage.getItem(SCREEN_KEY);
+    if (!raw) return { name: 'home' };
+    const parsed = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed.name === 'string' &&
+      SCREEN_NAMES.has(parsed.name)
+    ) {
+      return parsed as Screen;
+    }
+  } catch {
+    // ignore
+  }
+  return { name: 'home' };
+}
+
+function usePersistedScreen(): [Screen, (s: Screen) => void] {
+  const [screen, setScreen] = useState<Screen>(() => loadScreen());
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(SCREEN_KEY, JSON.stringify(screen));
+    } catch {
+      // ignore quota / private-mode errors
+    }
+  }, [screen]);
+  return [screen, setScreen];
+}
+
 export default function App() {
   const auth = useAuth();
 
@@ -193,7 +243,7 @@ function AppShell({
     loadSettings,
     saveSettings,
   );
-  const [screen, setScreen] = useState<Screen>({ name: 'home' });
+  const [screen, setScreen] = usePersistedScreen();
 
   // One-shot migration: invoices created before tax was made automatic have
   // gstRate/qstRate snapshotted as 0. Bring them up to current rates so they
