@@ -3,6 +3,13 @@ import type { Booking, Company, Expense, Invoice } from '../types';
 import { computeYearStats, groupByMonth, yearCsv } from '../lib/revenue';
 import { computeExpenseYear } from '../lib/expenses';
 import { currency, currencyExact } from '../lib/format';
+import {
+  formatDeadlineDate,
+  instalmentDates,
+  relativeDeadline,
+  taxDeadlines,
+  type Deadline,
+} from '../lib/tax-deadlines';
 import { ScreenHeader } from '../components/ScreenHeader';
 
 type Props = {
@@ -263,32 +270,14 @@ function YearSection({
           </SubSection>
 
           {/* ----------------- Tax filing ----------------- */}
-          <SubSection label="Tax filing" sub="Net for return">
-            <Row
-              label="Net income (revenue − expenses)"
-              value={currencyExact(netIncome)}
-              strong
-            />
-            <ObligationRow
-              label="GST"
-              authority="CRA"
-              collected={stats.gst}
-              paid={expenseStats.gst}
-              net={netGst}
-            />
-            <ObligationRow
-              label="QST"
-              authority="RQ"
-              collected={stats.qst}
-              paid={expenseStats.qst}
-              net={netQst}
-            />
-            <p className="mt-1.5 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">
-              Anchored on shoot date (revenue) and expense date. Tax counted
-              only on invoices that have left draft. Confirm with your
-              accountant before remitting.
-            </p>
-          </SubSection>
+          <TaxFilingSubsection
+            year={year}
+            netIncome={netIncome}
+            stats={stats}
+            expenseStats={expenseStats}
+            netGst={netGst}
+            netQst={netQst}
+          />
 
           {/* ----------------- By brokerage ----------------- */}
           {stats.byBrokerage.length > 0 && (
@@ -316,6 +305,117 @@ function YearSection({
         </div>
       )}
     </section>
+  );
+}
+
+function TaxFilingSubsection({
+  year,
+  netIncome,
+  stats,
+  expenseStats,
+  netGst,
+  netQst,
+}: {
+  year: number;
+  netIncome: number;
+  stats: ReturnType<typeof computeYearStats>;
+  expenseStats: ReturnType<typeof computeExpenseYear>;
+  netGst: number;
+  netQst: number;
+}) {
+  const now = useMemo(() => new Date(), []);
+  // Sales-tax payment date is the canonical "send the cheque" date — paste
+  // it onto each obligation row so the user sees who / how much / by when
+  // on one line.
+  const deadlines = useMemo(() => taxDeadlines(year), [year]);
+  const salesTaxPayDate = deadlines.find(
+    (d) => d.kind === 'sales-tax-payment',
+  )!.date;
+
+  return (
+    <SubSection label="Tax filing" sub={`for ${year}`}>
+      <Row
+        label="Net income (revenue − expenses)"
+        value={currencyExact(netIncome)}
+        strong
+      />
+      <ObligationRow
+        label="GST"
+        authority="CRA"
+        collected={stats.gst}
+        paid={expenseStats.gst}
+        net={netGst}
+        dueOn={salesTaxPayDate}
+        now={now}
+      />
+      <ObligationRow
+        label="QST"
+        authority="RQ"
+        collected={stats.qst}
+        paid={expenseStats.qst}
+        net={netQst}
+        dueOn={salesTaxPayDate}
+        now={now}
+      />
+
+      <div className="mt-3 rounded-lg border border-neutral-100 dark:border-neutral-800 bg-neutral-50/40 dark:bg-neutral-800/30 px-3 py-2.5">
+        <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Deadlines
+        </p>
+        <ul className="space-y-1.5">
+          {deadlines.map((d) => (
+            <DeadlineRow key={d.kind} d={d} now={now} />
+          ))}
+        </ul>
+        <p className="mt-2 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">
+          Annual filer, sole prop, calendar year-end. Filing extension to
+          June 15 — but any balance owing is due April 30.
+        </p>
+      </div>
+
+      <details className="mt-2 text-[12px] text-neutral-500 dark:text-neutral-400">
+        <summary className="cursor-pointer select-none rounded px-0.5 py-0.5 text-[11.5px] hover:text-neutral-900 dark:hover:text-white">
+          Need quarterly instalments?
+        </summary>
+        <ul className="mt-1.5 space-y-1 px-0.5">
+          {instalmentDates(year).map((d) => (
+            <DeadlineRow key={d.kind + d.date.toISOString()} d={d} now={now} />
+          ))}
+        </ul>
+        <p className="mt-1.5 px-0.5 text-[11px] leading-snug">
+          Required if your prior-year tax owing was over $3,000 federal
+          ($1,800 QC). If not, ignore this row.
+        </p>
+      </details>
+
+      <p className="mt-2 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">
+        Estimates only — confirm with your accountant before remitting.
+      </p>
+    </SubSection>
+  );
+}
+
+function DeadlineRow({ d, now }: { d: Deadline; now: Date }) {
+  const rel = relativeDeadline(d.date, now);
+  const overdue = d.date.getTime() < now.getTime();
+  return (
+    <li className="flex items-baseline justify-between gap-3 text-[12.5px]">
+      <span className="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-300">
+        {d.label}
+      </span>
+      <span className="shrink-0 text-[12px] tabular-nums text-neutral-900 dark:text-neutral-100">
+        {formatDeadlineDate(d.date, now)}{' '}
+        <span
+          className={
+            overdue
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-neutral-500 dark:text-neutral-400'
+          }
+        >
+          · {rel}
+        </span>
+      </span>
+    </li>
   );
 }
 
@@ -399,7 +499,8 @@ function Row({
 
 /**
  * A "net tax owed" line that flips between "Pay" / "Refund" / "Even"
- * based on the sign of (collected − paid).
+ * based on the sign of (collected − paid). Includes the filing deadline
+ * so the user sees by-when at a glance.
  */
 function ObligationRow({
   label,
@@ -407,12 +508,16 @@ function ObligationRow({
   collected,
   paid,
   net,
+  dueOn,
+  now,
 }: {
   label: string;
   authority: string;
   collected: number;
   paid: number;
   net: number;
+  dueOn?: Date;
+  now?: Date;
 }) {
   const owe = Math.round(net * 100) / 100;
   let verdict: string;
@@ -443,6 +548,11 @@ function ObligationRow({
         </span>
         <span className={`shrink-0 font-medium ${tone}`}>{verdict}</span>
       </div>
+      {dueOn && owe > 0 && (
+        <p className="mt-0.5 text-[11px] leading-snug text-neutral-500 dark:text-neutral-400">
+          Due by {formatDeadlineDate(dueOn, now)} · {relativeDeadline(dueOn, now)}
+        </p>
+      )}
     </div>
   );
 }
