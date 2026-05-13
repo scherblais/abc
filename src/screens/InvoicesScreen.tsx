@@ -74,7 +74,7 @@ export function InvoicesScreen({
         }
       />
 
-      <main className="flex-1 pb-24 pt-5">
+      <main className="flex-1 pb-12 pt-5">
         {invoices.length === 0 ? (
           <div className="card px-5 py-8 text-center">
             <p className="text-[14px] text-neutral-600 dark:text-neutral-400">No invoices yet.</p>

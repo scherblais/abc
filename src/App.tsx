@@ -11,7 +11,7 @@ import { InvoicePrintScreen } from './screens/InvoicePrintScreen';
 import { ExpensesScreen } from './screens/ExpensesScreen';
 import { ExpenseEditScreen } from './screens/ExpenseEditScreen';
 import { SignInScreen } from './screens/SignInScreen';
-import { BottomTabs, type TabId } from './components/BottomTabs';
+import { NavProvider, type TabId } from './lib/nav-context';
 import type {
   Agent,
   Booking,
@@ -564,7 +564,14 @@ function AppShell({
   }
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-[480px] flex-col px-4">
+    <NavProvider
+      value={{
+        current: activeTabFor(screen),
+        navigate: (tab) => setScreen({ name: tab }),
+        unpaidInvoices: unpaidInvoiceCount,
+      }}
+    >
+      <div className="mx-auto flex min-h-full w-full max-w-[480px] flex-col px-4">
       {screen.name === 'home' && (
         <HomeScreen
           bookings={bookings}
@@ -700,12 +707,8 @@ function AppShell({
           onCancel={() => setScreen({ name: 'expenses' })}
         />
       )}
-      <BottomTabs
-        active={activeTabFor(screen)}
-        unpaidInvoices={unpaidInvoiceCount}
-        onChange={(tab) => setScreen({ name: tab })}
-      />
-    </div>
+      </div>
+    </NavProvider>
   );
 }
 

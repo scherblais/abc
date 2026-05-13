@@ -105,7 +105,7 @@ export function HomeScreen({
         }
       />
 
-      <main className="flex-1 pb-40 pt-5">
+      <main className="flex-1 pb-28 pt-5">
         {upcoming.length === 0 && past.length === 0 ? (
           <EmptyState />
         ) : (
@@ -178,11 +178,8 @@ export function HomeScreen({
         )}
       </main>
 
-      <div
-        className="pointer-events-none fixed inset-x-0 z-10"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
-      >
-        <div className="mx-auto max-w-[480px] px-4 pb-2">
+      <div className="safe-bottom pointer-events-none fixed inset-x-0 bottom-0 z-10">
+        <div className="mx-auto max-w-[480px] px-4 pb-4">
           <button
             type="button"
             onClick={onAdd}

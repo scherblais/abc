@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { SyncIndicator } from './SyncIndicator';
+import { NavMenu } from './NavMenu';
 
 type Props = {
   /** Left-aligned content (back button, monogram, etc.). */
@@ -40,6 +41,7 @@ export function ScreenHeader({ left, title, right, dense }: Props) {
       <div className="flex shrink-0 items-center gap-1.5">
         {right}
         <SyncIndicator />
+        <NavMenu />
       </div>
     </header>
   );

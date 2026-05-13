@@ -54,7 +54,7 @@ export function AdminScreen({
         title="Settings"
       />
 
-      <main className="flex-1 pb-24 pt-5">
+      <main className="flex-1 pb-12 pt-5">
         <ThemeToggleCard />
         <StartingLocationCard settings={settings} onChange={onSaveSettings} />
         <BusinessInfoCard settings={settings} onChange={onSaveSettings} />
