@@ -5,6 +5,7 @@ import { normalizeServices } from '../lib/catalog';
 import { currency, formatDayLabel, formatTime } from '../lib/format';
 import { bookingTotal } from '../lib/bookings';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { NextShootCard } from '../components/NextShootCard';
 
 type Props = {
   bookings: Booking[];
@@ -110,6 +111,15 @@ export function HomeScreen({
           <EmptyState />
         ) : (
           <>
+            {upcoming.length > 0 && (
+              <NextShootCard
+                booking={upcoming[0]}
+                now={now}
+                labelFor={labelFor}
+                clientLine={clientLineFor(upcoming[0])}
+                onOpen={() => onOpen(upcoming[0])}
+              />
+            )}
             {upcoming.length > 0 && (
               <div className="space-y-6">
                 {groups.map((g) => (
