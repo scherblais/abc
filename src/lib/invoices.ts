@@ -90,7 +90,9 @@ export const invoiceLines = (
       .filter((s): s is string => Boolean(s));
     lines.push({
       bookingId: b.id,
-      dateLabel: new Date(b.scheduledAt).toISOString().slice(0, 10),
+      dateLabel: b.scheduledAt
+        ? new Date(b.scheduledAt).toISOString().slice(0, 10)
+        : '',
       addressLabel: b.address || '(no address)',
       serviceLabels: labels,
       travelLabel:

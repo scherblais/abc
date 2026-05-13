@@ -28,9 +28,10 @@ import { useUid } from '../lib/uid-context';
 
 type Props = {
   initial?: Booking;
-  /** Seed values for a brand-new booking. Used when converting a Task → Shoot
-   *  so the address / client / notes carry over. Ignored when `initial` is set. */
-  prefill?: Partial<DraftBooking>;
+  /** Start a brand-new booking with no scheduled date — i.e. as a task.
+   *  The Day/Time fields collapse into a "Schedule a date" button until
+   *  the user is ready to pin it to a slot. Ignored when `initial` is set. */
+  startUndated?: boolean;
   catalog: Service[];
   companies: Company[];
   agents: Agent[];
@@ -78,11 +79,11 @@ const draftFromBooking = (b: Booking): DraftBooking => ({
   notes: b.notes,
 });
 
-const emptyDraft = (catalog: Service[]): DraftBooking => {
+const emptyDraft = (catalog: Service[], undated: boolean): DraftBooking => {
   const first = catalog[0];
   return {
     address: '',
-    scheduledAt: suggestedNextSlot().toISOString(),
+    scheduledAt: undated ? undefined : suggestedNextSlot().toISOString(),
     services: first ? [{ id: first.id, qty: 1 }] : [],
     price: first?.price ?? 0,
     notes: '',
@@ -93,7 +94,7 @@ const INPUT = 'input';
 
 export function BookScreen({
   initial,
-  prefill,
+  startUndated,
   catalog,
   companies,
   agents,
@@ -117,11 +118,9 @@ export function BookScreen({
     const id = bookingInvoiceIndex.get(initial.id);
     return id ? invoices.find((i) => i.id === id) : undefined;
   }, [initial, invoices, bookingInvoiceIndex]);
-  const [draft, setDraft] = useState<DraftBooking>(() => {
-    if (initial) return draftFromBooking(initial);
-    const base = emptyDraft(catalog);
-    return prefill ? { ...base, ...prefill } : base;
-  });
+  const [draft, setDraft] = useState<DraftBooking>(() =>
+    initial ? draftFromBooking(initial) : emptyDraft(catalog, !!startUndated),
+  );
   const hasOccupant =
     !!initial?.occupant &&
     Boolean(
@@ -132,10 +131,7 @@ export function BookScreen({
     );
   const [showExtras, setShowExtras] = useState(
     () =>
-      hasOccupant ||
-      Boolean(initial?.notes) ||
-      Boolean(initial?.client?.name) ||
-      Boolean(prefill?.notes),
+      hasOccupant || Boolean(initial?.notes) || Boolean(initial?.client?.name),
   );
   const [overrideTotals, setOverrideTotals] = useState(false);
 
@@ -146,7 +142,11 @@ export function BookScreen({
     return catalogFor(catalog, company);
   }, [catalog, companies, draft.companyId]);
 
-  const scheduled = useMemo(() => new Date(draft.scheduledAt), [draft.scheduledAt]);
+  const scheduled = useMemo(
+    () => (draft.scheduledAt ? new Date(draft.scheduledAt) : null),
+    [draft.scheduledAt],
+  );
+  const isTask = !draft.scheduledAt;
   const total = draft.price + (draft.travelFee ?? 0);
   const canSave = draft.address.trim().length > 1 && draft.services.length > 0;
 
@@ -319,7 +319,15 @@ export function BookScreen({
             Cancel
           </button>
         }
-        title={initial ? 'Edit shoot' : 'New shoot'}
+        title={
+          initial
+            ? isTask
+              ? 'Edit task'
+              : 'Edit shoot'
+            : isTask
+              ? 'New task'
+              : 'New shoot'
+        }
         right={
           <button
             type="button"
@@ -332,7 +340,7 @@ export function BookScreen({
                 : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
             ].join(' ')}
           >
-            {initial ? 'Save' : 'Book'}
+            Save
           </button>
         }
       />
@@ -465,13 +473,47 @@ export function BookScreen({
           </button>
         )}
 
-        <Field label="Day" hint={formatDayLabel(scheduled)}>
-          <DatePickerRow value={scheduled} onChange={setScheduled} />
-        </Field>
+        {scheduled ? (
+          <>
+            <Field label="Day" hint={formatDayLabel(scheduled)}>
+              <DatePickerRow value={scheduled} onChange={setScheduled} />
+            </Field>
 
-        <Field label="Time" hint={formatTime(scheduled)}>
-          <TimePickerRow value={scheduled} onChange={setScheduled} />
-        </Field>
+            <Field label="Time" hint={formatTime(scheduled)}>
+              <TimePickerRow value={scheduled} onChange={setScheduled} />
+            </Field>
+
+            <button
+              type="button"
+              onClick={() =>
+                setDraft((p) => ({ ...p, scheduledAt: undefined }))
+              }
+              className="tap mb-5 -mt-1 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[12.5px] font-medium text-neutral-500 dark:text-neutral-400 underline-offset-4 hover:text-neutral-800 dark:hover:text-neutral-200 hover:underline"
+            >
+              Remove date — save as a task
+            </button>
+          </>
+        ) : (
+          <Field label="Schedule" hint="optional">
+            <div className="card flex items-center gap-3 px-4 py-3.5">
+              <div className="min-w-0 flex-1">
+                <p className="text-[13.5px] font-medium text-neutral-700 dark:text-neutral-300">
+                  No date set
+                </p>
+                <p className="mt-0.5 text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
+                  This will live in Tasks until you pick a day and time.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setScheduled(suggestedNextSlot())}
+                className="tap shrink-0 rounded-md bg-neutral-900 dark:bg-neutral-100 px-3 py-1.5 text-[13px] font-medium text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200"
+              >
+                Schedule
+              </button>
+            </div>
+          </Field>
+        )}
 
         <Field
           label="Services"
@@ -585,7 +627,7 @@ export function BookScreen({
             }}
             className="btn-destructive mt-8"
           >
-            Delete shoot
+            {isTask ? 'Delete task' : 'Delete shoot'}
           </button>
         )}
       </div>
@@ -603,7 +645,13 @@ export function BookScreen({
                 : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
             ].join(' ')}
           >
-            <span>{initial ? 'Save changes' : 'Book this shoot'}</span>
+            <span>
+              {initial
+                ? 'Save changes'
+                : isTask
+                  ? 'Save task'
+                  : 'Book this shoot'}
+            </span>
             <span className="tabular-nums">{currency(total)}</span>
           </button>
         </div>

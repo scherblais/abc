@@ -11,7 +11,6 @@ import { InvoicePrintScreen } from './screens/InvoicePrintScreen';
 import { ExpensesScreen } from './screens/ExpensesScreen';
 import { ExpenseEditScreen } from './screens/ExpenseEditScreen';
 import { TasksScreen } from './screens/TasksScreen';
-import { TaskEditScreen } from './screens/TaskEditScreen';
 import { SignInScreen } from './screens/SignInScreen';
 import { NavProvider, type TabId } from './lib/nav-context';
 import type {
@@ -21,12 +20,10 @@ import type {
   DraftBooking,
   DraftExpense,
   DraftService,
-  DraftTask,
   Expense,
   Invoice,
   Service,
   Settings,
-  Task,
 } from './types';
 import {
   DEFAULT_SETTINGS,
@@ -37,7 +34,6 @@ import {
   loadInvoices,
   loadServices,
   loadSettings,
-  loadTasks,
   newId,
   saveAgents,
   saveBookings,
@@ -46,7 +42,6 @@ import {
   saveInvoices,
   saveServices,
   saveSettings,
-  saveTasks,
 } from './lib/storage';
 import { DEFAULT_CATALOG, catalogFor, sumServices } from './lib/catalog';
 import { geocode } from './lib/geocode';
@@ -68,7 +63,7 @@ import { UidProvider } from './lib/uid-context';
 
 type Screen =
   | { name: 'home' }
-  | { name: 'book'; editingId?: string; fromTaskId?: string }
+  | { name: 'book'; editingId?: string; startUndated?: boolean }
   | { name: 'admin' }
   | { name: 'service-edit'; serviceId?: string }
   | { name: 'clients' }
@@ -78,8 +73,7 @@ type Screen =
   | { name: 'invoice-print'; invoiceId: string }
   | { name: 'expenses' }
   | { name: 'expense-edit'; expenseId?: string }
-  | { name: 'tasks' }
-  | { name: 'task-edit'; taskId?: string };
+  | { name: 'tasks' };
 
 /** Tab-scoped screen persistence. Survives F5 / pull-to-refresh; resets
  *  when the tab is closed. Validates that the persisted shape still
@@ -100,7 +94,6 @@ const SCREEN_NAMES = new Set([
   'expenses',
   'expense-edit',
   'tasks',
-  'task-edit',
 ]);
 
 function loadScreen(): Screen {
@@ -248,12 +241,6 @@ function AppShell({
     loadExpenses,
     saveExpenses,
   );
-  const [tasks, setTasks] = useDataList<Task>(
-    uid,
-    'tasks',
-    loadTasks,
-    saveTasks,
-  );
   const [settings, setSettings] = useDataDoc<Settings>(
     uid,
     'meta/settings',
@@ -340,16 +327,6 @@ function AppShell({
       ? expenses.find((e) => e.id === screen.expenseId)
       : undefined;
 
-  const editingTask =
-    screen.name === 'task-edit' && screen.taskId
-      ? tasks.find((t) => t.id === screen.taskId)
-      : undefined;
-
-  const fromTask =
-    screen.name === 'book' && screen.fromTaskId
-      ? tasks.find((t) => t.id === screen.fromTaskId)
-      : undefined;
-
   const handleSaveBooking = (draft: DraftBooking) => {
     if (editingBooking) {
       setBookings((prev) =>
@@ -363,15 +340,12 @@ function AppShell({
         source: 'me',
       };
       setBookings((prev) => [...prev, next]);
-      // Task → Shoot: drop the task that spawned this booking. The user
-      // explicitly said it should "convert", so the task disappears rather
-      // than lingering as a completed item.
-      if (screen.name === 'book' && screen.fromTaskId) {
-        const taskId = screen.fromTaskId;
-        setTasks((prev) => prev.filter((t) => t.id !== taskId));
-      }
     }
-    setScreen({ name: 'home' });
+    // Saving a brand-new task takes you to the Tasks tab; everything else
+    // returns to Home. Editing a shoot that loses its date goes to Tasks
+    // since it's the natural place to find it again.
+    const next = !draft.scheduledAt ? 'tasks' : 'home';
+    setScreen({ name: next });
   };
 
   const handleDeleteBooking = () => {
@@ -385,7 +359,7 @@ function AppShell({
           : i,
       ),
     );
-    setScreen({ name: 'home' });
+    setScreen({ name: editingBooking.scheduledAt ? 'home' : 'tasks' });
   };
 
   const handleSaveService = (draft: DraftService) => {
@@ -581,42 +555,6 @@ function AppShell({
     setScreen({ name: 'expenses' });
   };
 
-  // --- Tasks ---
-
-  const saveTask = (draft: DraftTask) => {
-    if (editingTask) {
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === editingTask.id ? { ...editingTask, ...draft } : t,
-        ),
-      );
-    } else {
-      const next: Task = {
-        ...draft,
-        id: newId(),
-        createdAt: new Date().toISOString(),
-      };
-      setTasks((prev) => [...prev, next]);
-    }
-    setScreen({ name: 'tasks' });
-  };
-
-  const deleteTask = () => {
-    if (!editingTask) return;
-    setTasks((prev) => prev.filter((t) => t.id !== editingTask.id));
-    setScreen({ name: 'tasks' });
-  };
-
-  const toggleTaskDone = (task: Task) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === task.id ? { ...t, done: !t.done } : t)),
-    );
-  };
-
-  const scheduleFromTask = (task: Task) => {
-    setScreen({ name: 'book', fromTaskId: task.id });
-  };
-
   // Print route renders outside the mobile-width wrapper so the invoice can
   // span the full page when printed to PDF.
   if (screen.name === 'invoice-print' && printInvoice) {
@@ -666,16 +604,7 @@ function AppShell({
       {screen.name === 'book' && (
         <BookScreen
           initial={editingBooking}
-          prefill={
-            fromTask
-              ? {
-                  address: fromTask.address ?? '',
-                  companyId: fromTask.companyId,
-                  agentId: fromTask.agentId,
-                  notes: fromTask.notes,
-                }
-              : undefined
-          }
+          startUndated={screen.startUndated}
           catalog={services}
           companies={companies}
           agents={agents}
@@ -684,7 +613,15 @@ function AppShell({
           settings={settings}
           onSave={handleSaveBooking}
           onDelete={editingBooking ? handleDeleteBooking : undefined}
-          onCancel={() => setScreen({ name: 'home' })}
+          onCancel={() =>
+            setScreen({
+              name:
+                screen.startUndated ||
+                (editingBooking && !editingBooking.scheduledAt)
+                  ? 'tasks'
+                  : 'home',
+            })
+          }
           onManageCatalog={() => setScreen({ name: 'admin' })}
           onCreateCompany={createCompany}
           onCreateAgent={createAgent}
@@ -788,28 +725,13 @@ function AppShell({
       )}
       {screen.name === 'tasks' && (
         <TasksScreen
-          tasks={tasks}
+          bookings={bookings}
+          catalog={services}
           companies={companies}
           agents={agents}
           onBack={() => setScreen({ name: 'home' })}
-          onAdd={() => setScreen({ name: 'task-edit' })}
-          onEdit={(t) => setScreen({ name: 'task-edit', taskId: t.id })}
-          onToggleDone={toggleTaskDone}
-        />
-      )}
-      {screen.name === 'task-edit' && (
-        <TaskEditScreen
-          initial={editingTask}
-          companies={companies}
-          agents={agents}
-          onSave={saveTask}
-          onDelete={editingTask ? deleteTask : undefined}
-          onSchedule={
-            editingTask ? () => scheduleFromTask(editingTask) : undefined
-          }
-          onCancel={() => setScreen({ name: 'tasks' })}
-          onCreateCompany={createCompany}
-          onCreateAgent={createAgent}
+          onAdd={() => setScreen({ name: 'book', startUndated: true })}
+          onOpen={(b) => setScreen({ name: 'book', editingId: b.id })}
         />
       )}
       </div>
@@ -844,7 +766,6 @@ function activeTabFor(screen: Screen): TabId | null {
     case 'invoice-edit':
     case 'expense-edit':
     case 'invoice-print':
-    case 'task-edit':
       return null;
   }
 }

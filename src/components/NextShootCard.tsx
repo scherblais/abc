@@ -26,7 +26,7 @@ const ARRIVAL_BUFFER_MIN = 10;
  * default maps app (Apple Maps on iOS, Google Maps everywhere else).
  */
 export function NextShootCard({ booking, now, labelFor, clientLine, onOpen }: Props) {
-  const start = new Date(booking.scheduledAt);
+  const start = new Date(booking.scheduledAt!);
   const driveMin =
     typeof booking.travelKm === 'number' && booking.travelKm > 0
       ? Math.max(1, Math.round((booking.travelKm / AVG_KMH) * 60))

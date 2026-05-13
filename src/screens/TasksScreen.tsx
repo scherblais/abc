@@ -1,60 +1,65 @@
 import { useMemo } from 'react';
-import type { Agent, Company, Task } from '../types';
+import type { Agent, Booking, Company, Service } from '../types';
+import { normalizeServices } from '../lib/catalog';
+import { currency } from '../lib/format';
+import { bookingTotal } from '../lib/bookings';
 import { ScreenHeader } from '../components/ScreenHeader';
 
 type Props = {
-  tasks: Task[];
+  bookings: Booking[];
+  catalog: Service[];
   companies: Company[];
   agents: Agent[];
   onBack: () => void;
   onAdd: () => void;
-  onEdit: (t: Task) => void;
-  onToggleDone: (t: Task) => void;
+  onOpen: (b: Booking) => void;
 };
 
+/**
+ * Lists bookings that haven't been scheduled yet — the "to do, but no
+ * date pinned" pile. Same record shape as a regular shoot; tapping a
+ * row opens the booking editor where the user can fill in a date and
+ * promote it into the Home day-grouped view.
+ */
 export function TasksScreen({
-  tasks,
+  bookings,
+  catalog,
   companies,
   agents,
   onBack,
   onAdd,
-  onEdit,
-  onToggleDone,
+  onOpen,
 }: Props) {
-  const companyById = useMemo(
-    () => new Map(companies.map((c) => [c.id, c.name])),
-    [companies],
-  );
-  const agentById = useMemo(
-    () => new Map(agents.map((a) => [a.id, a.name])),
-    [agents],
+  const undated = useMemo(
+    () =>
+      bookings
+        .filter((b) => !b.scheduledAt)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [bookings],
   );
 
-  const open = useMemo(
-    () =>
-      tasks
-        .filter((t) => !t.done)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [tasks],
-  );
-  const done = useMemo(
-    () =>
-      tasks
-        .filter((t) => t.done)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [tasks],
-  );
+  const labelFor = useMemo(() => {
+    const byId = new Map(catalog.map((s) => [s.id, s.name]));
+    return (id: string) => byId.get(id);
+  }, [catalog]);
 
-  const subtitleFor = (t: Task) => {
-    const parts: string[] = [];
-    if (t.address) parts.push(t.address);
-    const agentName = t.agentId ? agentById.get(t.agentId) : undefined;
-    const companyName = t.companyId ? companyById.get(t.companyId) : undefined;
-    if (agentName && companyName) parts.push(`${agentName} · ${companyName}`);
-    else if (companyName) parts.push(companyName);
-    else if (agentName) parts.push(agentName);
-    return parts.join(' — ');
-  };
+  const clientLineFor = useMemo(() => {
+    const companyById = new Map(companies.map((c) => [c.id, c]));
+    const agentById = new Map(agents.map((a) => [a.id, a]));
+    return (b: Booking): string | null => {
+      const agent = b.agentId ? agentById.get(b.agentId) : undefined;
+      const company = b.companyId ? companyById.get(b.companyId) : undefined;
+      if (agent && company) return `${agent.name} · ${company.name}`;
+      if (agent) return agent.name;
+      if (company) return company.name;
+      if (b.client?.name) {
+        return b.client.brokerage
+          ? `${b.client.name} · ${b.client.brokerage}`
+          : b.client.name;
+      }
+      return null;
+    };
+  }, [companies, agents]);
 
   return (
     <div className="flex h-full min-h-full flex-col">
@@ -81,62 +86,35 @@ export function TasksScreen({
       />
 
       <main className="flex-1 pb-12 pt-5">
-        {tasks.length === 0 ? (
+        {undated.length === 0 ? (
           <div className="card px-5 py-8 text-center">
             <p className="text-[14px] text-neutral-600 dark:text-neutral-400">
               No tasks yet.
             </p>
-            <p className="mt-1 text-[12.5px] text-neutral-500 dark:text-neutral-400">
+            <p className="mt-1 text-[12.5px] leading-snug text-neutral-500 dark:text-neutral-400">
               Use this for shoots that don't have a date yet so you don't
-              forget about them.
+              forget about them. Add a date later to schedule it.
             </p>
             <button
               type="button"
               onClick={onAdd}
               className="tap mt-4 rounded-md bg-neutral-900 dark:bg-neutral-100 px-4 py-2 text-[14px] font-medium text-white dark:text-neutral-900 hover:bg-black dark:hover:bg-neutral-200"
             >
-              + Log your first task
+              + New task
             </button>
           </div>
         ) : (
-          <>
-            {open.length > 0 && (
-              <section className="mb-5">
-                <p className="mb-2.5 px-0.5 text-[12.5px] font-medium text-neutral-500 dark:text-neutral-400">
-                  Open · {open.length}
-                </p>
-                <ul className="card divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden">
-                  {open.map((t) => (
-                    <Row
-                      key={t.id}
-                      task={t}
-                      subtitle={subtitleFor(t)}
-                      onClick={() => onEdit(t)}
-                      onToggleDone={() => onToggleDone(t)}
-                    />
-                  ))}
-                </ul>
-              </section>
-            )}
-            {done.length > 0 && (
-              <section className="mb-5">
-                <p className="mb-2.5 px-0.5 text-[12.5px] font-medium text-neutral-500 dark:text-neutral-400">
-                  Done · {done.length}
-                </p>
-                <ul className="card divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden opacity-70">
-                  {done.map((t) => (
-                    <Row
-                      key={t.id}
-                      task={t}
-                      subtitle={subtitleFor(t)}
-                      onClick={() => onEdit(t)}
-                      onToggleDone={() => onToggleDone(t)}
-                    />
-                  ))}
-                </ul>
-              </section>
-            )}
-          </>
+          <ul className="card divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden">
+            {undated.map((b) => (
+              <Row
+                key={b.id}
+                b={b}
+                labelFor={labelFor}
+                clientLine={clientLineFor(b)}
+                onClick={() => onOpen(b)}
+              />
+            ))}
+          </ul>
         )}
       </main>
     </div>
@@ -144,74 +122,71 @@ export function TasksScreen({
 }
 
 function Row({
-  task,
-  subtitle,
+  b,
+  labelFor,
+  clientLine,
   onClick,
-  onToggleDone,
 }: {
-  task: Task;
-  subtitle: string;
+  b: Booking;
+  labelFor: (id: string) => string | undefined;
+  clientLine: string | null;
   onClick: () => void;
-  onToggleDone: () => void;
 }) {
+  const labels = normalizeServices(b.services)
+    .map(({ id, qty }) => {
+      const name = labelFor(id);
+      if (!name) return undefined;
+      return qty > 1 ? `${name} × ${qty}` : name;
+    })
+    .filter((s): s is string => Boolean(s));
+  const total = bookingTotal(b);
+
   return (
     <li>
-      <div className="tap flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
-        <button
-          type="button"
-          onClick={onToggleDone}
-          aria-label={task.done ? 'Mark not done' : 'Mark done'}
-          className={[
-            'tap grid h-6 w-6 shrink-0 place-items-center rounded-md border',
-            task.done
-              ? 'border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900'
-              : 'border-neutral-300 dark:border-neutral-600',
-          ].join(' ')}
-        >
-          {task.done && (
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-            >
-              <path d="M3 7.4 5.5 10 11 4" />
-            </svg>
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={onClick}
-          className="min-w-0 flex-1 text-left"
-        >
-          <p
-            className={[
-              'truncate text-[14.5px] font-medium',
-              task.done
-                ? 'text-neutral-400 line-through dark:text-neutral-500'
-                : 'text-neutral-900 dark:text-neutral-100',
-            ].join(' ')}
-          >
-            {task.title}
+      <button
+        type="button"
+        onClick={onClick}
+        className="tap flex w-full items-stretch gap-3 px-4 py-3.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14.5px] font-medium text-neutral-900 dark:text-neutral-100">
+            {b.address || 'No address'}
           </p>
-          {subtitle && (
-            <p className="truncate text-[12.5px] text-neutral-500 dark:text-neutral-400">
-              {subtitle}
-            </p>
+          <p className="truncate text-[12.5px] text-neutral-500 dark:text-neutral-400">
+            {clientLine ?? 'No client'}
+          </p>
+          {labels.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {labels.slice(0, 3).map((label, i) => (
+                <span
+                  key={`${label}-${i}`}
+                  className="pill border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50 text-neutral-600 dark:text-neutral-400"
+                >
+                  {label}
+                </span>
+              ))}
+              {labels.length > 3 && (
+                <span className="pill text-neutral-400 dark:text-neutral-500">
+                  +{labels.length - 3}
+                </span>
+              )}
+            </div>
           )}
-        </button>
-        <span
-          aria-hidden
-          className="text-neutral-300 dark:text-neutral-600"
-        >
-          ›
-        </span>
-      </div>
+        </div>
+        <div className="flex shrink-0 flex-col items-end justify-between pt-0.5">
+          {total > 0 && (
+            <span className="text-[14px] font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+              {currency(total)}
+            </span>
+          )}
+          <span
+            className="text-neutral-300 dark:text-neutral-600"
+            aria-hidden
+          >
+            ›
+          </span>
+        </div>
+      </button>
     </li>
   );
 }

@@ -17,17 +17,19 @@ type Props = {
   onOpenRevenue: () => void;
 };
 
+/** Bookings reaching these helpers always have a scheduledAt — the Home
+ *  screen filters tasks out before grouping. */
 const groupByDay = (items: Booking[]) => {
   const groups = new Map<string, { date: Date; items: Booking[] }>();
   for (const a of items) {
-    const d = new Date(a.scheduledAt);
+    const d = new Date(a.scheduledAt!);
     const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     const bucket = groups.get(key) ?? { date: startOfDay(d), items: [] };
     bucket.items.push(a);
     groups.set(key, bucket);
   }
   for (const g of groups.values()) {
-    g.items.sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+    g.items.sort((a, b) => a.scheduledAt!.localeCompare(b.scheduledAt!));
   }
   return [...groups.values()].sort((a, b) => a.date.getTime() - b.date.getTime());
 };
@@ -42,24 +44,27 @@ export function HomeScreen({
   onOpenRevenue,
 }: Props) {
   const now = useMemo(() => new Date(), []);
+  // Bookings without a scheduledAt are tasks — they live in the Tasks tab,
+  // not the Home calendar view. Filter those out before splitting upcoming
+  // vs. past.
+  const dated = useMemo(
+    () => bookings.filter((b) => !!b.scheduledAt),
+    [bookings],
+  );
   const upcoming = useMemo(
     () =>
-      bookings
-        .filter(
-          (b) => new Date(b.scheduledAt).getTime() >= now.getTime(),
-        )
-        .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)),
-    [bookings, now],
+      dated
+        .filter((b) => new Date(b.scheduledAt!).getTime() >= now.getTime())
+        .sort((a, b) => a.scheduledAt!.localeCompare(b.scheduledAt!)),
+    [dated, now],
   );
 
   const past = useMemo(
     () =>
-      bookings
-        .filter(
-          (b) => new Date(b.scheduledAt).getTime() < now.getTime(),
-        )
-        .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt)),
-    [bookings, now],
+      dated
+        .filter((b) => new Date(b.scheduledAt!).getTime() < now.getTime())
+        .sort((a, b) => b.scheduledAt!.localeCompare(a.scheduledAt!)),
+    [dated, now],
   );
 
   // The very next upcoming booking gets its own hero card; drop it from
@@ -222,7 +227,7 @@ function BookingRow({
   clientLine: string | null;
   onClick: () => void;
 }) {
-  const start = new Date(b.scheduledAt);
+  const start = new Date(b.scheduledAt!);
   const labels = normalizeServices(b.services)
     .map(({ id, qty }) => {
       const name = labelFor(id);
@@ -290,7 +295,7 @@ function PastBookingRow({
   clientLine: string | null;
   onClick: () => void;
 }) {
-  const start = new Date(b.scheduledAt);
+  const start = new Date(b.scheduledAt!);
   const dateLabel = start.toLocaleDateString('en-CA', {
     month: 'short',
     day: 'numeric',

@@ -8,7 +8,6 @@ import {
   loadInvoices,
   loadServices,
   loadSettings,
-  loadTasks,
 } from './storage';
 import { DEFAULT_CATALOG } from './catalog';
 import { stripUndefined } from './sync';
@@ -54,7 +53,6 @@ export async function migrateLocalToCloud(uid: string): Promise<void> {
   const companies = loadCompanies();
   const agents = loadAgents();
   const expenses = loadExpenses();
-  const tasks = loadTasks();
   // Brand-new account with no local services? Seed the default catalog so
   // the Book screen isn't empty. After this one-time seed, the catalog is
   // the user's to manage — deletions stay deleted.
@@ -67,7 +65,6 @@ export async function migrateLocalToCloud(uid: string): Promise<void> {
       companies.length +
       agents.length +
       expenses.length +
-      tasks.length +
       services.length >
     0;
 
@@ -86,8 +83,6 @@ export async function migrateLocalToCloud(uid: string): Promise<void> {
     batch.set(doc(db, `users/${uid}/services`, s.id), stripUndefined(s));
   for (const e of expenses)
     batch.set(doc(db, `users/${uid}/expenses`, e.id), stripUndefined(e));
-  for (const t of tasks)
-    batch.set(doc(db, `users/${uid}/tasks`, t.id), stripUndefined(t));
 
   await batch.commit();
   markMigrated(uid);
@@ -95,7 +90,7 @@ export async function migrateLocalToCloud(uid: string): Promise<void> {
   if (hasAnything) {
     // Helpful console crumb on the rare occasion something goes sideways.
     console.info(
-      `Migrated ${bookings.length} bookings, ${invoices.length} invoices, ${companies.length} companies, ${agents.length} agents, ${services.length} services, ${expenses.length} expenses, ${tasks.length} tasks from localStorage to Firestore.`,
+      `Migrated ${bookings.length} bookings, ${invoices.length} invoices, ${companies.length} companies, ${agents.length} agents, ${services.length} services, ${expenses.length} expenses from localStorage to Firestore.`,
     );
   }
 }

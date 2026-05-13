@@ -22,6 +22,8 @@ export const groupByMonth = (bookings: Booking[], now: Date): MonthRevenue[] => 
   const groups = new Map<number, { year: number; month: number; total: number; count: number }>();
 
   for (const b of bookings) {
+    // Undated bookings (tasks) don't belong to any calendar month.
+    if (!b.scheduledAt) continue;
     const d = new Date(b.scheduledAt);
     const k = monthKey(d);
     const g = groups.get(k) ?? { year: d.getFullYear(), month: d.getMonth(), total: 0, count: 0 };
@@ -118,6 +120,9 @@ export function computeYearStats(
   const byCompany = new Map<string, BrokerageStat>();
 
   for (const b of bookings) {
+    // Tasks (undated) don't get rolled up into year-end stats — they
+    // aren't billable yet and have no tax year to anchor against.
+    if (!b.scheduledAt) continue;
     const d = new Date(b.scheduledAt);
     const y = d.getFullYear();
     yearsSet.add(y);
@@ -234,11 +239,13 @@ export function yearCsv(
   ];
 
   const dated = bookings
-    .filter((b) => new Date(b.scheduledAt).getFullYear() === year)
-    .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+    .filter(
+      (b) => b.scheduledAt && new Date(b.scheduledAt).getFullYear() === year,
+    )
+    .sort((a, b) => a.scheduledAt!.localeCompare(b.scheduledAt!));
 
   for (const b of dated) {
-    const date = new Date(b.scheduledAt).toISOString().slice(0, 10);
+    const date = new Date(b.scheduledAt!).toISOString().slice(0, 10);
     const total = bookingTotal(b);
     const invId = bookingInvoiceIndex.get(b.id);
     const inv = invId ? invoiceById.get(invId) : undefined;

@@ -116,11 +116,13 @@ export function InvoiceEditScreen({
   const eligibleBookings = useMemo(() => {
     return bookings
       .filter((b) => b.companyId && b.companyId === draft.companyId)
+      // Tasks (undated) can't be billed until they're scheduled.
+      .filter((b) => !!b.scheduledAt)
       .filter((b) => {
         const inv = bookingIndex.get(b.id);
         return !inv || inv === draft.id;
       })
-      .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt));
+      .sort((a, b) => b.scheduledAt!.localeCompare(a.scheduledAt!));
   }, [bookings, draft.companyId, draft.id, bookingIndex]);
 
   const subtotal = invoiceSubtotal(draft, bookings);
@@ -372,7 +374,7 @@ export function InvoiceEditScreen({
                             selected ? 'text-neutral-300 dark:text-neutral-600' : 'text-neutral-500 dark:text-neutral-400',
                           ].join(' ')}
                         >
-                          {formatInvoiceDate(b.scheduledAt)}
+                          {b.scheduledAt ? formatInvoiceDate(b.scheduledAt) : ''}
                         </span>
                       </span>
                       <span className="shrink-0 text-[13px] font-semibold tabular-nums">
