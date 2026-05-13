@@ -41,6 +41,7 @@ export function NavMenu() {
 
   const items: Item[] = [
     { id: 'home', label: 'Today', icon: <HomeIcon /> },
+    { id: 'tasks', label: 'Tasks', icon: <TasksIcon /> },
     { id: 'revenue', label: 'Revenue', icon: <RevenueIcon /> },
     { id: 'expenses', label: 'Expenses', icon: <ExpensesIcon /> },
     {
@@ -125,6 +126,29 @@ function KebabIcon() {
       <circle cx="12" cy="5.5" r="1.6" fill="currentColor" />
       <circle cx="12" cy="12" r="1.6" fill="currentColor" />
       <circle cx="12" cy="18.5" r="1.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+function TasksIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect
+        x="4"
+        y="4"
+        width="16"
+        height="16"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <path
+        d="m8 12 2.5 2.5L16 9"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

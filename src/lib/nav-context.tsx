@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 
-export type TabId = 'home' | 'revenue' | 'expenses' | 'invoices' | 'admin';
+export type TabId = 'home' | 'tasks' | 'revenue' | 'expenses' | 'invoices' | 'admin';
 
 export type NavContextValue = {
   /** Currently active top-level destination (or null on edit/print routes). */

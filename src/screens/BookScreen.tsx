@@ -28,6 +28,9 @@ import { useUid } from '../lib/uid-context';
 
 type Props = {
   initial?: Booking;
+  /** Seed values for a brand-new booking. Used when converting a Task → Shoot
+   *  so the address / client / notes carry over. Ignored when `initial` is set. */
+  prefill?: Partial<DraftBooking>;
   catalog: Service[];
   companies: Company[];
   agents: Agent[];
@@ -90,6 +93,7 @@ const INPUT = 'input';
 
 export function BookScreen({
   initial,
+  prefill,
   catalog,
   companies,
   agents,
@@ -113,9 +117,11 @@ export function BookScreen({
     const id = bookingInvoiceIndex.get(initial.id);
     return id ? invoices.find((i) => i.id === id) : undefined;
   }, [initial, invoices, bookingInvoiceIndex]);
-  const [draft, setDraft] = useState<DraftBooking>(() =>
-    initial ? draftFromBooking(initial) : emptyDraft(catalog),
-  );
+  const [draft, setDraft] = useState<DraftBooking>(() => {
+    if (initial) return draftFromBooking(initial);
+    const base = emptyDraft(catalog);
+    return prefill ? { ...base, ...prefill } : base;
+  });
   const hasOccupant =
     !!initial?.occupant &&
     Boolean(
@@ -125,7 +131,11 @@ export function BookScreen({
         initial.occupant.accessNotes,
     );
   const [showExtras, setShowExtras] = useState(
-    () => hasOccupant || Boolean(initial?.notes) || Boolean(initial?.client?.name),
+    () =>
+      hasOccupant ||
+      Boolean(initial?.notes) ||
+      Boolean(initial?.client?.name) ||
+      Boolean(prefill?.notes),
   );
   const [overrideTotals, setOverrideTotals] = useState(false);
 

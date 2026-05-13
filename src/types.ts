@@ -166,6 +166,22 @@ export type Expense = {
 };
 
 export type DraftExpense = Omit<Expense, 'id' | 'createdAt'>;
+
+/** A reminder for an unscheduled shoot — same conceptual fields as a Booking
+ *  minus the date/time. Convertible into a real Booking when the user lines
+ *  up an actual time. */
+export type Task = {
+  id: string;
+  title: string;
+  address?: string;
+  companyId?: string;
+  agentId?: string;
+  notes?: string;
+  done?: boolean;
+  createdAt: string; // ISO
+};
+
+export type DraftTask = Omit<Task, 'id' | 'createdAt'>;
 export type DraftCompany = Omit<Company, 'id' | 'createdAt'>;
 export type DraftAgent = Omit<Agent, 'id' | 'createdAt'>;
 export type DraftInvoice = Omit<Invoice, 'id' | 'createdAt'>;

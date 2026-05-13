@@ -6,6 +6,7 @@ import type {
   Invoice,
   Service,
   Settings,
+  Task,
 } from '../types';
 
 const BOOKINGS_KEY = 'lensbook.bookings.v1';
@@ -15,6 +16,7 @@ const COMPANIES_KEY = 'lensbook.companies.v1';
 const AGENTS_KEY = 'lensbook.agents.v1';
 const INVOICES_KEY = 'lensbook.invoices.v1';
 const EXPENSES_KEY = 'lensbook.expenses.v1';
+const TASKS_KEY = 'lensbook.tasks.v1';
 
 export const DEFAULT_SETTINGS: Settings = {
   startingAddress: 'Carignan, QC',
@@ -125,6 +127,21 @@ export const loadExpenses = (): Expense[] => {
 
 export const saveExpenses = (expenses: Expense[]) => {
   localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
+};
+
+export const loadTasks = (): Task[] => {
+  try {
+    const raw = localStorage.getItem(TASKS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Task[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+export const saveTasks = (tasks: Task[]) => {
+  localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
 };
 
 export const newId = () =>
