@@ -186,8 +186,13 @@ function DirectionsIcon() {
 /**
  * Build a directions URL aimed at the user's default maps app.
  * iOS hands `maps.apple.com` off to Apple Maps; everywhere else gets the
- * Google Maps universal URL (which Google Maps app handles when installed,
- * falls back to web otherwise).
+ * Google Maps universal URL.
+ *
+ * Prefer the address STRING over our stored coords — the coords came from
+ * an earlier Google / OSM geocode that can drift a building or two off,
+ * whereas the address text the user actually typed gets re-geocoded by
+ * Apple Maps / Google Maps directly against their own (more accurate for
+ * navigation) databases. Coords are a fallback only when no address.
  */
 function directionsUrl(
   address: string,
@@ -196,18 +201,21 @@ function directionsUrl(
   const isIos =
     typeof navigator !== 'undefined' &&
     /iPhone|iPad|iPod/.test(navigator.userAgent);
-  if (isIos) {
-    // Apple Maps prefers a daddr query. Coords are more reliable than free-
-    // form address text for the actual destination pin.
-    if (coords) {
-      return `https://maps.apple.com/?daddr=${coords.lat},${coords.lon}`;
+  const trimmed = address?.trim();
+
+  if (trimmed) {
+    if (isIos) {
+      return `https://maps.apple.com/?daddr=${encodeURIComponent(trimmed)}`;
     }
-    return `https://maps.apple.com/?daddr=${encodeURIComponent(address)}`;
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(trimmed)}`;
   }
   if (coords) {
+    if (isIos) {
+      return `https://maps.apple.com/?daddr=${coords.lat},${coords.lon}`;
+    }
     return `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lon}`;
   }
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+  return isIos ? 'https://maps.apple.com/' : 'https://www.google.com/maps';
 }
 
 function relativeFromNow(future: Date, now: Date): string {
