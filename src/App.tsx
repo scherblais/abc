@@ -587,6 +587,7 @@ function AppShell({
           agents={agents}
           onAdd={() => setScreen({ name: 'book' })}
           onOpen={(b) => setScreen({ name: 'book', editingId: b.id })}
+          onOpenTasks={() => setScreen({ name: 'tasks' })}
           onOpenRevenue={() => setScreen({ name: 'revenue' })}
         />
       )}

@@ -14,6 +14,7 @@ type Props = {
   agents: Agent[];
   onAdd: () => void;
   onOpen: (b: Booking) => void;
+  onOpenTasks: () => void;
   onOpenRevenue: () => void;
 };
 
@@ -41,14 +42,22 @@ export function HomeScreen({
   agents,
   onAdd,
   onOpen,
+  onOpenTasks,
   onOpenRevenue,
 }: Props) {
   const now = useMemo(() => new Date(), []);
-  // Bookings without a scheduledAt are tasks — they live in the Tasks tab,
-  // not the Home calendar view. Filter those out before splitting upcoming
-  // vs. past.
+  // Split bookings into the day-grouped (dated) view and the Tasks pile
+  // (undated). Tasks surface in their own collapsed section above the
+  // calendar — same record, just not pinned to a slot yet.
   const dated = useMemo(
     () => bookings.filter((b) => !!b.scheduledAt),
+    [bookings],
+  );
+  const tasks = useMemo(
+    () =>
+      bookings
+        .filter((b) => !b.scheduledAt)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [bookings],
   );
   const upcoming = useMemo(
@@ -117,7 +126,7 @@ export function HomeScreen({
       />
 
       <main className="flex-1 pb-28 pt-5">
-        {upcoming.length === 0 && past.length === 0 ? (
+        {upcoming.length === 0 && past.length === 0 && tasks.length === 0 ? (
           <EmptyState />
         ) : (
           <>
@@ -129,6 +138,38 @@ export function HomeScreen({
                 clientLine={clientLineFor(upcoming[0])}
                 onOpen={() => onOpen(upcoming[0])}
               />
+            )}
+            {tasks.length > 0 && (
+              <section className="mb-6">
+                <button
+                  type="button"
+                  onClick={onOpenTasks}
+                  className="tap mb-2.5 flex w-full items-center justify-between px-0.5 text-[12.5px] font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+                >
+                  <span>Tasks · {tasks.length}</span>
+                  <span aria-hidden>›</span>
+                </button>
+                <ul className="card divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden">
+                  {tasks.slice(0, 3).map((b) => (
+                    <TaskRow
+                      key={b.id}
+                      b={b}
+                      labelFor={labelFor}
+                      clientLine={clientLineFor(b)}
+                      onClick={() => onOpen(b)}
+                    />
+                  ))}
+                </ul>
+                {tasks.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={onOpenTasks}
+                    className="tap mt-2 w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 py-2 text-[12.5px] text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white"
+                  >
+                    {tasks.length - 3} more in Tasks ›
+                  </button>
+                )}
+              </section>
             )}
             {groups.length > 0 && (
               <div className="space-y-6">
@@ -323,6 +364,54 @@ function PastBookingRow({
         </div>
         <span className="shrink-0 text-[13px] font-medium tabular-nums text-neutral-700 dark:text-neutral-300">
           {currency(bookingTotal(b))}
+        </span>
+      </button>
+    </li>
+  );
+}
+
+function TaskRow({
+  b,
+  labelFor,
+  clientLine,
+  onClick,
+}: {
+  b: Booking;
+  labelFor: (id: string) => string | undefined;
+  clientLine: string | null;
+  onClick: () => void;
+}) {
+  const firstService = normalizeServices(b.services)
+    .map(({ id }) => labelFor(id))
+    .find(Boolean);
+  const subtitle = clientLine ?? firstService ?? 'No client';
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="tap flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+      >
+        <span
+          aria-hidden
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-dashed border-neutral-300 dark:border-neutral-700 text-neutral-400 dark:text-neutral-500"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" strokeWidth="1.7" />
+            <path d="M4 9h16" stroke="currentColor" strokeWidth="1.7" />
+            <path d="M9 3v4M15 3v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+          </svg>
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14px] font-medium text-neutral-800 dark:text-neutral-200">
+            {b.address || 'No address'}
+          </p>
+          <p className="truncate text-[12px] text-neutral-500 dark:text-neutral-400">
+            {subtitle}
+          </p>
+        </div>
+        <span className="shrink-0 text-neutral-300 dark:text-neutral-600" aria-hidden>
+          ›
         </span>
       </button>
     </li>
