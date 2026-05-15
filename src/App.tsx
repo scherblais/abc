@@ -56,6 +56,7 @@ import {
 import { useAuth } from './lib/auth';
 import { useDataDoc, useDataList } from './lib/sync';
 import { migrateLocalToCloud } from './lib/migrate';
+import { deleteReceipt } from './lib/receipts';
 import { getFirebaseDb, signOut } from './lib/firebase';
 import { onSnapshotsInSync } from 'firebase/firestore';
 import { markWarm, setInSync, setOnline } from './lib/sync-status';
@@ -531,7 +532,19 @@ function AppShell({
 
   // --- Expenses ---
 
-  const saveExpense = (draft: DraftExpense) => {
+  // The expense form needs a stable id at mount time so receipt uploads
+  // can target the final Storage path. For new expenses we generate one
+  // here and reuse it on save.
+  const expenseFormId = useMemo(
+    () =>
+      screen.name === 'expense-edit' ? screen.expenseId ?? newId() : '',
+    // Re-generate only when transitioning into a new "+ New" session, not
+    // on every render. Keying on the (id-or-undefined) flag is sufficient.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [screen.name === 'expense-edit' ? screen.expenseId ?? '__new__' : null],
+  );
+
+  const saveExpense = (draft: DraftExpense, id: string) => {
     if (editingExpense) {
       setExpenses((prev) =>
         prev.map((e) =>
@@ -541,7 +554,7 @@ function AppShell({
     } else {
       const next: Expense = {
         ...draft,
-        id: newId(),
+        id,
         createdAt: new Date().toISOString(),
       };
       setExpenses((prev) => [...prev, next]);
@@ -551,6 +564,11 @@ function AppShell({
 
   const deleteExpense = () => {
     if (!editingExpense) return;
+    // Drop the receipt blob too — Firestore doc deletion doesn't cascade
+    // to Storage.
+    if (editingExpense.receipt?.path) {
+      void deleteReceipt(editingExpense.receipt.path);
+    }
     setExpenses((prev) => prev.filter((e) => e.id !== editingExpense.id));
     setScreen({ name: 'expenses' });
   };
@@ -719,6 +737,7 @@ function AppShell({
       {screen.name === 'expense-edit' && (
         <ExpenseEditScreen
           initial={editingExpense}
+          formId={expenseFormId}
           onSave={saveExpense}
           onDelete={editingExpense ? deleteExpense : undefined}
           onCancel={() => setScreen({ name: 'expenses' })}

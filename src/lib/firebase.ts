@@ -14,11 +14,13 @@ import {
   persistentMultipleTabManager,
   type Firestore,
 } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { FIREBASE_CONFIG, FIREBASE_ENABLED } from '../firebase-config';
 
 let _app: FirebaseApp | null = null;
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
+let _storage: FirebaseStorage | null = null;
 
 function ensureInit() {
   if (!FIREBASE_ENABLED) {
@@ -46,6 +48,12 @@ export function getFirebaseAuth(): Auth {
 export function getFirebaseDb(): Firestore {
   ensureInit();
   return _db!;
+}
+
+export function getFirebaseStorage(): FirebaseStorage {
+  ensureInit();
+  if (!_storage) _storage = getStorage(_app!);
+  return _storage;
 }
 
 /** Try popup first (works in normal mobile Safari + every desktop browser),

@@ -195,6 +195,23 @@ function Row({
         <div className="min-w-0 flex-1">
           <p className="truncate text-[14.5px] font-medium text-neutral-900 dark:text-neutral-100">
             {expense.description || '(no description)'}
+            {expense.receipt && (
+              <span
+                aria-label="Receipt attached"
+                title="Receipt attached"
+                className="ml-1.5 inline-flex translate-y-[1px] text-neutral-400 dark:text-neutral-500"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="m20.5 11.5-8 8a4 4 0 1 1-5.7-5.7l9-9a2.7 2.7 0 0 1 3.8 3.8l-9 9a1.4 1.4 0 0 1-2-2l8.5-8.5"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            )}
           </p>
           <p className="truncate text-[12.5px] text-neutral-500 dark:text-neutral-400">
             {CATEGORY_LABEL[expense.category]}

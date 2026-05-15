@@ -165,6 +165,9 @@ export type Expense = {
   description: string;
   vendor?: string;
   notes?: string;
+  /** Receipt photo (Firebase Storage). `path` is the storage object path,
+   *  retained so we can delete it cleanly on Replace / Remove. */
+  receipt?: { url: string; path: string; contentType?: string };
   createdAt: string; // ISO
 };
 

@@ -3,6 +3,7 @@ import type { DraftExpense, Expense, ExpenseCategory } from '../types';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Field } from '../components/Field';
 import { NumberField } from '../components/NumberField';
+import { ReceiptUpload } from '../components/ReceiptUpload';
 import { RecordSyncLabel } from '../components/RecordSyncLabel';
 import {
   CATEGORY_LABEL,
@@ -12,12 +13,16 @@ import {
   type TaxMode,
 } from '../lib/expenses';
 import { currencyExact } from '../lib/format';
+import { deleteReceipt, uploadReceipt } from '../lib/receipts';
 import { recordPath } from '../lib/sync-status';
 import { useUid } from '../lib/uid-context';
 
 type Props = {
   initial?: Expense;
-  onSave: (draft: DraftExpense) => void;
+  /** Stable id used both for the eventual Expense record and for the
+   *  Storage path of any receipt picked in this form. */
+  formId: string;
+  onSave: (draft: DraftExpense, id: string) => void;
   onDelete?: () => void;
   onCancel: () => void;
 };
@@ -40,6 +45,7 @@ const fromExpense = (e: Expense): DraftExpense => ({
   description: e.description,
   vendor: e.vendor,
   notes: e.notes,
+  receipt: e.receipt,
 });
 
 const TAX_MODES: { value: TaxMode; label: string; hint: string }[] = [
@@ -61,6 +67,7 @@ function inferMode(e: Expense | undefined): TaxMode {
 
 export function ExpenseEditScreen({
   initial,
+  formId,
   onSave,
   onDelete,
   onCancel,
@@ -76,6 +83,14 @@ export function ExpenseEditScreen({
   const [total, setTotal] = useState<number>(() =>
     initial ? expenseTotal(initial.amount, initial.gst, initial.qst) : 0,
   );
+  // Receipt picker state. `pendingFile` is uploaded on Save (lazy, so a
+  // Cancel doesn't leave orphaned blobs in Storage). `removed` flags an
+  // existing receipt for deletion.
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [removed, setRemoved] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const existingReceipt = initial?.receipt ?? null;
   const descRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -99,19 +114,53 @@ export function ExpenseEditScreen({
   const split = useMemo(() => splitFromTotal(total, mode), [total, mode]);
 
   const canSave =
-    draft.description.trim().length > 0 && total > 0 && draft.date.length > 0;
+    !uploading &&
+    draft.description.trim().length > 0 &&
+    total > 0 &&
+    draft.date.length > 0;
 
-  const save = () => {
+  const save = async () => {
     if (!canSave) return;
-    onSave({
-      ...draft,
-      description: draft.description.trim(),
-      vendor: draft.vendor?.trim() || undefined,
-      notes: draft.notes?.trim() || undefined,
-      gst: split.gst > 0 ? split.gst : undefined,
-      qst: split.qst > 0 ? split.qst : undefined,
-      amount: split.amount,
-    });
+
+    let nextReceipt = draft.receipt;
+    try {
+      if (pendingFile && uid) {
+        setUploading(true);
+        setUploadError(null);
+        nextReceipt = await uploadReceipt(uid, formId, pendingFile);
+      } else if (removed) {
+        nextReceipt = undefined;
+      }
+    } catch (err) {
+      setUploading(false);
+      setUploadError(
+        (err as { message?: string })?.message ?? 'Receipt upload failed.',
+      );
+      return;
+    }
+
+    onSave(
+      {
+        ...draft,
+        description: draft.description.trim(),
+        vendor: draft.vendor?.trim() || undefined,
+        notes: draft.notes?.trim() || undefined,
+        gst: split.gst > 0 ? split.gst : undefined,
+        qst: split.qst > 0 ? split.qst : undefined,
+        amount: split.amount,
+        receipt: nextReceipt,
+      },
+      formId,
+    );
+
+    // Best-effort: clean up the previously stored receipt after the save
+    // commits. Skip when the new receipt happens to live at the same path
+    // (uploadReceipt overwrites in place when extension is identical).
+    const oldPath = existingReceipt?.path;
+    if (oldPath && oldPath !== nextReceipt?.path) {
+      void deleteReceipt(oldPath);
+    }
+    setUploading(false);
   };
 
   return (
@@ -139,7 +188,7 @@ export function ExpenseEditScreen({
                 : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500',
             ].join(' ')}
           >
-            Save
+            {uploading ? 'Saving…' : 'Save'}
           </button>
         }
       />
@@ -273,6 +322,38 @@ export function ExpenseEditScreen({
             placeholder="Receipt #, project, justification"
             className="input"
           />
+        </Field>
+
+        <Field
+          label="Receipt"
+          hint={uid ? 'optional · photo or PDF' : 'sign in to attach'}
+        >
+          <ReceiptUpload
+            existing={existingReceipt}
+            pendingFile={pendingFile}
+            removed={removed}
+            disabled={!uid || uploading}
+            onPick={(f) => {
+              setPendingFile(f);
+              if (f) setRemoved(false);
+              setUploadError(null);
+            }}
+            onRemove={() => {
+              setRemoved(true);
+              setUploadError(null);
+            }}
+            onUndoRemove={() => setRemoved(false)}
+          />
+          {uploading && (
+            <p className="mt-1.5 px-0.5 text-[12px] text-neutral-500 dark:text-neutral-400">
+              Uploading receipt…
+            </p>
+          )}
+          {uploadError && (
+            <p className="mt-1.5 px-0.5 text-[12px] text-red-600 dark:text-red-400">
+              {uploadError}
+            </p>
+          )}
         </Field>
 
         {initial && onDelete && (
