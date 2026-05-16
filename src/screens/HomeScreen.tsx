@@ -16,7 +16,6 @@ type Props = {
   onOpen: (b: Booking) => void;
   onOpenTasks: () => void;
   onOpenRevenue: () => void;
-  onOpenContacts: () => void;
 };
 
 /** Bookings reaching these helpers always have a scheduledAt — the Home
@@ -45,7 +44,6 @@ export function HomeScreen({
   onOpen,
   onOpenTasks,
   onOpenRevenue,
-  onOpenContacts,
 }: Props) {
   const now = useMemo(() => new Date(), []);
   // Split bookings into the day-grouped (dated) view and the Tasks pile
@@ -124,15 +122,6 @@ export function HomeScreen({
           >
             LM
           </span>
-        }
-        right={
-          <button
-            type="button"
-            onClick={onOpenContacts}
-            className="tap rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-2.5 py-1 text-[12.5px] font-medium text-neutral-700 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-900 dark:hover:text-white"
-          >
-            Contacts
-          </button>
         }
       />
 

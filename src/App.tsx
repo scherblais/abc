@@ -619,7 +619,6 @@ function AppShell({
           onOpen={(b) => setScreen({ name: 'book', editingId: b.id })}
           onOpenTasks={() => setScreen({ name: 'tasks' })}
           onOpenRevenue={() => setScreen({ name: 'revenue' })}
-          onOpenContacts={() => setScreen({ name: 'contacts' })}
         />
       )}
       {screen.name === 'revenue' && (
@@ -819,7 +818,7 @@ function activeTabFor(screen: Screen): TabId | null {
       return 'admin';
     case 'contacts':
     case 'contact-detail':
-      return 'home';
+      return 'contacts';
     case 'book':
     case 'service-edit':
     case 'invoice-edit':

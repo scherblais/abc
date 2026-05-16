@@ -42,6 +42,7 @@ export function NavMenu() {
   const items: Item[] = [
     { id: 'home', label: 'Today', icon: <HomeIcon /> },
     { id: 'tasks', label: 'Tasks', icon: <TasksIcon /> },
+    { id: 'contacts', label: 'Contacts', icon: <ContactsIcon /> },
     { id: 'revenue', label: 'Revenue', icon: <RevenueIcon /> },
     { id: 'expenses', label: 'Expenses', icon: <ExpensesIcon /> },
     {
@@ -202,6 +203,20 @@ function InvoiceIcon() {
       />
       <path d="M14 3v5h5" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
       <path d="M9 13h7M9 17h7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ContactsIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="M5 20c1.2-3.4 4-5 7-5s5.8 1.6 7 5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
