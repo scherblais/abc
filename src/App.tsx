@@ -5,6 +5,8 @@ import { AdminScreen } from './screens/AdminScreen';
 import { ServiceEditScreen } from './screens/ServiceEditScreen';
 import { RevenueScreen } from './screens/RevenueScreen';
 import { ClientsScreen } from './screens/ClientsScreen';
+import { ContactsScreen } from './screens/ContactsScreen';
+import { ContactDetailScreen } from './screens/ContactDetailScreen';
 import { InvoicesScreen } from './screens/InvoicesScreen';
 import { InvoiceEditScreen } from './screens/InvoiceEditScreen';
 import { InvoicePrintScreen } from './screens/InvoicePrintScreen';
@@ -22,6 +24,7 @@ import type {
   DraftService,
   Expense,
   Invoice,
+  Occupant,
   Service,
   Settings,
 } from './types';
@@ -64,10 +67,17 @@ import { UidProvider } from './lib/uid-context';
 
 type Screen =
   | { name: 'home' }
-  | { name: 'book'; editingId?: string; startUndated?: boolean }
+  | {
+      name: 'book';
+      editingId?: string;
+      startUndated?: boolean;
+      prefill?: { occupant?: Occupant; address?: string };
+    }
   | { name: 'admin' }
   | { name: 'service-edit'; serviceId?: string }
   | { name: 'clients' }
+  | { name: 'contacts' }
+  | { name: 'contact-detail'; contactKey: string }
   | { name: 'revenue' }
   | { name: 'invoices' }
   | { name: 'invoice-edit'; invoiceId?: string; preselectBookingId?: string }
@@ -88,6 +98,8 @@ const SCREEN_NAMES = new Set([
   'admin',
   'service-edit',
   'clients',
+  'contacts',
+  'contact-detail',
   'revenue',
   'invoices',
   'invoice-edit',
@@ -607,6 +619,7 @@ function AppShell({
           onOpen={(b) => setScreen({ name: 'book', editingId: b.id })}
           onOpenTasks={() => setScreen({ name: 'tasks' })}
           onOpenRevenue={() => setScreen({ name: 'revenue' })}
+          onOpenContacts={() => setScreen({ name: 'contacts' })}
         />
       )}
       {screen.name === 'revenue' && (
@@ -624,6 +637,7 @@ function AppShell({
         <BookScreen
           initial={editingBooking}
           startUndated={screen.startUndated}
+          prefill={screen.prefill}
           catalog={services}
           companies={companies}
           agents={agents}
@@ -754,6 +768,28 @@ function AppShell({
           onOpen={(b) => setScreen({ name: 'book', editingId: b.id })}
         />
       )}
+      {screen.name === 'contacts' && (
+        <ContactsScreen
+          bookings={bookings}
+          onBack={() => setScreen({ name: 'home' })}
+          onOpen={(contactKey) =>
+            setScreen({ name: 'contact-detail', contactKey })
+          }
+        />
+      )}
+      {screen.name === 'contact-detail' && (
+        <ContactDetailScreen
+          bookings={bookings}
+          contactKey={screen.contactKey}
+          onBack={() => setScreen({ name: 'contacts' })}
+          onOpenBooking={(id) =>
+            setScreen({ name: 'book', editingId: id })
+          }
+          onNewShoot={(prefillValues) =>
+            setScreen({ name: 'book', prefill: prefillValues })
+          }
+        />
+      )}
       </div>
     </NavProvider>
   );
@@ -781,6 +817,9 @@ function activeTabFor(screen: Screen): TabId | null {
     case 'admin':
     case 'clients':
       return 'admin';
+    case 'contacts':
+    case 'contact-detail':
+      return 'home';
     case 'book':
     case 'service-edit':
     case 'invoice-edit':

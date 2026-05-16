@@ -5,6 +5,7 @@ import type {
   Company,
   DraftBooking,
   Invoice,
+  Occupant,
   Service,
   Settings,
 } from '../types';
@@ -32,6 +33,10 @@ type Props = {
    *  The Day/Time fields collapse into a "Schedule a date" button until
    *  the user is ready to pin it to a slot. Ignored when `initial` is set. */
   startUndated?: boolean;
+  /** Seed values for a brand-new booking. Used by the "+ New shoot for
+   *  this contact" flow on ContactDetailScreen. Ignored when `initial`
+   *  is set. */
+  prefill?: { occupant?: Occupant; address?: string };
   catalog: Service[];
   companies: Company[];
   agents: Agent[];
@@ -79,13 +84,18 @@ const draftFromBooking = (b: Booking): DraftBooking => ({
   notes: b.notes,
 });
 
-const emptyDraft = (catalog: Service[], undated: boolean): DraftBooking => {
+const emptyDraft = (
+  catalog: Service[],
+  undated: boolean,
+  prefill?: { occupant?: Occupant; address?: string },
+): DraftBooking => {
   const first = catalog[0];
   return {
-    address: '',
+    address: prefill?.address ?? '',
     scheduledAt: undated ? undefined : suggestedNextSlot().toISOString(),
     services: first ? [{ id: first.id, qty: 1 }] : [],
     price: first?.price ?? 0,
+    occupant: prefill?.occupant ? { ...prefill.occupant } : undefined,
     notes: '',
   };
 };
@@ -95,6 +105,7 @@ const INPUT = 'input';
 export function BookScreen({
   initial,
   startUndated,
+  prefill,
   catalog,
   companies,
   agents,
@@ -119,7 +130,9 @@ export function BookScreen({
     return id ? invoices.find((i) => i.id === id) : undefined;
   }, [initial, invoices, bookingInvoiceIndex]);
   const [draft, setDraft] = useState<DraftBooking>(() =>
-    initial ? draftFromBooking(initial) : emptyDraft(catalog, !!startUndated),
+    initial
+      ? draftFromBooking(initial)
+      : emptyDraft(catalog, !!startUndated, prefill),
   );
   const hasOccupant =
     !!initial?.occupant &&
@@ -129,9 +142,20 @@ export function BookScreen({
         initial.occupant.email ||
         initial.occupant.accessNotes,
     );
+  const prefillHasOccupant =
+    !!prefill?.occupant &&
+    Boolean(
+      prefill.occupant.name ||
+        prefill.occupant.phone ||
+        prefill.occupant.email ||
+        prefill.occupant.accessNotes,
+    );
   const [showExtras, setShowExtras] = useState(
     () =>
-      hasOccupant || Boolean(initial?.notes) || Boolean(initial?.client?.name),
+      hasOccupant ||
+      prefillHasOccupant ||
+      Boolean(initial?.notes) ||
+      Boolean(initial?.client?.name),
   );
   const [overrideTotals, setOverrideTotals] = useState(false);
 
