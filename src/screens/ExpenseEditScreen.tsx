@@ -132,10 +132,16 @@ export function ExpenseEditScreen({
         nextReceipt = undefined;
       }
     } catch (err) {
+      console.error('[receipt] save failed:', err);
       setUploading(false);
-      setUploadError(
-        (err as { message?: string })?.message ?? 'Receipt upload failed.',
-      );
+      const code = (err as { code?: string })?.code;
+      const message =
+        code === 'storage/unauthorized'
+          ? "Couldn't upload: Storage rules block this write. Publish storage.rules in the Firebase Console (Storage → Rules)."
+          : code === 'storage/unknown' || code === 'storage/object-not-found'
+            ? "Couldn't upload: is Firebase Storage enabled for this project? (Console → Storage → Get started.)"
+            : ((err as { message?: string })?.message ?? 'Receipt upload failed.');
+      setUploadError(message);
       return;
     }
 
@@ -195,6 +201,16 @@ export function ExpenseEditScreen({
       {initial && uid && (
         <div className="-mx-4 flex justify-center border-b border-neutral-100 dark:border-neutral-800/70 bg-white/60 dark:bg-neutral-900/40 px-4 py-1.5">
           <RecordSyncLabel path={recordPath(uid, 'expenses', initial.id)} />
+        </div>
+      )}
+      {uploadError && (
+        <div
+          role="alert"
+          className="-mx-4 border-b border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 px-4 py-2.5"
+        >
+          <p className="text-[12.5px] leading-snug text-red-800 dark:text-red-300">
+            {uploadError}
+          </p>
         </div>
       )}
 
@@ -347,11 +363,6 @@ export function ExpenseEditScreen({
           {uploading && (
             <p className="mt-1.5 px-0.5 text-[12px] text-neutral-500 dark:text-neutral-400">
               Uploading receipt…
-            </p>
-          )}
-          {uploadError && (
-            <p className="mt-1.5 px-0.5 text-[12px] text-red-600 dark:text-red-400">
-              {uploadError}
             </p>
           )}
         </Field>
