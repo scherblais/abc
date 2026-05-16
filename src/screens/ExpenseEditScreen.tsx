@@ -89,6 +89,7 @@ export function ExpenseEditScreen({
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [removed, setRemoved] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const existingReceipt = initial?.receipt ?? null;
   const descRef = useRef<HTMLInputElement>(null);
@@ -126,8 +127,14 @@ export function ExpenseEditScreen({
     try {
       if (pendingFile && uid) {
         setUploading(true);
+        setUploadProgress(0);
         setUploadError(null);
-        nextReceipt = await uploadReceipt(uid, formId, pendingFile);
+        nextReceipt = await uploadReceipt(
+          uid,
+          formId,
+          pendingFile,
+          setUploadProgress,
+        );
       } else if (removed) {
         nextReceipt = undefined;
       }
@@ -362,7 +369,7 @@ export function ExpenseEditScreen({
           />
           {uploading && (
             <p className="mt-1.5 px-0.5 text-[12px] text-neutral-500 dark:text-neutral-400">
-              Uploading receipt…
+              Uploading receipt… {uploadProgress}%
             </p>
           )}
         </Field>
